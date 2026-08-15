@@ -7,8 +7,9 @@ path with the fewest moving parts.
 - [What goes where, and why](#what-goes-where-and-why)
 - [Before you start](#before-you-start)
 - [1. Generate the keys](#1-generate-the-keys)
-- [2. Deploy the API and database](#2-deploy-the-api-and-database)
-- [3. Create the schema](#3-create-the-schema)
+- [2. Create the database](#2-create-the-database)
+- [3. Deploy the API](#3-deploy-the-api)
+- [3b. Create the schema](#3b-create-the-schema)
 - [4. Deploy the dashboard](#4-deploy-the-dashboard)
 - [5. Point the CLI at it](#5-point-the-cli-at-it)
 - [What to check afterwards](#what-to-check-afterwards)
@@ -108,16 +109,46 @@ alphanumeric, so it survives a URI, a shell, and a dashboard form unchanged.
 Keep both somewhere you can paste from in the next step. Not in the repository,
 not in a chat message.
 
-## 2. Deploy the API and database
+## 2. Create the database
+
+Warder needs **PostgreSQL**, not a Postgres-flavoured API. It uses two schemas
+— `public` for metadata and `secret_material` for ciphertext — and that split
+is what lets a reporting role be given everything about which credentials exist
+while holding no privilege at all on the ciphertext. It also uses `bytea`,
+`jsonb`, `timestamptz`, triggers that make audit rows unrewritable, and
+session-level advisory locks so two instances cannot apply the same migration
+twice.
+
+SQLite-backed services such as Turso cannot express any of that. Schemas do not
+exist there at all, so the separation the threat model rests on would have to
+be dropped.
+
+**Neon** is the recommendation: real Postgres, a free tier that does not expire,
+and it suspends when idle rather than being deleted. Supabase, Aiven and
+Railway also work. Render's own free Postgres does not — it is removed after 30
+days, which is a poor property for the store holding every secret you own.
+
+Create a project on [neon.tech](https://neon.tech) and copy **two** connection
+strings from the dashboard:
+
+| String | Used for | Why |
+|---|---|---|
+| **Pooled** (has `-pooler` in the host) | the two services | They open many short connections |
+| **Direct** (no `-pooler`) | migrations only | Session-level advisory locks do not survive a transaction-mode pooler |
+
+Both end in `?sslmode=require`. Keep it.
+
+## 3. Deploy the API
 
 In Render: **New → Blueprint**, pick this repository. Render reads
-`render.yaml` and proposes a database and two services.
+`render.yaml` and proposes two services. No database — you just made one.
 
-It will stop and ask for the values marked `sync: false`. Set the **same value
+It will stop and ask for the values marked `sync: false`. Set the **same three
 on both services**:
 
 | Variable | Value |
 |---|---|
+| `WARDER_DATABASE_URL` | Neon's **pooled** connection string |
 | `WARDER_KEYRING` | the key from `warder-api keygen` |
 | `WARDER_SERVICE_TOKEN` | the string from `openssl rand -hex 32` |
 
@@ -125,8 +156,7 @@ Both services read the same ciphertext, so they need the same keyring. The
 service token is only *used* by the admin surface, but the binary requires it
 at startup on both.
 
-Apply. Render builds the image once and starts both services. When they are
-live you will have two URLs:
+Apply. Render builds the image once and starts both services:
 
 ```
 https://warder-admin-XXXX.onrender.com      the dashboard's backend talks here
@@ -144,18 +174,18 @@ curl -s https://warder-runtime-XXXX.onrender.com/health
 `{"status":"ok"}` from each. The admin service answers the same on `/health`
 and refuses everything else without the service token, which is correct.
 
-## 3. Create the schema
+## 3b. Create the schema
 
-**Do not skip this.** Render creates an empty database; the services start
-fine against it and then every request fails, because there are no tables. The
-API answers `internal_error` — deliberately, since a caller learns nothing
-about the internals — and the real cause appears only in the service log as
+**Do not skip this.** A new database is empty; the services start fine against
+it and then every request fails, because there are no tables. The API answers
+`internal_error` — deliberately, since a caller learns nothing about the
+internals — and the real cause appears only in the service log as
 `relation "users" does not exist`.
 
-Copy the **External Database URL** from the Render database page, then:
+Use Neon's **direct** connection string here, not the pooled one:
 
 ```bash
-WARDER_DATABASE_URL="postgres://…" warder-api migrate
+WARDER_DATABASE_URL="postgres://…@ep-xxx.neon.tech/warder?sslmode=require" warder-api migrate
 ```
 
 That is the only variable it needs. A schema change has no business requiring
@@ -230,10 +260,10 @@ Worth doing once, in this order, because each proves a different boundary:
 Stated plainly, because a deployment guide that only lists successes is not
 useful.
 
-**The free tiers sleep and expire.** Render free services spin down when idle,
-so the first `ward run` after a quiet period waits for a cold start. Render's
-free Postgres expires after 30 days. Neither is suitable for anything real —
-they are fine for evaluating.
+**The free tiers sleep.** Render free services spin down when idle, so the
+first `ward run` after a quiet period waits for a cold start, and Neon suspends
+an idle branch until the next connection wakes it. Fine for evaluating,
+unsuitable for a workload that needs a credential in under a second.
 
 **The keyring sits in an environment variable.** That is the local key
 provider, and it means anyone who can read the service's configuration can read

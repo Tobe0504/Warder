@@ -14,20 +14,14 @@
 #
 # First deploy, in order:
 #   1. Push this file. In Render: New → Blueprint → pick the repo.
-#   2. Render creates the database and both services, then stops at the
-#      secrets marked sync:false below. Fill them in (see docs/deployment.md).
-#   3. Run the migration once — Render Shell on warder-admin, or locally with
-#      the external database URL:  warder-api migrate
-
-databases:
-  - name: warder-db
-    databaseName: warder
-    user: warder
-    plan: free
-    # Keep the database and both services in one region. Every request the
-    # dashboard makes crosses this link, and a cross-region hop is a hop an
-    # attacker could be sitting on.
-    region: oregon
+#   2. Render creates both services, then stops at the secrets marked
+#      sync:false below. Fill them in (see docs/deployment.md).
+#   3. Run the migration once, locally, against the direct (unpooled)
+#      connection string:  WARDER_DATABASE_URL="…" warder-api migrate
+#
+# The database is deliberately not declared here. Render's free Postgres
+# expires after 30 days, which is a poor property for the store holding every
+# secret an organization owns.
 
 services:
   # -------------------------------------------------------------------------
@@ -60,10 +54,12 @@ services:
       - key: WARDER_TRUST_PROXY_HEADERS
         value: "true"
 
+      # An external Postgres, so the deployment does not expire with Render's
+      # free database. Neon's free tier does not lapse; see docs/deployment.md.
+      # Use the *pooled* connection string here — the services open many short
+      # connections — and the direct one for migrations.
       - key: WARDER_DATABASE_URL
-        fromDatabase:
-          name: warder-db
-          property: connectionString
+        sync: false
 
       # Set once, by hand, and never rotated casually: every secret in the
       # system is encrypted under this. Generate with `warder-api keygen`.
@@ -109,10 +105,12 @@ services:
       - key: WARDER_TRUST_PROXY_HEADERS
         value: "true"
 
+      # An external Postgres, so the deployment does not expire with Render's
+      # free database. Neon's free tier does not lapse; see docs/deployment.md.
+      # Use the *pooled* connection string here — the services open many short
+      # connections — and the direct one for migrations.
       - key: WARDER_DATABASE_URL
-        fromDatabase:
-          name: warder-db
-          property: connectionString
+        sync: false
 
       # The same keyring as the admin service. Two processes, one set of keys —
       # they are reading the same ciphertext.
