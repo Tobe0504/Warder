@@ -156,6 +156,11 @@ there is nothing to apply — it says so and exits.
 In Vercel: **Add New → Project**, pick this repository, and set the **root
 directory to `web`**. Vercel detects Next.js on its own.
 
+There is deliberately no `vercel.json`. Everything one would put in it is
+either Vercel's default or already handled in `middleware.ts`, which sets the
+security headers per request so the Content-Security-Policy can carry a fresh
+nonce. A second place to configure headers is a second place for them to drift.
+
 One environment variable:
 
 ```
