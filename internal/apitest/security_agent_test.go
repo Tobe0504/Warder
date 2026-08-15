@@ -230,3 +230,63 @@ func mustSlice(v any) []any {
 	out, _ := v.([]any)
 	return out
 }
+
+// Removing someone must take their explicit grants with it.
+//
+// The grants were already unreachable: a revoked membership means the
+// principal never resolves, so nothing could exercise them. They are revoked
+// anyway, because an Access page listing people who used to work here is one
+// nobody can answer "who can reach production?" from.
+func TestRemovingAMemberRevokesTheirGrants(t *testing.T) {
+	h := apitest.New(t)
+
+	org := h.NewOrganization()
+	project := h.NewProject(org)
+	h.NewSecret(org, project.DevelopmentID, "DATABASE_URL", "offboarding-canary-not-real")
+
+	leaver := h.AddMember(org, "DEVELOPER")
+	h.Grant(org, project.ID, project.DevelopmentID, "USER", leaver.UserID, []string{"USE_SECRET"}, nil)
+
+	listed := h.MustAdmin(http.StatusOK, apitest.Request{
+		Path:       "/projects/" + project.ID + "/access",
+		Credential: org.BrowserSession,
+	})
+	if !strings.Contains(listed.Raw, leaver.UserID) {
+		t.Fatalf("the grant was not created: %s", listed.Raw)
+	}
+
+	h.MustAdmin(http.StatusOK, apitest.Request{
+		Method:     http.MethodDelete,
+		Path:       "/members/" + leaver.MembershipID,
+		Credential: org.BrowserSession,
+	})
+
+	after := h.MustAdmin(http.StatusOK, apitest.Request{
+		Path:       "/projects/" + project.ID + "/access",
+		Credential: org.BrowserSession,
+	})
+	if strings.Contains(after.Raw, leaver.UserID) {
+		t.Fatalf("a removed member still holds a grant on the access page: %s", after.Raw)
+	}
+
+	// And their session is dead on the next request, not at its expiry.
+	denied := h.RuntimeCall(apitest.Request{
+		Method:     http.MethodPost,
+		Path:       "/runtime/auth",
+		Credential: leaver.CLISession,
+		Body:       map[string]string{"project": project.Slug, "environment": "development"},
+	})
+	if denied.Status != http.StatusUnauthorized {
+		t.Fatalf("a removed member still authenticated: %d %s", denied.Status, denied.Raw)
+	}
+
+	// The secret itself was never touched. That is the point of the whole
+	// exercise: nobody rotates anything because somebody left.
+	secrets := h.MustAdmin(http.StatusOK, apitest.Request{
+		Path:       "/environments/" + project.DevelopmentID + "/secrets",
+		Credential: org.BrowserSession,
+	})
+	if version, _ := mustSlice(secrets.Get("secrets"))[0].(map[string]any)["version"].(float64); version != 1 {
+		t.Fatalf("offboarding rotated the credential (version %v)", version)
+	}
+}

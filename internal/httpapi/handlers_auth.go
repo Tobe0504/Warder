@@ -429,16 +429,14 @@ func (s *Server) handleRemoveMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.accounts.RevokeMembership(r.Context(), principal.OrganizationID, membershipID); err != nil {
+	// One call, one transaction: the membership, their explicit grants, and
+	// their sessions all end together. Doing the three separately left a window
+	// where a failure in the second recorded a revoked membership beside live
+	// grants, in a log line nobody reads.
+	removedUserID, err := s.accounts.RevokeMembership(r.Context(), principal.OrganizationID, membershipID)
+	if err != nil {
 		writeError(w, r, s.logger, translateError(err), err)
 		return
-	}
-
-	// Revoking the membership alone would leave existing sessions working until
-	// they expired. Removing someone has to take effect on their next request.
-	if err := s.accounts.RevokeSessionsForUser(r.Context(), target.UserID); err != nil {
-		s.logger.Error("membership revoked but sessions could not be ended",
-			"user_id", target.UserID.String(), "error", err)
 	}
 
 	s.audit.Record(r.Context(), audit.Event{
@@ -451,7 +449,7 @@ func (s *Server) handleRemoveMember(w http.ResponseWriter, r *http.Request) {
 		CredentialID:   &principal.CredentialID,
 		IPAddress:      ClientIP(r, s.cfg.TrustProxyHeaders),
 		UserAgent:      r.UserAgent(),
-		Metadata:       map[string]any{"removed_user_id": target.UserID.String()},
+		Metadata:       map[string]any{"removed_user_id": removedUserID.String()},
 	})
 
 	writeJSON(w, r, s.logger, http.StatusOK, map[string]bool{"ok": true})

@@ -2,11 +2,13 @@ package store
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"time"
 
 	"github.com/Tobe0504/Warder/internal/domain"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 // AccountRepo covers organizations, users, memberships, and login sessions.
@@ -197,18 +199,66 @@ type Member struct {
 }
 
 // RevokeMembership ends a membership immediately.
-func (r *AccountRepo) RevokeMembership(ctx context.Context, orgID, membershipID uuid.UUID) error {
-	tag, err := r.db.Pool.Exec(ctx, `
-		UPDATE memberships SET revoked_at = now()
-		WHERE id = $1 AND organization_id = $2 AND revoked_at IS NULL`,
-		membershipID, orgID)
-	if err != nil {
-		return translate(err)
-	}
-	if tag.RowsAffected() == 0 {
-		return ErrNotFound
-	}
-	return nil
+// RevokeMembership ends a membership and everything that hung off it, in one
+// transaction. It returns the user who was removed, for the audit entry.
+//
+// Three things go, not one:
+//
+//	the membership   they stop being able to resolve a principal at all
+//	their grants     the explicit USE_SECRET and READ_SECRET they were given
+//	their sessions   so nothing already in flight survives on the old check
+//
+// The grants matter even though they are already unreachable: a revoked
+// membership means the principal never resolves, so the grant could not be
+// exercised either way. Leaving the rows behind makes the Access page a list
+// of people who used to work here, and "who can reach production?" stops being
+// answerable by reading it. A question you have to mentally filter is one
+// people stop asking.
+//
+// One transaction because the alternative was three statements where a failure
+// in the second left a revoked membership beside live grants, recorded nowhere
+// but a log line.
+func (r *AccountRepo) RevokeMembership(ctx context.Context, orgID, membershipID uuid.UUID) (uuid.UUID, error) {
+	var userID uuid.UUID
+
+	err := InTx(ctx, r.db, func(tx pgx.Tx) error {
+		err := tx.QueryRow(ctx, `
+			UPDATE memberships SET revoked_at = now()
+			WHERE id = $1 AND organization_id = $2 AND revoked_at IS NULL
+			RETURNING user_id`,
+			membershipID, orgID,
+		).Scan(&userID)
+		if errors.Is(err, pgx.ErrNoRows) {
+			// Already revoked, or another organization's. Both answer the same.
+			return ErrNotFound
+		}
+		if err != nil {
+			return translate(err)
+		}
+
+		if _, err := tx.Exec(ctx, `
+			UPDATE access_grants SET revoked_at = now()
+			WHERE organization_id = $1 AND subject_type = 'USER' AND subject_id = $2
+			  AND revoked_at IS NULL`,
+			orgID, userID,
+		); err != nil {
+			return translate(err)
+		}
+
+		// Not scoped to the organization: a session is to the product, not to
+		// one tenant, and someone being removed should not keep one open.
+		if _, err := tx.Exec(ctx, `
+			UPDATE user_sessions SET revoked_at = now()
+			WHERE user_id = $1 AND revoked_at IS NULL`,
+			userID,
+		); err != nil {
+			return translate(err)
+		}
+
+		return nil
+	})
+
+	return userID, err
 }
 
 // ---------------------------------------------------------------------------

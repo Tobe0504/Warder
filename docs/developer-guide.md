@@ -293,9 +293,16 @@ neither.
 The role governs administration. It grants no access to any secret value, that
 is always a separate, explicit grant.
 
-**Removing someone:** *Members*, then remove them. Their sessions stop working
-on the next request, and their password stops conferring anything even though it
-is still correct.
+**Removing someone:** *Members*, then remove them. One transaction ends three
+things together:
+
+- **the membership**, so no request of theirs resolves to a principal again
+- **their grants**, so the Access page stops listing people who left
+- **their sessions**, so nothing already in flight survives
+
+Their password is still correct and now confers nothing. **No credential
+rotates**, because they never held one: they could *use* `DATABASE_URL`, and
+using it was always Warder fetching it on their behalf.
 
 **No credential needs rotating.** That is the point. Someone who could *use*
 `DATABASE_URL` never held it, so their leaving does not put it at risk.
