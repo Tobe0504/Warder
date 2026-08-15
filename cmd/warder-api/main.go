@@ -193,7 +193,9 @@ is refused at startup rather than silently sending the token in the clear.
 }
 
 func migrate() error {
-	cfg, err := config.Load()
+	// Only the database URL. A migration does not need the keyring, and asking
+	// for it would put that value in one more shell than necessary.
+	dsn, err := config.MigrationDSN()
 	if err != nil {
 		return err
 	}
@@ -201,7 +203,7 @@ func migrate() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
-	applied, err := store.Migrate(ctx, cfg.MigrationDSN())
+	applied, err := store.Migrate(ctx, dsn)
 	if err != nil {
 		return err
 	}

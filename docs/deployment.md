@@ -146,15 +146,25 @@ and refuses everything else without the service token, which is correct.
 
 ## 3. Create the schema
 
-The migration runs once, against the database Render created. Copy the
-**external** connection string from the Render database page, then:
+**Do not skip this.** Render creates an empty database; the services start
+fine against it and then every request fails, because there are no tables. The
+API answers `internal_error` — deliberately, since a caller learns nothing
+about the internals — and the real cause appears only in the service log as
+`relation "users" does not exist`.
+
+Copy the **External Database URL** from the Render database page, then:
 
 ```bash
 WARDER_DATABASE_URL="postgres://…" warder-api migrate
 ```
 
-Run this again after any deploy that adds a migration. It is safe to run when
-there is nothing to apply — it says so and exits.
+That is the only variable it needs. A schema change has no business requiring
+the keyring, and demanding it would put the key that decrypts every secret in
+one more shell for no benefit.
+
+Expect `applied 0001_init.sql` and `applied 0002_invitations.sql`. Run it again
+after any deploy that adds a migration; when there is nothing to apply it says
+`Database is up to date.` and exits.
 
 ## 4. Deploy the dashboard
 

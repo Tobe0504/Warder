@@ -123,6 +123,24 @@ func (c *Config) MigrationDSN() string {
 	return c.DatabaseURL
 }
 
+// MigrationDSN reads only what a schema change needs.
+//
+// Separate from Load because a migration has no business requiring the
+// keyring. Demanding it would mean pasting the key that decrypts every secret
+// in the system into a shell, a CI job, and a shell history, in order to
+// create some tables — multiplying the places that value has been seen for no
+// benefit at all.
+func MigrationDSN() (string, error) {
+	dsn := os.Getenv("WARDER_MIGRATION_DATABASE_URL")
+	if dsn == "" {
+		dsn = os.Getenv("WARDER_DATABASE_URL")
+	}
+	if dsn == "" {
+		return "", errors.New("set WARDER_DATABASE_URL (or WARDER_MIGRATION_DATABASE_URL) to the database to migrate")
+	}
+	return dsn, nil
+}
+
 func (c *Config) validate() error {
 	var problems []string
 
