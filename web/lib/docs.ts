@@ -46,15 +46,33 @@ export type DocSection = {
  * listing publishes everything in the directory — including the material that
  * belongs to people working on Warder rather than people using it.
  *
- * Local setup, the test suite and database spelunking live in CONTRIBUTING.md
- * at the repository root, outside docs/ and therefore outside this site. A
- * reader here wants to know how to use the product; how to start a Postgres
- * container is somebody else's question.
+ * This list is the whole published site. A file in docs/ that is not named
+ * here has no route and cannot be reached.
+ *
+ * Three audiences, one of which belongs here:
+ *
+ *   using it     install the CLI, add secrets, grant access, run an app
+ *   operating it deploying Warder, the keyring, disaster recovery
+ *   building it  local setup, the test suite, the source layout
+ *
+ * Only the first is published. Someone reading these pages is a developer at
+ * an organization that already runs Warder — they did not choose the database,
+ * they cannot reach the keyring, and telling them how to deploy their own
+ * copy answers a question they do not have while advertising the shape of
+ * infrastructure they have no business knowing.
+ *
+ * The security documents are the deliberate exception. They are published so
+ * that the claims made everywhere else can be checked rather than taken, and
+ * they describe properties rather than infrastructure.
+ *
+ * Operating lives in docs/deployment.md, docs/security/key-management.md and
+ * docs/security/disaster-recovery.md. Building lives in CONTRIBUTING.md.
+ * Neither is reachable from this site.
  */
 export const DOC_SECTIONS: DocSection[] = [
   {
     title: "Start here",
-    blurb: "What the product does, and what changes in your application.",
+    blurb: "What changes in your application, and the commands you will use.",
     docs: [
       {
         slug: "using-warder",
@@ -72,33 +90,9 @@ export const DOC_SECTIONS: DocSection[] = [
     ],
   },
   {
-    title: "Running Warder",
-    blurb: "For whoever operates the deployment everyone else uses.",
-    docs: [
-      {
-        slug: "deployment",
-        file: "deployment.md",
-        title: "Deploying Warder",
-        summary: "The API, the database and the dashboard — what goes where, and what it costs.",
-      },
-    ],
-  },
-  {
-    title: "How it works",
-    blurb: "The design, and the reasoning behind it.",
-    docs: [
-      {
-        slug: "architecture",
-        file: "architecture/overview.md",
-        title: "Architecture overview",
-        summary: "The pieces, the two HTTP surfaces, and how a secret travels.",
-      },
-    ],
-  },
-  {
     title: "Security",
     blurb:
-      "The part worth reading before you rely on this. Including what it does not do.",
+      "What is protected and what is not, so the claims on this site can be checked rather than taken.",
     docs: [
       {
         slug: "security/threat-model",
@@ -113,22 +107,10 @@ export const DOC_SECTIONS: DocSection[] = [
         summary: "What Warder does not protect against, stated plainly.",
       },
       {
-        slug: "security/key-management",
-        file: "security/key-management.md",
-        title: "Key management",
-        summary: "The key everything depends on: where it lives and how it rotates.",
-      },
-      {
         slug: "security/audit",
         file: "security/audit.md",
         title: "Audit",
         summary: "What is recorded, what is never recorded, and why.",
-      },
-      {
-        slug: "security/disaster-recovery",
-        file: "security/disaster-recovery.md",
-        title: "Disaster recovery",
-        summary: "Restoring the two things that must be stored apart.",
       },
     ],
   },

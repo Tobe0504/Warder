@@ -288,7 +288,7 @@ Worth knowing, because it explains some behaviour you'd otherwise find
 surprising.
 
 **Values go into the environment block, not the argument vector.** They don't
-appear in `ps`, and nothing is written to disk. ([`run.go`](../internal/cli/run.go))
+appear in `ps`, and nothing is written to disk.
 
 **`WARDER_TOKEN` is removed from the child's environment.** Your app receives the
 secrets, but not the ability to ask for more of them. This matters more than it
@@ -350,6 +350,6 @@ token gets an attacker staging.
 ## Where to go next
 
 - [Developer guide](developer-guide.md) — every command, in order
-- [Architecture overview](architecture/overview.md) — how it works underneath
+- [Threat model](security/threat-model.md) — what is protected, from whom
 - [Limitations](security/limitations.md) — what this does **not** protect
   against, stated plainly. Worth reading before you rely on it.

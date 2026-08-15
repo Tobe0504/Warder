@@ -2,9 +2,8 @@
 
 Everything you need to use Warder day to day, in the order you need it.
 
-This assumes Warder is already running somewhere and you have its address. If
-you are setting up a deployment, see [deployment](deployment.md). If you are
-working on Warder itself, see `CONTRIBUTING.md` in the repository.
+This assumes Warder is already running somewhere and somebody has given you
+its address. You do not need to deploy anything.
 
 - [Installing the CLI](#installing-the-cli)
 - [Daily development](#daily-development)
@@ -59,18 +58,6 @@ the real tag is stamped by the release build rather than compiled in.
 
 Download the archive for the platform from the releases page, check it against
 `checksums.txt`, extract, and put `ward` somewhere on PATH.
-
-### Publishing a release
-
-Tag and push. The release workflow cross-compiles for macOS and Linux on both
-architectures, publishes the checksums, and creates the GitHub release.
-
-```bash
-git tag v0.2.0 && git push origin v0.2.0
-```
-
-Binaries are built with `CGO_ENABLED=0` and `-trimpath`, so each one is static
-— no libc to match — and carries no local filesystem paths.
 
 ---
 
@@ -317,63 +304,53 @@ is still correct.
 
 ## Troubleshooting
 
-### "Could not reach the service"
-
-The dashboard is up; the core API is not.
-
-```bash
-docker compose -f deploy/docker-compose.yml ps    # is Postgres up?
-curl -s http://127.0.0.1:8081/health              # is the API up?
-```
-
-### "Not configured yet" on the sign-in page
-
-`web/.env.local` is missing or `WARDER_URL` is malformed. The page prints
-exactly what is wrong. Regenerate with `go run ./cmd/warder-api init`.
-
-### The API will not start
-
-It validates configuration before binding anything and names what is missing.
-The usual causes are an unset `WARDER_KEYRING` or a `WARDER_SERVICE_TOKEN`
-shorter than 32 characters.
-
 ### `ward: not logged in`
 
 ```bash
 ward login
 ```
 
-Or, for a machine runtime, set `WARDER_RUNTIME_URL` and `WARDER_TOKEN` in its environment.
+Sessions expire. This is the ordinary case.
 
-### `ward run` says "not authorized"
+### `ward: could not reach the service`
 
-Your identity has not been granted `USE_SECRET` on that environment. Check the
-project's **Access** tab. Being an owner is not enough — no role grants access
-to secret values.
+`WARDER_RUNTIME_URL` is unset, wrong, or the deployment is down. Check the
+address with whoever operates it:
+
+```bash
+echo $WARDER_RUNTIME_URL
+curl -s "$WARDER_RUNTIME_URL/health"
+```
+
+`{"status":"ok"}` means the service is up and the problem is your session or
+your project, not the address.
+
+### `ward: no project "..."`
+
+The name in `.warder.json` does not exist, or exists in an organization you
+are not a member of. `ward project list` shows what you can actually see.
+
+### `ward run` starts but the process has no secrets
+
+It authenticated and was granted nothing. The line above the command names
+what it was refused. An identity needs an explicit **Can use** grant on that
+environment — being a member of the organization is not enough, and no role
+confers it.
 
 ### A secret shows `EXPIRED`
 
-Its active version passed its expiry. Rotate it, or clear the expiry from the
-version list.
+Its version passed the expiry someone set. Rotate it, or ask whoever owns it
+to clear the expiry.
 
-### The dashboard renders but nothing is clickable
+### That email and password do not match an account
 
-Almost always a Content Security Policy problem. Check the browser console for
-policy violations. Development allows `unsafe-eval` because Next.js needs it for
-hot reloading; production does not.
+Exactly what it says, and it does not distinguish which half was wrong. If you
+have never signed in to this deployment, you may not have an account on it yet
+— ask for an invitation.
 
 ---
 
 ## Command reference
-
-### `warder-api`
-
-| Command | What it does |
-|---|---|
-| `warder-api init` | Generate a complete starting configuration |
-| `warder-api migrate` | Apply database migrations |
-| `warder-api serve` | Run the admin and runtime listeners |
-| `warder-api keygen` | Print one new key encryption key |
 
 ### `ward`
 

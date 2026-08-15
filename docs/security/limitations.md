@@ -71,8 +71,9 @@ into a process that then logs it.
 
 ## Operational gaps
 
-- No backup or restore procedure is automated. See
-  [disaster recovery](./disaster-recovery.md) for what has to be true.
+- No backup or restore procedure is automated. Recovering a Warder deployment
+  means recovering two things kept deliberately apart — the database and the
+  keyring — and neither is any use without the other.
 - No key rotation job. The schema records a key version per row and the
   encryption layer decrypts under old versions, so re-encryption is possible —
   but nothing performs it.
