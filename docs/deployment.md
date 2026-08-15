@@ -94,11 +94,16 @@ it.
 > [key management](security/key-management.md) and
 > [disaster recovery](security/disaster-recovery.md).
 
-And a service credential, at least 32 characters from a real random source:
+And a service credential — at least 32 characters, from a real random source:
 
 ```bash
-openssl rand -base64 48
+openssl rand -hex 32
 ```
+
+**Hex, not base64.** This value goes into a URI, and base64's alphabet includes
+`/`, which ends the authority before the `@` is reached. The token would never
+arrive and the error would point at the wrong half of the string. Hex is
+alphanumeric, so it survives a URI, a shell, and a dashboard form unchanged.
 
 Keep both somewhere you can paste from in the next step. Not in the repository,
 not in a chat message.
@@ -114,7 +119,7 @@ on both services**:
 | Variable | Value |
 |---|---|
 | `WARDER_KEYRING` | the key from `warder-api keygen` |
-| `WARDER_SERVICE_TOKEN` | the string from `openssl rand` |
+| `WARDER_SERVICE_TOKEN` | the string from `openssl rand -hex 32` |
 
 Both services read the same ciphertext, so they need the same keyring. The
 service token is only *used* by the admin surface, but the binary requires it
