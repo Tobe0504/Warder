@@ -82,7 +82,11 @@ fetch "$base/checksums.txt" "$tmp/checksums.txt" || fail "could not download che
 # Verifying is not optional. This binary will hold a credential that reaches
 # every secret its identity is granted, so a tampered download is not a
 # cosmetic problem.
-expected=$(grep " \./$archive\$\|  $archive\$" "$tmp/checksums.txt" | awk '{print $1}' | head -n 1)
+# Matched with awk rather than grep. The checksum file lists names as
+# "./name", and a grep alternation written with \| is a GNU extension that
+# BSD grep — the one on every Mac — treats as a literal, so the lookup found
+# nothing and the install failed on exactly the platform most developers use.
+expected=$(awk -v want="$archive" '$2 == want || $2 == "./" want { print $1; exit }' "$tmp/checksums.txt")
 [ -n "$expected" ] || fail "no checksum published for $archive"
 
 if command -v sha256sum >/dev/null 2>&1; then
