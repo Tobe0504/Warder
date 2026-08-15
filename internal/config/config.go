@@ -136,7 +136,7 @@ func (c *Config) validate() error {
 		problems = append(problems, "WARDER_DATABASE_URL is required")
 	}
 	if c.Keyring == "" {
-		problems = append(problems, "WARDER_KEYRING is required (run: go run ./cmd/warder-api keygen)")
+		problems = append(problems, "WARDER_KEYRING is required (run: warder-api keygen)")
 	}
 	if c.ServiceToken == "" {
 		problems = append(problems, "WARDER_SERVICE_TOKEN is required")

@@ -34,10 +34,14 @@ import (
 )
 
 func main() {
-	command := "serve"
-	if len(os.Args) > 1 {
-		command = os.Args[1]
+	// No default command. Someone who has just installed this and typed its
+	// name should be told what it can do, not shown three errors about
+	// environment variables for a `serve` they did not ask for.
+	if len(os.Args) < 2 {
+		usage()
+		return
 	}
+	command := os.Args[1]
 
 	var err error
 	switch command {
@@ -71,7 +75,7 @@ func usage() {
 
 Usage:
   warder-api init      Generate a complete starting configuration
-  warder-api serve     Run the admin and runtime API servers (default)
+  warder-api serve     Run the admin and runtime API servers
   warder-api migrate   Apply database migrations and exit
   warder-api keygen    Print a fresh key encryption key and exit
 

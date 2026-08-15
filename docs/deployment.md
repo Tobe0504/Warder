@@ -52,10 +52,24 @@ nothing outside the container can reach it. That is what
 You need a GitHub account with this repository, a Render account, and a Vercel
 account. All three have free tiers that fit this.
 
-Install the CLI locally first — you will use it to generate keys:
+Install the API binary locally first — you will use it to generate keys and to
+run the migration:
 
 ```bash
 go build -o "$HOME/.local/bin/warder-api" ./cmd/warder-api
+```
+
+Check it is reachable before going on:
+
+```bash
+warder-api
+```
+
+That prints the list of commands. If instead you get `command not found`, the
+directory is not on your PATH:
+
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc && exec zsh
 ```
 
 ## 1. Generate the keys
