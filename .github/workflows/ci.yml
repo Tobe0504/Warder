@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   go:
-    name: Go: build, vet, test
+    name: "Go: build, vet, test"
     runs-on: ubuntu-latest
 
     services:
@@ -72,7 +72,7 @@ jobs:
         run: go test -race -count=1 ./...
 
   vulnerabilities:
-    name: Go: known vulnerabilities
+    name: "Go: known vulnerabilities"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -89,7 +89,7 @@ jobs:
           govulncheck ./...
 
   web:
-    name: Web: typecheck and build
+    name: "Web: typecheck and build"
     runs-on: ubuntu-latest
     defaults:
       run:
