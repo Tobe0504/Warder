@@ -24,7 +24,7 @@ type HeaderUser = { name: string; email: string; organization: string };
  * The account control in the public header.
  *
  * A client component on purpose. The pages around it are static HTML, so they
- * cannot read a cookie without becoming dynamic — which would cost the landing
+ * cannot read a cookie without becoming dynamic, which would cost the landing
  * page and every documentation page their cacheability, and would put a
  * session read in front of visitors who are only here to read the docs.
  *

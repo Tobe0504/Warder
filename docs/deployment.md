@@ -23,7 +23,7 @@ Warder serves two HTTP surfaces, and keeping them apart is most of the design.
 | Surface | Who talks to it | What it trusts |
 |---|---|---|
 | **Admin** | Only the dashboard's backend | A service credential the dashboard holds |
-| **Runtime** | The `ward` CLI and deployed workloads | Each workload's own token — no shared credential |
+| **Runtime** | The `ward` CLI and deployed workloads | Each workload's own token: no shared credential |
 
 They are separate because collapsing them would mean shipping the service
 credential to every workload, and one stolen container would then be a foothold
@@ -42,7 +42,7 @@ nothing outside the container can reach it. That is what
 
 > **One consequence worth understanding.** Putting the dashboard on Vercel
 > means its backend reaches the admin surface across the public internet, so
-> the admin port has to be publicly addressable — protected by the service
+> the admin port has to be publicly addressable, protected by the service
 > token and nothing else. Running the dashboard on Render instead would let it
 > use the private network and the admin port could stay unreachable. The
 > Vercel path is simpler; this is what it costs.
@@ -52,14 +52,14 @@ nothing outside the container can reach it. That is what
 You need a GitHub account with this repository, a Render account, and a Vercel
 account. All three have free tiers that fit this.
 
-Install the API binary locally first — you will use it to generate keys and to
+Install the API binary locally first; you will use it to generate keys and to
 run the migration:
 
 ```bash
 go build -o "$(dirname "$(command -v go)")/warder-api" ./cmd/warder-api
 ```
 
-Or name a directory yourself — it has to be one that is already on your PATH,
+Or name a directory yourself; it has to be one that is already on your PATH,
 not merely one that exists. On a Mac with Homebrew, `/opt/homebrew/bin` is the
 reliable answer; `~/.local/bin` exists on plenty of machines that never put it
 on PATH.
@@ -75,7 +75,7 @@ warder-api
 ```
 
 That prints the list of commands. `command not found` means the directory you
-chose is not on your PATH — `echo $PATH` will show you which ones are.
+chose is not on your PATH, `echo $PATH` will show you which ones are.
 
 ## 1. Generate the keys
 
@@ -89,12 +89,12 @@ That prints a key encryption key. Every secret Warder stores is encrypted under
 it.
 
 > **This is the one thing you cannot regenerate.** Lose it and every stored
-> secret is unrecoverable — there is no reset, by design. Put a copy somewhere
+> secret is unrecoverable; there is no reset, by design. Put a copy somewhere
 > durable and separate from the database before you go further. See
 > [key management](security/key-management.md) and
 > [disaster recovery](security/disaster-recovery.md).
 
-And a service credential — at least 32 characters, from a real random source:
+And a service credential, at least 32 characters, from a real random source:
 
 ```bash
 openssl rand -hex 32
@@ -149,14 +149,14 @@ and refuses everything else without the service token, which is correct.
 > **The free database is removed after 30 days.** Fine for evaluating, and a
 > poor property for the store holding every secret an organization owns. See
 > [using a different database](#using-a-different-database) when you outgrow
-> it — nothing about Warder is tied to Render.
+> it: nothing about Warder is tied to Render.
 
 ## 3. Create the schema
 
 **Do not skip this.** Render creates an empty database; the services start fine
 against it and then every request fails, because there are no tables. The API
-answers `internal_error` — deliberately, since a caller learns nothing about
-the internals — and the real cause appears only in the service log as
+answers `internal_error`: deliberately, since a caller learns nothing about
+the internals, and the real cause appears only in the service log as
 `relation "users" does not exist`.
 
 Copy the **External Database URL** from the Render database page. The services
@@ -236,13 +236,13 @@ Worth doing once, in this order, because each proves a different boundary:
 
 ## Using a different database
 
-Nothing about Warder is tied to Render's database. To point at an external one
-— when the free tier expires, or for anything real — delete the `databases`
+Nothing about Warder is tied to Render's database. To point at an external one:
+when the free tier expires, or for anything real, delete the `databases`
 block from `render.yaml` and change both `WARDER_DATABASE_URL` entries from
 `fromDatabase` to `sync: false`, then set the connection string on each service.
 
 It has to be **PostgreSQL**, not a Postgres-flavoured API. Warder uses two
-schemas — `public` for metadata and `secret_material` for ciphertext — and that
+schemas: `public` for metadata and `secret_material` for ciphertext, and that
 split is what lets a reporting role be given everything about which credentials
 exist while holding no privilege on the ciphertext. It also uses `bytea`,
 `jsonb`, `timestamptz`, a trigger that makes audit rows unrewritable, and
@@ -255,7 +255,7 @@ there, so the separation the threat model rests on would simply be gone.
 [Neon](https://neon.tech) is the natural next step: real Postgres, a free tier
 that does not expire, suspended when idle rather than deleted. Supabase, Aiven
 and Railway work too. If the provider offers a connection pooler, use the
-pooled string for the services and the **direct** one for migrations —
+pooled string for the services and the **direct** one for migrations:
 session-level advisory locks do not survive a transaction-mode pooler.
 
 ---
@@ -274,13 +274,13 @@ keep.
 **The keyring sits in an environment variable.** That is the local key
 provider, and it means anyone who can read the service's configuration can read
 the key that decrypts everything. For production, move to a KMS so the key
-never leaves the provider — the `KeyProvider` interface exists for exactly this
+never leaves the provider, the `KeyProvider` interface exists for exactly this
 and the cloud implementations are stubbed in
 [`internal/crypto/kms_cloud.go`](../internal/crypto/kms_cloud.go). See
 [key management](security/key-management.md).
 
 **Organization creation is unauthenticated.** Anyone who can reach the
-dashboard can create a tenant. Gate this before you put it anywhere public —
+dashboard can create a tenant. Gate this before you put it anywhere public:
 it is the first item in [limitations](security/limitations.md).
 
 **Nothing backs up the database.** Render's free tier does not, and a Warder
@@ -290,4 +290,4 @@ database without its keyring is unrecoverable ciphertext. Read
 **The database roles are not applied.** `deploy/sql/roles.sql` splits migrator,
 application, and read-only privileges so that a leaked reporting credential
 exposes no ciphertext. Render's default user owns everything. Applying it is a
-deliberate step — read it first, because it reassigns table ownership.
+deliberate step: read it first, because it reassigns table ownership.

@@ -68,7 +68,7 @@ var valuePatterns = []*regexp.Regexp{
 	regexp.MustCompile(`\b(vlt|vrt|vsn)_[A-Z2-7]{10}_[A-Z2-7]{52}\b`),
 
 	// Connection strings carrying inline credentials. Only the userinfo is
-	// replaced, so the host and database remain visible for debugging — which
+	// replaced, so the host and database remain visible for debugging, which
 	// is usually the part someone was trying to log anyway.
 	//
 	// Both userinfo shapes are matched: "user:password@" as in a PostgreSQL
@@ -159,8 +159,8 @@ func (h *redactingHandler) WithGroup(name string) slog.Handler {
 }
 
 func redactAttr(a slog.Attr) slog.Attr {
-	// Resolve first, so a type implementing slog.LogValuer — including
-	// secretvalue.Value — has already replaced itself.
+	// Resolve first, so a type implementing slog.LogValuer, including
+	// secretvalue.Value: has already replaced itself.
 	a.Value = a.Value.Resolve()
 
 	if Sensitive(a.Key) {

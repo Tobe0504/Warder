@@ -3,7 +3,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 /**
  * The bar across the top of every dashboard page.
  *
- * Deliberately thin — 48px, like Vercel's — because the content below it is
+ * Deliberately thin: 48px, like Vercel's, because the content below it is
  * dense tables and every pixel spent on chrome is a row someone cannot see.
  * It holds the sidebar toggle, a breadcrumb, and whatever action belongs to the
  * page.

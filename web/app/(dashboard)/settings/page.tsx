@@ -40,7 +40,7 @@ export default async function SettingsPage() {
                 <span className="inline-flex items-center gap-2">
                   <Badge variant="outline">{user.role.toLowerCase()}</Badge>
                   <span className="text-meta text-muted-foreground">
-                    administration only — grants no access to any secret value
+                    administration only: grants no access to any secret value
                   </span>
                 </span>
               }

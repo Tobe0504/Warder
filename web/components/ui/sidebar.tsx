@@ -23,8 +23,8 @@ import { cn } from "@/lib/utils";
 /**
  * The application sidebar.
  *
- * Follows the shadcn/ui sidebar API — provider, collapsible rail, mobile sheet,
- * and menu primitives — so the composition is the one people already know.
+ * Follows the shadcn/ui sidebar API, provider, collapsible rail, mobile sheet,
+ * and menu primitives, so the composition is the one people already know.
  *
  * The collapsed state is kept in a cookie rather than local state, so it
  * survives navigation and reload. That is a preference, not a credential, and
@@ -433,7 +433,7 @@ export const SidebarMenuButton = React.forwardRef<
       />
     );
 
-    // Collapsed to icons, the label is gone — so it moves into a tooltip rather
+    // Collapsed to icons, the label is gone, so it moves into a tooltip rather
     // than leaving an unlabelled icon.
     if (!tooltip || state !== "collapsed" || isMobile) {
       return button;

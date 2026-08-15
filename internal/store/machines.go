@@ -75,7 +75,7 @@ func (r *MachineRepo) ListIdentities(ctx context.Context, orgID uuid.UUID) ([]do
 // do not: they are verified against their own record, so a session minted a
 // minute ago would keep delivering secrets until it expired. Disabling an
 // identity has to mean the next request is denied, not the next request after
-// the session lapses — so they are revoked here, in the same transaction.
+// the session lapses, so they are revoked here, in the same transaction.
 func (r *MachineRepo) DisableIdentity(ctx context.Context, orgID, id uuid.UUID) error {
 	return InTx(ctx, r.db, func(tx pgx.Tx) error {
 		tag, err := tx.Exec(ctx, `

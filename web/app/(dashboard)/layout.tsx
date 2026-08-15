@@ -27,7 +27,7 @@ export type { SessionUser };
  *
  * If the core API is unreachable, this throws and app/(dashboard)/error.tsx
  * renders a page explaining what is not running. That path exists so nobody
- * ever has to comment out the check above to see the interface — which would
+ * ever has to comment out the check above to see the interface, which would
  * mean shipping a dashboard that renders without a verified session.
  */
 export default async function DashboardLayout({

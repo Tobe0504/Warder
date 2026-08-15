@@ -26,14 +26,14 @@ go run ./cmd/warder-api init
 
 This prints two blocks. It generates the encryption key, the service
 credential, and the dashboard's connection URI together, so they agree with each
-other — which is the part that is tedious and easy to get wrong by hand.
+other: which is the part that is tedious and easy to get wrong by hand.
 
 Save the first block as `.env` in the repository root, and the line beginning
 `WARDER_URL=` as `web/.env.local`. Both are git-ignored.
 
 > The keyring is the one thing you cannot regenerate. Lose it and every secret
 > encrypted under it is gone. For anything beyond local development, put it in a
-> KMS — see [key management](security/key-management.md).
+> KMS: see [key management](security/key-management.md).
 
 ### 3. Create the schema
 
@@ -59,7 +59,7 @@ curl -s http://127.0.0.1:8081/health
 ```
 
 `{"status":"ok"}`. The admin port answers `401` to the same request, which is
-correct — it requires the service credential that only the dashboard holds.
+correct: it requires the service credential that only the dashboard holds.
 
 ### 5. Start the dashboard
 
@@ -77,7 +77,7 @@ From this checkout:
 go build -o "$HOME/.local/bin/ward" ./cmd/ward
 ```
 
-Not `/usr/local/bin` — it is root-owned on Apple Silicon, so that build fails
+Not `/usr/local/bin`: it is root-owned on Apple Silicon, so that build fails
 silently and leaves you with `command not found`. Use a directory you own that
 is already on your PATH.
 
@@ -136,7 +136,7 @@ should be looking at a production database. `deploy/sql/roles.sql` creates
 `warder_readonly`, which has no privilege on `secret_material` at all, and
 cannot select password hashes or credential verifiers.
 
-Connect DBeaver as that role and the ciphertext tables are simply not there —
+Connect DBeaver as that role and the ciphertext tables are simply not there:
 which is the most direct demonstration of the model there is.
 
 > Read that file before running it. It reassigns ownership of every table to
@@ -159,7 +159,7 @@ export WARDER_TEST_DATABASE_URL="postgres://warder:warder-local-dev-only@127.0.0
 go test -race ./...
 ```
 
-The suite in `internal/apitest` is the interesting part — it is written to fail
+The suite in `internal/apitest` is the interesting part; it is written to fail
 when a guarantee breaks: a development token reaching production, a value
 appearing in a log, a revoked token's existing sessions still working.
 
@@ -187,5 +187,5 @@ git tag v0.2.0 && git push origin v0.2.0
 ```
 
 Binaries are built with `CGO_ENABLED=0` and `-trimpath`, so each one is static
-and carries no local filesystem paths. The version is stamped by the linker —
+and carries no local filesystem paths. The version is stamped by the linker:
 which is why `internal/cli.Version` is a `var` and not a `const`.

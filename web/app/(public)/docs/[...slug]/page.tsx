@@ -55,7 +55,7 @@ export default async function DocPage({ params }: Params) {
           <h1 className="text-title font-medium tracking-tight sm:text-[1.75rem]">
             {doc.meta.title}
           </h1>
-          <p className="mt-2.5 max-w-[62ch] prose-note text-muted-foreground">
+          <p className="mt-2.5 max-w-[62ch] prose-doc text-muted-foreground">
             {doc.meta.summary}
           </p>
         </header>
@@ -94,7 +94,7 @@ export default async function DocPage({ params }: Params) {
       </article>
 
       {/*
-        The contents rail. Only shown where there is genuine room for it —
+        The contents rail. Only shown where there is genuine room for it:
         squeezing it in at narrower widths would cost the prose the measure it
         needs, and these documents are long enough that reading comfort matters
         more than a shortcut.

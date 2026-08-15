@@ -30,7 +30,7 @@ var (
 	ErrNotAuthorized = errors.New("not authorized")
 
 	// ErrSecretUnavailable is returned when a secret exists but has no
-	// deliverable version — expired, revoked, or never given a value.
+	// deliverable version: expired, revoked, or never given a value.
 	ErrSecretUnavailable = errors.New("secret is not available")
 
 	// ErrNotFound is returned when a secret does not exist.
@@ -115,7 +115,7 @@ type Delivery struct {
 	Denied []string
 
 	// Unavailable lists requested keys the caller is authorized for but which
-	// have no deliverable version — expired or revoked. Distinguishing this
+	// have no deliverable version, expired or revoked. Distinguishing this
 	// from Denied is safe because the caller has already proven authorization
 	// over the key, and it turns a mystifying outage into a legible one.
 	Unavailable []string
@@ -247,7 +247,7 @@ func (s *Service) decrypt(ctx context.Context, orgID, projectID, envID uuid.UUID
 // Reveal returns a single plaintext value to a human.
 //
 // This is the only path in the system that sends plaintext toward a browser,
-// and it requires READ_SECRET — a capability no role confers. Both the request
+// and it requires READ_SECRET, a capability no role confers. Both the request
 // and the result are audited, so an administrator granting themselves
 // visibility leaves two records rather than none.
 func (s *Service) Reveal(ctx context.Context, rc RequestContext, orgID, projectID, envID, secretID uuid.UUID) (secretvalue.Value, error) {
@@ -467,7 +467,7 @@ type RotateRequest struct {
 //
 // Applications keep referring to the same secret; nothing about the reference
 // they hold changes. This rotates the value Warder stores. It does not rotate
-// the credential at the upstream provider — creating a new database password or
+// the credential at the upstream provider, creating a new database password or
 // a new Stripe key remains a separate act, and pretending otherwise would leave
 // operators believing a credential had been replaced when it had not.
 func (s *Service) Rotate(ctx context.Context, rc RequestContext, req RotateRequest) (*domain.SecretVersion, error) {
@@ -521,7 +521,7 @@ func (s *Service) Rotate(ctx context.Context, rc RequestContext, req RotateReque
 
 		// The version the database assigned must match the one bound into the
 		// ciphertext. If a concurrent rotation moved the counter, the binding
-		// would be wrong and the value would be undecryptable later — so the
+		// would be wrong and the value would be undecryptable later, so the
 		// transaction is abandoned rather than committing material that cannot
 		// be opened.
 		if version.Version != nextVersion {

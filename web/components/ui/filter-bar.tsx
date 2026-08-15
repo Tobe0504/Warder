@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
  *
  * "All X" as the resting label matters. A dropdown showing a blank or a
  * placeholder leaves you unsure whether a filter is applied; "All environments"
- * states plainly that nothing is being hidden from you — which on a screen
+ * states plainly that nothing is being hidden from you, which on a screen
  * about access is worth being unambiguous about.
  */
 

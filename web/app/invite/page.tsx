@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 /**
  * The invitee's side of the flow.
  *
- * This page is rendered without reading the token at all — it arrives in the
+ * This page is rendered without reading the token at all: it arrives in the
  * URL fragment, which never reaches a server. Everything happens in the form.
  */
 export default function AcceptInvitationPage() {

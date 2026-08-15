@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 /**
  * The Warder logo.
  *
- * Two forms — the full lockup and the mark on its own — each shipped as a dark
+ * Two forms: the full lockup and the mark on its own: each shipped as a dark
  * ("ink") and a light ("paper") artwork. Both are rendered and one is hidden by
  * the colour scheme, rather than swapping a `src` at runtime: a swap would
  * flash the wrong artwork on first paint, and in a dark interface that means a
@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
  *
  * ## Why these components do arithmetic
  *
- * The source files carry transparent padding around the artwork — 12% either
+ * The source files carry transparent padding around the artwork, 12% either
  * side of the lockup, 24.5% above and below it. Dropped into a flexbox as-is,
  * an element whose visible logo is 20px tall occupies 39px and sits 19px
  * further from the edge than everything aligned beneath it, which reads as a
@@ -95,7 +95,7 @@ export function Wordmark({
 }
 
 /**
- * The mark on its own, for places too narrow for the lockup — a collapsed
+ * The mark on its own, for places too narrow for the lockup, a collapsed
  * sidebar, a footer, an error page.
  *
  * @param size how tall the visible artwork should be, in pixels.

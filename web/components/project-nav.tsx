@@ -37,7 +37,7 @@ const SECTIONS = [
  * The project's own navigation column.
  *
  * A second, nested nav rather than a tab strip. Tabs work while there are four
- * of them and stop working shortly after — labels start colliding, and the row
+ * of them and stop working shortly after, labels start colliding, and the row
  * has nowhere to grow. A column has room for the sections this will accumulate
  * (environments, integrations, settings), keeps the active item on the same
  * axis as the main sidebar's, and leaves the horizontal space to the tables,

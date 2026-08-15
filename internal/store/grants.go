@@ -17,8 +17,8 @@ func NewGrantRepo(db *DB) *GrantRepo { return &GrantRepo{db: db} }
 // GrantsForSubject returns every grant held by a subject in an organization.
 //
 // Expired and revoked grants are filtered in SQL as well as in the policy
-// engine. The engine's check is the one that matters — it uses a single
-// consistent clock for the whole decision — but excluding them here keeps a
+// engine. The engine's check is the one that matters: it uses a single
+// consistent clock for the whole decision, but excluding them here keeps a
 // long-lived identity's grant list from growing into a scan.
 func (r *GrantRepo) GrantsForSubject(ctx context.Context, orgID uuid.UUID, subjectType domain.SubjectType, subjectID uuid.UUID) ([]domain.AccessGrant, error) {
 	rows, err := r.db.Pool.Query(ctx, `

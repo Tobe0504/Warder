@@ -51,8 +51,8 @@ export default async function EnvironmentSecretsPage({ params }: Params) {
 
       {/*
         The bridge between this screen and what the product actually does.
-        Someone looking at a column of masked values has a fair question — "so
-        how do I use these?" — and the answer belongs on the same screen,
+        Someone looking at a column of masked values has a fair question: "so
+        how do I use these?", and the answer belongs on the same screen,
         already filled in with the project and environment they are looking at.
       */}
       <RunCommand project={project.slug} environment={listing.environment.slug} />

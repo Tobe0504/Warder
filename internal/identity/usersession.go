@@ -28,9 +28,9 @@ type UserSessionProvider struct {
 	//
 	// Browser sessions and CLI logins are both user sessions, but they are
 	// issued to different places and reach the system through different
-	// surfaces. Keeping them apart means a browser session token — the one that
+	// surfaces. Keeping them apart means a browser session token, the one that
 	// sits in a cookie and is exposed to any cross-site scripting flaw in the
-	// dashboard — cannot be replayed against the secret delivery API, and a CLI
+	// dashboard: cannot be replayed against the secret delivery API, and a CLI
 	// login sitting in a file on a laptop cannot be used to administer the
 	// organization.
 	allowedKinds []string

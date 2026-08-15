@@ -71,7 +71,7 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprint(os.Stderr, `warder-api — Warder core API
+	fmt.Fprint(os.Stderr, `warder-api: Warder core API
 
 Usage:
   warder-api init      Generate a complete starting configuration
@@ -110,7 +110,7 @@ Store this in your secret manager and supply it as WARDER_KEYRING.
 // initConfig generates a complete, consistent starting configuration.
 //
 // Doing this by hand means generating a key, generating a service token, and
-// then assembling a connection URI that has to agree with both — three chances
+// then assembling a connection URI that has to agree with both, three chances
 // to make a mistake that only shows up as a confusing failure later. This emits
 // all of it at once, already consistent.
 //
@@ -134,7 +134,7 @@ func initConfig() error {
 	adminAddr := getenv("WARDER_ADMIN_ADDR", "127.0.0.1:8080")
 
 	fmt.Printf(`# ---------------------------------------------------------------------------
-# Core API — save as .env in the repository root
+# Core API: save as .env in the repository root
 # ---------------------------------------------------------------------------
 WARDER_ENV=development
 WARDER_DATABASE_URL=postgres://warder:warder-local-dev-only@127.0.0.1:5432/warder?sslmode=disable
@@ -145,7 +145,7 @@ WARDER_ACTIVE_KEY_VERSION=v1
 WARDER_SERVICE_TOKEN=%s
 
 # ---------------------------------------------------------------------------
-# Dashboard — save as web/.env.local
+# Dashboard: save as web/.env.local
 # ---------------------------------------------------------------------------
 # One variable. It carries the service token, the core API address, and the
 # deployment posture together, so they cannot drift apart.
@@ -159,7 +159,7 @@ Two files, generated together so they agree.
   2. Save the second block as web/.env.local.
   3. Both are git-ignored. Neither should ever be committed.
 
-WARNING — this generates a NEW encryption key, named v1.
+WARNING: this generates a NEW encryption key, named v1.
 
   Run it only on a deployment with no secrets stored yet. If secrets already
   exist, they were sealed with a different key that also called itself v1, and
@@ -179,7 +179,7 @@ WARNING — this generates a NEW encryption key, named v1.
   a different key.
 
 About the keyring: losing it means every secret encrypted under it is
-unrecoverable. For anything beyond local development, put it in a KMS —
+unrecoverable. For anything beyond local development, put it in a KMS:
 see docs/security/key-management.md.
 
 For production, the dashboard's URL changes shape:

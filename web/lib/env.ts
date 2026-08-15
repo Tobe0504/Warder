@@ -24,8 +24,8 @@ let cached: Connection | null = null;
  * Returns the parsed connection, parsing once per process.
  *
  * This is a function rather than a module-level constant so that a
- * configuration error surfaces as a handled error on the first request — which
- * renders a readable page — instead of as a module evaluation failure during
+ * configuration error surfaces as a handled error on the first request: which
+ * renders a readable page, instead of as a module evaluation failure during
  * the build, which does not.
  */
 export function connection(): Connection {

@@ -133,8 +133,8 @@ function SecretRow({ secret }: { secret: Secret }) {
   const timers = useRef<ReturnType<typeof setInterval>[]>([]);
 
   /**
-   * A revealed value is held in one local variable and nowhere else — not in a
-   * store, not in a context, not in the URL, not in storage — and it clears
+   * A revealed value is held in one local variable and nowhere else: not in a
+   * store, not in a context, not in the URL, not in storage, and it clears
    * itself after a short window. That does not make the disclosure reversible;
    * the person saw it, and the audit trail records that. It limits how long the
    * value sits in a tab someone walked away from.

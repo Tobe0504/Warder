@@ -14,13 +14,13 @@ type LoginResponse = {
  * Creates an organization and signs the new owner straight in.
  *
  * Two upstream calls, because the core API keeps creation and authentication
- * separate — correctly, since one is a bootstrap operation and the other is a
+ * separate: correctly, since one is a bootstrap operation and the other is a
  * credential exchange. Joining them here means the person is not asked to type
  * their password twice within ten seconds.
  *
  * A note carried over from the core API and repeated where someone deploying
  * this will read it: this endpoint is open. Anyone who can reach the dashboard
- * can create a tenant. A real deployment must gate it — an invitation, an
+ * can create a tenant. A real deployment must gate it, an invitation, an
  * allowlisted email domain, or an operator-only path. See
  * docs/security/limitations.md.
  */

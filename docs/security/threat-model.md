@@ -1,7 +1,7 @@
 # Threat model
 
-This document states what Warder protects, from whom, and — as precisely as
-possible — what it does not protect. The last part matters most: a security
+This document states what Warder protects, from whom, and: as precisely as
+possible: what it does not protect. The last part matters most: a security
 document that only lists strengths is a marketing document.
 
 ## What is being protected
@@ -52,7 +52,7 @@ to be.
      │   public.*           metadata
      │   secret_material.*  ciphertext, separately grantable
      ▼
-  Key provider                     key custody boundary — outside the database
+  Key provider                     key custody boundary, outside the database
 
   Runtime (separate listener)      authorized secret consumer
 ```
@@ -93,7 +93,7 @@ or a compromised container.
 
 **Mitigation.** Tokens are scoped to exactly one project and one environment, so
 a leaked development token cannot reach production regardless of what its
-identity is granted — scope is checked before grants are consulted. Tokens can be
+identity is granted: scope is checked before grants are consulted. Tokens can be
 narrowed further to specific keys. They are revocable, and revoking one also
 revokes every short-lived session derived from it, so revocation takes effect on
 the next request rather than after a delay. The long-lived token is presented
@@ -124,17 +124,17 @@ is revoked or expires.
 **Threat.** Injected script runs in the dashboard.
 
 **Mitigation.** React escapes all interpolated values, and
-`dangerouslySetInnerHTML` appears nowhere in the codebase — enforced by
+`dangerouslySetInnerHTML` appears nowhere in the codebase, enforced by
 `web/scripts/check-boundaries.mjs`, which runs in CI. A nonce-based Content
 Security Policy without `unsafe-inline` for scripts limits what injected markup
 could execute. `connect-src 'self'` blocks exfiltration to a third-party
 endpoint. The session cookie is `HttpOnly`, so script cannot read it. Secret
-values are not present in any page — the only way to obtain one in the browser
+values are not present in any page, the only way to obtain one in the browser
 is an explicit reveal, which requires `READ_SECRET` and is audited.
 
 The same check fails the build on any `NEXT_PUBLIC_` variable, on a client
 component that transitively reaches a server-only module, and on any use of
-`localStorage`, `sessionStorage`, or `indexedDB` — so a session or a revealed
+`localStorage`, `sessionStorage`, or `indexedDB`, so a session or a revealed
 value cannot come to rest somewhere script can read it later.
 
 The development server relaxes the policy with `'unsafe-eval'`, because Next.js
@@ -160,8 +160,8 @@ before CORS is consulted.
 
 **Including sign-in.** Sign-in and organization creation have no session yet and
 therefore no token to check, but they still enforce the origin check. Without
-it, another site can forge a sign-in carrying the *attacker's* credentials — no
-cookie needed, since the victim has no session — and leave the browser holding a
+it, another site can forge a sign-in carrying the *attacker's* credentials: no
+cookie needed, since the victim has no session, and leave the browser holding a
 valid session for the attacker's organization. The victim then works inside it,
 and any secret they add lands somewhere the attacker can read. It is a quiet
 attack, because everything appears to work.
@@ -187,7 +187,7 @@ uses.
 
 ### Server-side request forgery
 
-**Threat.** An attacker induces a server to fetch an address of their choosing —
+**Threat.** An attacker induces a server to fetch an address of their choosing:
 cloud metadata, an internal service.
 
 **Mitigation.** There is no generic proxy endpoint and no path where a
@@ -196,7 +196,7 @@ at the call site and validated to be relative; identifiers taken from URL
 segments are checked against a UUID pattern before being interpolated. Redirects
 are not followed on any client, so an upstream cannot redirect a request carrying
 the service credential elsewhere. Warder makes no outbound requests to
-user-supplied destinations at all — which is the strongest available answer,
+user-supplied destinations at all, which is the strongest available answer,
 since it means there is no allowlist to get wrong.
 
 ### Privilege escalation
@@ -238,7 +238,7 @@ system makes that visible and attributable; it does not make it impossible.
 
 **Mitigation.** Two layers. Plaintext travels in `secretvalue.Value`, which
 renders as `[redacted]` through every `fmt` verb, through `slog`, and refuses to
-marshal to JSON at all — an accidental include in a response fails the request
+marshal to JSON at all, an accidental include in a response fails the request
 rather than succeeding quietly. Behind that, the application logger redacts by
 attribute name and scans every logged string for credential shapes, including
 Warder's own token format and common vendor formats. Extracting plaintext
@@ -267,8 +267,8 @@ here changes that.
 
 **Threat.** A compromised package exfiltrates secrets.
 
-**Mitigation.** The Go dependency set is deliberately small — `pgx`,
-`google/uuid`, `golang.org/x/crypto`, `golang.org/x/term` — and the HTTP router,
+**Mitigation.** The Go dependency set is deliberately small, `pgx`,
+`google/uuid`, `golang.org/x/crypto`, `golang.org/x/term`, and the HTTP router,
 validation, and migration runner are standard library or first-party code, so
 there is less surface to compromise. Lockfiles are committed, `go.sum` verifies
 module checksums, and CI runs `govulncheck` and `npm audit`.
@@ -287,12 +287,12 @@ environment, so a compromised process holds the secrets it was given but not the
 credential to request more.
 
 **Residual risk.** The process has those plaintext values, and they are valid
-until rotated at the provider. This is unavoidable — see
+until rotated at the provider. This is unavoidable: see
 [limitations](./limitations.md).
 
 ### AI agent prompt injection
 
-**Threat.** Content an agent reads — an issue, a web page, a dependency's README —
+**Threat.** Content an agent reads, an issue, a web page, a dependency's README:
 instructs it to exfiltrate credentials, and the agent complies.
 
 **Mitigation.** This threat is the reason for much of the design, so it gets its
@@ -337,8 +337,8 @@ backend.
 ## The AI agent, stated explicitly
 
 An AI coding agent is not a developer with a keyboard. It is a program that
-reads untrusted input — issues, pull requests, documentation, dependency READMEs,
-web pages — and can be induced by that input to take actions its operator did not
+reads untrusted input: issues, pull requests, documentation, dependency READMEs,
+web pages, and can be induced by that input to take actions its operator did not
 intend. It also inspects files, runs commands, reads environment variables, makes
 network requests, and produces transcripts that are often stored and sometimes
 shared.
@@ -358,7 +358,7 @@ own identity, its own grants, and its own scoped credential. Concretely:
 What this does **not** do: an agent that runs `ward run -- npm test` starts a
 process whose environment contains the test credentials, and the agent can read
 that process's environment. The protection is that those are test credentials in
-a development environment, scoped as narrowly as the operator chose — not that
+a development environment, scoped as narrowly as the operator chose: not that
 the agent is prevented from reading what it was authorized to use.
 
 The corresponding operational advice: give agents development scopes, name the

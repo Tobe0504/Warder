@@ -11,7 +11,7 @@ import (
 // maxSecretsPerBatch bounds one import.
 //
 // A .env file with more than this in it is not a configuration, it is a
-// mistake — most likely a whole file pasted into the wrong box. The limit also
+// mistake: most likely a whole file pasted into the wrong box. The limit also
 // bounds how much plaintext one request can hold in memory at once.
 const maxSecretsPerBatch = 100
 
@@ -31,8 +31,8 @@ type createSecretsRequest struct {
 
 // handleCreateSecrets stores several secrets in one transaction.
 //
-// This exists because the alternative — the browser looping over the
-// single-secret endpoint — fails badly in exactly the case it is needed. Twenty
+// This exists because the alternative: the browser looping over the
+// single-secret endpoint: fails badly in exactly the case it is needed. Twenty
 // requests means twenty chances to be interrupted, a rate limit that trips
 // partway through, and an environment left holding half a configuration with no
 // record of which half.

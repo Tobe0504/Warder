@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
  *
  * The section data is passed in from the server rather than imported, because
  * the manifest lives in a server-only module that reads the filesystem. What
- * arrives here is plain data — titles and slugs — and this component exists
+ * arrives here is plain data, titles and slugs, and this component exists
  * only to mark the current page.
  */
 

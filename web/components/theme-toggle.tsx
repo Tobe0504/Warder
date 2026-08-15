@@ -19,8 +19,8 @@ const OPTIONS: { value: Theme; label: string; icon: typeof Sun }[] = [
  * Light, dark, or follow the device.
  *
  * The choice is stored in a cookie rather than localStorage. Partly because the
- * boundary check forbids browser storage outright — a rule worth keeping blunt,
- * since the cost of arguing about exceptions is how storage rules erode — and
+ * boundary check forbids browser storage outright, a rule worth keeping blunt,
+ * since the cost of arguing about exceptions is how storage rules erode, and
  * partly because a cookie is the one that could later be read on the server if
  * this ever wanted to render the right theme on the first paint.
  *
@@ -28,7 +28,7 @@ const OPTIONS: { value: Theme; label: string; icon: typeof Sun }[] = [
  * flash: the pages here are static HTML, so an explicit choice cannot be known
  * until this component mounts, and someone who picks dark on a light machine
  * will see one light frame first. Fixing that needs a blocking inline script,
- * which needs the CSP nonce, which would make every public page dynamic — a
+ * which needs the CSP nonce, which would make every public page dynamic, a
  * poor trade for one frame.
  */
 export function ThemeToggle() {
@@ -36,7 +36,7 @@ export function ThemeToggle() {
 
   useEffect(() => {
     // The page arrives as static HTML with no attribute on it, so the stored
-    // choice has to be applied here as well as recorded in state — otherwise
+    // choice has to be applied here as well as recorded in state: otherwise
     // the toggle would show "Dark" while the page rendered light.
     const stored = readTheme();
     setTheme(stored);
@@ -92,7 +92,7 @@ function readTheme(): Theme {
  * Stamps the choice on the document.
  *
  * `system` removes the attribute rather than setting it, which hands control
- * back to the prefers-color-scheme rules in globals.css — including live
+ * back to the prefers-color-scheme rules in globals.css, including live
  * updates when the device switches at sunset.
  */
 function apply(theme: Theme) {

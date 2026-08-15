@@ -18,7 +18,7 @@ import type { NextRequest } from "next/server";
  *
  * So development gets 'unsafe-eval' and production does not. The condition is
  * on NODE_ENV, which Next sets itself and which is 'production' in any built
- * artifact — there is no configuration that can accidentally ship the relaxed
+ * artifact: there is no configuration that can accidentally ship the relaxed
  * policy, and no reason for anyone to weaken the real one to get work done.
  */
 const isDevelopment = process.env.NODE_ENV === "development";
@@ -40,7 +40,7 @@ export function middleware(request: NextRequest) {
 
     // Styles cannot use a nonce here: Next.js injects style tags during
     // development and some Radix primitives set inline styles for positioning.
-    // This is the one relaxation in the policy, and it is a modest one —
+    // This is the one relaxation in the policy, and it is a modest one:
     // style injection can reflow a page but cannot execute script.
     "style-src 'self' 'unsafe-inline'",
 
@@ -65,7 +65,7 @@ export function middleware(request: NextRequest) {
   // when it is: Next.js reads the nonce out of the request's
   // Content-Security-Policy header in order to stamp it onto the script tags it
   // generates. Setting the header only on the response yields a page whose
-  // policy names a nonce that none of its scripts carry — so either the app
+  // policy names a nonce that none of its scripts carry, so either the app
   // silently fails to hydrate, or, if 'unsafe-inline' is present as a fallback,
   // the policy is quietly doing nothing at all.
   const headers = new Headers(request.headers);

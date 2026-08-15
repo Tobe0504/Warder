@@ -19,7 +19,7 @@
  *   KEY="line one             a quoted value spanning several lines
  *   line two"
  *
- * Values are returned exactly as written otherwise — no trimming of quoted
+ * Values are returned exactly as written otherwise: no trimming of quoted
  * content, no interpolation of `$OTHER`, and no expansion of anything. A broker
  * that quietly rewrote a credential on the way in would be a bad broker.
  */
@@ -129,8 +129,8 @@ function unescapeDouble(value: string): string {
 /**
  * Shortens a line for an error message.
  *
- * A line that failed to parse may still be a credential — a bare token pasted
- * without a key, most likely — so only the first few characters are ever shown,
+ * A line that failed to parse may still be a credential, a bare token pasted
+ * without a key, most likely, so only the first few characters are ever shown,
  * and never enough to use.
  */
 function truncate(text: string): string {
@@ -147,7 +147,7 @@ function truncate(text: string): string {
  * continuation lines that are not assignments, and those are exactly the files
  * worth importing.
  *
- * The direction that matters is the other one — never shredding a single value
+ * The direction that matters is the other one: never shredding a single value
  * across rows. Yielding an entry is not enough on its own to prove a paste is a
  * file, because a bare PEM block does yield one: base64 padding makes
  * `MIIEow==` look exactly like a key, an equals sign and a value. What

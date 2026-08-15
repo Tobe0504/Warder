@@ -9,8 +9,8 @@
 //
 //	git grep -n '\.Expose()'
 //
-// The result should be a short list — the runtime delivery handler, the reveal
-// handler, and the tests — and every entry on it should be reviewable.
+// The result should be a short list: the runtime delivery handler, the reveal
+// handler, and the tests, and every entry on it should be reviewable.
 package secretvalue
 
 import (

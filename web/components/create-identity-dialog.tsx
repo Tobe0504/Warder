@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 /**
  * The kinds of machine identity, chosen as cards rather than a dropdown.
  *
- * The type is descriptive — it changes nothing about how policy is evaluated —
+ * The type is descriptive, it changes nothing about how policy is evaluated:
  * but it changes how a person reads the access screen later. Making the choice
  * visual, with a sentence about what each is for, means the audit trail ends up
  * with accurate labels instead of everything being "service".
@@ -175,7 +175,7 @@ export function CreateIdentityDialog() {
               // remembers it exists.
               <p className="prose-note text-muted-foreground">
                 An agent session should end by itself. When this passes, every token issued to this
-                identity stops working — no cleanup needed.
+                identity stops working: no cleanup needed.
               </p>
             )}
           </div>

@@ -57,7 +57,7 @@ var (
 	// runs. A crash loop legitimately produces bursts, so the allowance is
 	// wider than login while still bounding a token brute-force attempt.
 	//
-	// Brute force is not the reason this limit exists — a 256-bit credential is
+	// Brute force is not the reason this limit exists: a 256-bit credential is
 	// not going to be guessed. It exists so that a compromised network position
 	// cannot be used to enumerate or hammer the endpoint cheaply.
 	RuntimeAuth = Rule{Burst: 30, Rate: 30, Period: time.Minute}
@@ -82,8 +82,8 @@ var (
 // Its limitation is worth stating plainly: with N application instances behind
 // a load balancer, the effective limit is N times the configured one, and
 // restarting an instance clears its buckets. That is acceptable for the MVP
-// because these limits are defence in depth rather than the primary control —
-// credentials carry 256 bits of entropy and passwords are Argon2id — but a
+// because these limits are defence in depth rather than the primary control:
+// credentials carry 256 bits of entropy and passwords are Argon2id, but a
 // production deployment that cares about the login limit specifically should
 // move this to a shared backend. See docs/security/threat-model.md.
 type InMemory struct {
@@ -143,7 +143,7 @@ func (l *InMemory) perSecond() float64 {
 
 // refilled reports what a bucket's token count would be at time now.
 //
-// Refill is lazy — it happens when a bucket is touched — so the stored count is
+// Refill is lazy; it happens when a bucket is touched, so the stored count is
 // only meaningful together with lastSeen. Sweep needs the same calculation, and
 // having it in one place is what keeps the two from disagreeing.
 func (l *InMemory) refilled(b *bucket, now time.Time) float64 {
@@ -155,14 +155,14 @@ func (l *InMemory) refilled(b *bucket, now time.Time) float64 {
 }
 
 // Sweep discards buckets whose allowance has fully refilled and which have not
-// been touched recently, so that a stream of distinct keys — one per client
-// address, say — cannot grow memory without bound.
+// been touched recently, so that a stream of distinct keys, one per client
+// address, say: cannot grow memory without bound.
 //
 // The refilled count is computed rather than read, because refill is lazy: an
 // exhausted bucket that was abandoned still holds a stored count of zero no
 // matter how much time has passed. Reading the stored value instead would make
 // exactly the abandoned buckets uncollectable, which is the opposite of what a
-// sweeper is for — and those are the ones an attacker cycling through addresses
+// sweeper is for, and those are the ones an attacker cycling through addresses
 // generates.
 //
 // Discarding a fully refilled bucket is equivalent to keeping it: a fresh

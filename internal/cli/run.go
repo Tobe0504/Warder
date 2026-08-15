@@ -84,7 +84,7 @@ func Run(ctx context.Context, opts runOptions) error {
 	if !opts.Quiet {
 		// The summary names keys and counts. It never names a value, and there
 		// is no flag that makes it do so.
-		fmt.Fprintf(os.Stderr, "warder: %s/%s as %s (%s) — %d secret(s) injected\n",
+		fmt.Fprintf(os.Stderr, "warder: %s/%s as %s (%s), %d secret(s) injected\n",
 			auth.Project, auth.Environment, auth.Identity, auth.ActorType, len(delivery.Secrets))
 
 		if len(delivery.Secrets) > 0 {
@@ -148,13 +148,13 @@ func execute(ctx context.Context, command []string, values map[string]string) er
 	}
 
 	// The runtime credential is removed from the child's environment. The child
-	// needs the secrets, not the ability to ask for more of them — and leaving
+	// needs the secrets, not the ability to ask for more of them, and leaving
 	// it in place would hand every dependency and every agent in that process
 	// tree a credential they could use against the broker directly.
 	//
 	// VAULT_TOKEN is stripped too. It is the name this CLI used before, and a
 	// deployment that still sets it would otherwise pass a live credential into
-	// the child — the one place a leftover name is worth carrying.
+	// the child: the one place a leftover name is worth carrying.
 	environ = withoutVars(environ, "WARDER_TOKEN", "VAULT_TOKEN")
 
 	cmd := exec.Command(command[0], command[1:]...)

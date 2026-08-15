@@ -107,7 +107,7 @@ func eventArgs(ev Event) ([]any, error) {
 // scrubMetadata removes anything credential-shaped from event metadata.
 //
 // Metadata is the one open-ended field on an event, so it is the one place
-// where a value could slip in — a caller adding a helpful "detail" that happens
+// where a value could slip in, a caller adding a helpful "detail" that happens
 // to contain a connection string. Everything that goes in is filtered by key
 // name and scanned for credential shapes, and any secretvalue.Value is replaced
 // outright.

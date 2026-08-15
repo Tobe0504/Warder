@@ -99,7 +99,7 @@ function MemberRow({ member, currentUserId }: { member: Member; currentUserId: s
             onClick={remove}
             disabled={pending}
             aria-label={`Remove ${member.name}`}
-            title="Remove — their sessions end on the next request, and no credential rotates"
+            title="Remove: their sessions end on the next request, and no credential rotates"
           >
             <UserMinus />
           </Button>

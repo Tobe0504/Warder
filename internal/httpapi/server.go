@@ -109,7 +109,7 @@ func New(d Deps) *Server {
 		// The admin chain accepts only browser sessions. A machine token
 		// presented to the dashboard API is not recognized at all, so a stolen
 		// workload credential cannot be used to browse or administer an
-		// organization — and a CLI login sitting in a file on a laptop cannot
+		// organization, and a CLI login sitting in a file on a laptop cannot
 		// be used to change access policy.
 		//
 		// The runtime chain accepts machine tokens, runtime sessions, and CLI
@@ -226,7 +226,7 @@ func (s *Server) AdminHandler() http.Handler {
 //
 // Note what is absent: the service-token middleware. A runtime authenticates as
 // itself, and requiring a shared service credential as well would mean shipping
-// that credential to every workload — turning one stolen container into a
+// that credential to every workload, turning one stolen container into a
 // foothold on the human-facing API.
 func (s *Server) RuntimeHandler() http.Handler {
 	mux := http.NewServeMux()
@@ -251,7 +251,7 @@ func (s *Server) RuntimeHandler() http.Handler {
 	// They live here rather than on the admin surface because the CLI is a
 	// machine client: it authenticates with a credential it holds, and it
 	// cannot be given the BFF's service token without shipping that credential
-	// to every developer's laptop — which would end the guarantee that only the
+	// to every developer's laptop, which would end the guarantee that only the
 	// BFF can reach the human-facing API.
 	//
 	// Everything here is read-only metadata plus login. There is no route on

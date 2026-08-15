@@ -16,7 +16,7 @@ credentials.json
 #
 # Anchored with a leading slash so these match only the compiled binaries at
 # the repository root. Unanchored, `ward` and `warder-api` also match the
-# directories cmd/ward and cmd/warder-api — which silently excluded every
+# directories cmd/ward and cmd/warder-api, which silently excluded every
 # entry point from the first commit and left a repository that could not be
 # built or installed.
 /bin/

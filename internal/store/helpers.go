@@ -23,7 +23,7 @@ func nullInet(addr string) any {
 // capabilityStrings converts capabilities for storage in a text[] column.
 //
 // The result is always non-nil. A nil Go slice binds as SQL NULL rather than as
-// an empty array, which a NOT NULL array column rejects — and which, on a
+// an empty array, which a NOT NULL array column rejects, and which, on a
 // nullable column, would read back as "unknown" where the caller meant "none".
 func capabilityStrings(caps []domain.Capability) []string {
 	out := make([]string, 0, len(caps))
@@ -46,7 +46,7 @@ func textArray(values []string) []string {
 //
 // Unrecognized values are dropped rather than carried forward. A capability
 // this build does not understand cannot be enforced, so treating it as
-// meaningless is the only safe reading — and the policy engine denies anything
+// meaningless is the only safe reading, and the policy engine denies anything
 // it cannot recognize regardless.
 func capabilitiesFrom(values []string) []domain.Capability {
 	out := make([]domain.Capability, 0, len(values))

@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/card";
  * The dashboard's error boundary.
  *
  * This page exists so that "the core API is not running" is a legible message
- * rather than a stack trace — which is the situation that tempts someone to
+ * rather than a stack trace, which is the situation that tempts someone to
  * comment out the session check just to see the interface.
  *
  * Next.js deliberately does not pass the underlying error message to the client

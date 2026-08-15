@@ -16,7 +16,7 @@ export default function DocsIndexPage() {
   return (
     <div className="max-w-[68ch]">
       <h1 className="text-title font-medium tracking-tight sm:text-[1.75rem]">Documentation</h1>
-      <p className="mt-3 prose-note text-muted-foreground">
+      <p className="mt-3 prose-doc text-muted-foreground">
         Everything here is generated from the markdown that ships with the repository, so a page
         cannot drift from the version of the code it describes. If you are integrating an existing
         application, start with{" "}
@@ -33,7 +33,7 @@ export default function DocsIndexPage() {
         {DOC_SECTIONS.map((section) => (
           <section key={section.title}>
             <h2 className="text-heading font-semibold">{section.title}</h2>
-            <p className="mt-1.5 prose-note text-muted-foreground">{section.blurb}</p>
+            <p className="mt-1.5 prose-doc text-muted-foreground">{section.blurb}</p>
 
             <ul className="mt-4 space-y-2">
               {section.docs.map((doc) => (

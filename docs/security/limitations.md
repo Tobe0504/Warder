@@ -57,7 +57,7 @@ into a process that then logs it.
 - **AES-256-GCM with random 96-bit nonces.** Each secret version gets a fresh
   data key used for exactly one encryption, so nonce reuse on values is
   impossible. The key encryption key wraps many data keys, where the birthday
-  bound is roughly 2³² operations per key — far beyond realistic volumes, and the
+  bound is roughly 2³² operations per key, far beyond realistic volumes, and the
   reason key versioning exists.
 - **Encryption context is mandatory.** An all-zero context is rejected rather
   than tolerated, so ciphertext cannot accidentally be written unbound.
@@ -72,10 +72,10 @@ into a process that then logs it.
 ## Operational gaps
 
 - No backup or restore procedure is automated. Recovering a Warder deployment
-  means recovering two things kept deliberately apart — the database and the
-  keyring — and neither is any use without the other.
+  means recovering two things kept deliberately apart: the database and the
+  keyring, and neither is any use without the other.
 - No key rotation job. The schema records a key version per row and the
-  encryption layer decrypts under old versions, so re-encryption is possible —
+  encryption layer decrypts under old versions, so re-encryption is possible:
   but nothing performs it.
 - Audit retention is unbounded. Trimming requires the privileged procedure in
   `deploy/sql/erase-organization.sql`, by design.
@@ -84,7 +84,7 @@ into a process that then logs it.
 ## Compliance
 
 Warder has not been audited, certified, or assessed against SOC 2, ISO 27001,
-PCI DSS, HIPAA, or any other framework. Several of its design choices — envelope
-encryption, an append-only audit trail, least-privilege database roles — are the
+PCI DSS, HIPAA, or any other framework. Several of its design choices, envelope
+encryption, an append-only audit trail, least-privilege database roles: are the
 kind of thing such assessments look for. That is not the same as having passed
 one, and this MVP should not be described as compliant with anything.

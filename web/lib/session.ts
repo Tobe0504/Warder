@@ -9,7 +9,7 @@ import { connection } from "./env";
  *
  * The session credential lives in an HttpOnly cookie and is never readable by
  * client JavaScript. A cross-site scripting flaw in the dashboard can therefore
- * act as the user while it runs — which is bad — but cannot exfiltrate the
+ * act as the user while it runs, which is bad, but cannot exfiltrate the
  * session itself to be replayed later from somewhere else, which is worse.
  *
  * The CSRF token is a separate cookie that client script *can* read, because it
@@ -57,7 +57,7 @@ export async function getCsrfToken(): Promise<string | null> {
  *
  *   httpOnly   client script cannot read the session credential
  *   secure     it is never transmitted over plain HTTP in production
- *   sameSite   'strict' — the browser will not attach it to any cross-site
+ *   sameSite   'strict': the browser will not attach it to any cross-site
  *              request at all, which removes the request-forgery class before
  *              the token check even runs
  *   maxAge     matched to the server-side expiry, so the browser stops sending
@@ -79,7 +79,7 @@ export async function startSession(token: string, expiresAt: Date): Promise<stri
   const csrfToken = generateCsrfToken();
   store.set(CSRF_COOKIE, csrfToken, {
     // Deliberately readable by client script: it has to be sent back in a
-    // header, and it is useless to an attacker who cannot also read it — which
+    // header, and it is useless to an attacker who cannot also read it, which
     // the same-origin policy prevents.
     httpOnly: false,
     secure,

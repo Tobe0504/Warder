@@ -6,8 +6,8 @@ import { cn } from "@/lib/utils";
  * Initials on a flat surface. No external image request, nothing to track.
  *
  * Lives here rather than inside the dashboard sidebar so that the public
- * header can use it without pulling the entire signed-in navigation — and its
- * client-side dependencies — into the landing page's bundle.
+ * header can use it without pulling the entire signed-in navigation, and its
+ * client-side dependencies: into the landing page's bundle.
  */
 export function Avatar({ name, className }: { name: string; className?: string }) {
   const initials = name

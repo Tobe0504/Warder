@@ -128,7 +128,7 @@ func (c *Config) MigrationDSN() string {
 // Separate from Load because a migration has no business requiring the
 // keyring. Demanding it would mean pasting the key that decrypts every secret
 // in the system into a shell, a CI job, and a shell history, in order to
-// create some tables — multiplying the places that value has been seen for no
+// create some tables, multiplying the places that value has been seen for no
 // benefit at all.
 func MigrationDSN() (string, error) {
 	dsn := os.Getenv("WARDER_MIGRATION_DATABASE_URL")
@@ -180,7 +180,7 @@ func (c *Config) validate() error {
 		// there is no specific interface to name, because the address is
 		// assigned at start and the platform decides what reaches it. So the
 		// requirement is an explicit acknowledgement rather than a prohibition
-		// — someone has to have thought about what sits in front of this port.
+		//: someone has to have thought about what sits in front of this port.
 		bindsEverything := strings.HasPrefix(c.RuntimeAddr, ":") ||
 			strings.HasPrefix(c.RuntimeAddr, "0.0.0.0:") ||
 			strings.HasPrefix(c.RuntimeAddr, "[::]:")

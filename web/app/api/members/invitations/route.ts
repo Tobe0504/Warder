@@ -16,7 +16,7 @@ export async function GET(request: Request) {
  *
  * The token goes in the URL **fragment**, not the path and not the query. A
  * fragment is never sent to a server, so the invitation cannot land in this
- * application's access log, a load balancer's, or a proxy's — and it cannot
+ * application's access log, a load balancer's, or a proxy's, and it cannot
  * escape through a Referer header to whatever the invitee clicks next. The
  * accept page reads it in the browser and posts it back in a request body.
  */

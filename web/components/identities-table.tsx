@@ -60,7 +60,7 @@ export function IdentitiesTable({
         <EmptyState
           icon={<Workflow className="size-5" />}
           title="No identities yet"
-          description="Create one for each thing that runs your code — the API in production, the CI job, an agent working on a branch. Separate identities mean you can revoke one without disturbing the others."
+          description="Create one for each thing that runs your code: the API in production, the CI job, an agent working on a branch. Separate identities mean you can revoke one without disturbing the others."
           action={emptyAction}
         />
       </DataList>
@@ -174,7 +174,7 @@ function IdentityRow({ identity }: { identity: Identity }) {
               Revoke <span className="font-mono">{identity.name}</span>?
             </DialogTitle>
             <DialogDescription>
-              This cannot be undone. There is no way to bring an identity back —
+              This cannot be undone. There is no way to bring an identity back:
               create a new one if you need it again.
             </DialogDescription>
           </DialogHeader>

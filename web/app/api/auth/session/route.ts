@@ -6,7 +6,7 @@ import type { SessionUser } from "@/lib/session-user";
 /**
  * Who is signed in, for the public header.
  *
- * The landing page and the documentation are static HTML — they read no cookie,
+ * The landing page and the documentation are static HTML; they read no cookie,
  * which is what makes them cacheable and indexable. The account menu in the
  * header is the one part that depends on who is asking, so it asks here after
  * the page has loaded rather than making every public page dynamic.
@@ -17,7 +17,7 @@ import type { SessionUser } from "@/lib/session-user";
  *
  * No CSRF token is required, and none is meaningful: this reads, it does not
  * act. The session cookie is SameSite=strict, so a request from another origin
- * arrives without it and is answered with `{ user: null }` — another site
+ * arrives without it and is answered with `{ user: null }`, another site
  * cannot use this to learn anything about the visitor.
  */
 export async function GET() {

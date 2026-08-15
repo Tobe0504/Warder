@@ -208,7 +208,7 @@ export function GrantAccessDialog({
             <div className="flex gap-2 rounded-md bg-can-reveal-surface px-2.5 py-2">
               <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-can-reveal" />
               <p className="prose-note text-can-reveal">
-                This lets a person read the credential itself. Prefer a time limit, and say why —
+                This lets a person read the credential itself. Prefer a time limit, and say why:
                 both appear in the audit trail.
               </p>
             </div>

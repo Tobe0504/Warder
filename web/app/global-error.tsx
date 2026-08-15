@@ -4,7 +4,7 @@
  * The last-resort error boundary, for failures in the root layout itself.
  *
  * It replaces the whole document, so it carries its own html and body, and it
- * uses inline styles rather than Tailwind — if the root layout failed, the
+ * uses inline styles rather than Tailwind, if the root layout failed, the
  * stylesheet may be exactly what did not load.
  *
  * It shows no error detail. A root-layout failure is most often a configuration
@@ -30,7 +30,7 @@ export default function GlobalError({ reset }: { error: Error; reset: () => void
           {/*
             A plain img, not next/image. This boundary exists for the case where
             the root layout itself failed, so it depends on nothing but the
-            static file — and the page is painted on a light background, so the
+            static file, and the page is painted on a light background, so the
             ink artwork is the right one regardless of colour scheme.
           */}
           {/* eslint-disable-next-line @next/next/no-img-element */}

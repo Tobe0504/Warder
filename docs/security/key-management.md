@@ -42,7 +42,7 @@ know it exists.
 The local provider holds keys in process memory. It offers no protection against
 anyone who can read that memory or the process environment, and it logs no key
 access. It is for development and for self-hosted deployments that inject key
-material through their own mechanism — not for a deployment where the threat
+material through their own mechanism: not for a deployment where the threat
 model includes the host.
 
 ## Production
@@ -70,7 +70,7 @@ Whichever is chosen, three things must hold:
 
 1. **The encryption context must be passed through.** It is what binds ciphertext
    to its location in the secret tree. A provider that silently drops it removes
-   a real defence — see the threat model's note on relocated ciphertext.
+   a real defence: see the threat model's note on relocated ciphertext.
 2. **The key must not be exportable.** The point of a KMS is that a compromise of
    the application does not yield the key.
 3. **Key access must be logged by the KMS.** Warder's audit trail records secret
@@ -106,8 +106,8 @@ GROUP BY encryption_key_id;
 ```
 
 Removing a key that rows still reference makes those rows permanently
-unreadable. The failure is loud — `ErrKeyUnavailable` internally, a generic
-"unavailable" to callers — but it is not recoverable without the key.
+unreadable. The failure is loud, `ErrKeyUnavailable` internally, a generic
+"unavailable" to callers, but it is not recoverable without the key.
 
 ### Never reuse a version name
 
@@ -117,8 +117,8 @@ mistake, and it is worth understanding why it is worse than simply deleting a
 key.
 
 Each row records the version that sealed it. When that version is absent, the
-provider reports `ErrKeyUnavailable` — "this deployment does not hold the key
-that wrote this row" — which is unambiguous and points straight at the
+provider reports `ErrKeyUnavailable`: "this deployment does not hold the key
+that wrote this row": which is unambiguous and points straight at the
 keyring. When the version is *present but holds different key material*, the
 lookup succeeds and the AEAD authentication fails instead. That failure is
 indistinguishable from tampering, because it is meant to be: the whole point of
@@ -145,7 +145,7 @@ writes; re-encrypting history is a background concern.
 
 ## If a key is exposed
 
-Rotating the KEK does not help on its own — the exposed key still decrypts every
+Rotating the KEK does not help on its own, the exposed key still decrypts every
 row written under it, and an attacker with a database copy already has those
 rows. The order that matters is:
 
@@ -162,7 +162,7 @@ Step 1 is the one people skip, and it is the only one that stops the attacker.
 ## Backup
 
 Key material and database backups must not be stored together. A backup system
-that captures both in one place has, in effect, stored the secrets in plaintext —
+that captures both in one place has, in effect, stored the secrets in plaintext:
 whoever holds that backup holds everything.
 
 - Database backups: encrypted at rest, standard retention.

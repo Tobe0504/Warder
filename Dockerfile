@@ -36,7 +36,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build \
 # which is the point.
 FROM gcr.io/distroless/static-debian12:nonroot
 
-# Runs as uid 65532. Nothing here needs root, and nothing writes to disk —
+# Runs as uid 65532. Nothing here needs root, and nothing writes to disk:
 # plaintext is never cached, so there is no volume to mount.
 USER nonroot:nonroot
 

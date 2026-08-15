@@ -16,8 +16,8 @@ import (
 //
 // Every response is built from a fixed set of messages defined below. No
 // internal error string is ever interpolated into one, because internal errors
-// quote the values they were handling — a failed query quotes its parameters, a
-// failed connection quotes its DSN — and for this system those values are
+// quote the values they were handling, a failed query quotes its parameters, a
+// failed connection quotes its DSN, and for this system those values are
 // credentials.
 type APIError struct {
 	// Code is a stable identifier clients can branch on.
@@ -44,7 +44,7 @@ var (
 	// It is distinguished from ErrUnauthorized deliberately. Both are 401, and
 	// collapsing them means a deployment whose BFF and core API disagree about
 	// the service token reports to the person signing in as "your session has
-	// ended" — so they sign in again, and again, while the actual fault is in
+	// ended", so they sign in again, and again, while the actual fault is in
 	// configuration nobody is looking at.
 	//
 	// The distinction discloses only that a service credential is expected,
@@ -75,7 +75,7 @@ var (
 	// can fail to apply: unknown, mistyped, expired, withdrawn, already used.
 	//
 	// The person redeeming an invitation holds a token and is not the attacker
-	// this vagueness defends against — but the endpoint is unauthenticated and
+	// this vagueness defends against, but the endpoint is unauthenticated and
 	// therefore reachable by anyone with a guess, and distinguishing "no such
 	// invitation" from "that one expired" would make it an oracle for probing
 	// which handles exist.
@@ -196,8 +196,8 @@ func translateError(err error) *APIError {
 
 // writeJSON sends a response body.
 //
-// If encoding fails — which is what happens when a handler accidentally
-// includes a secretvalue.Value, since that type refuses to marshal — the
+// If encoding fails, which is what happens when a handler accidentally
+// includes a secretvalue.Value, since that type refuses to marshal, the
 // partial body is discarded and the request fails. A 500 is the correct outcome
 // there: the alternative is a successful response carrying plaintext.
 func writeJSON(w http.ResponseWriter, r *http.Request, logger *slog.Logger, status int, body any) {

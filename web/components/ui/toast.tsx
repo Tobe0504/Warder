@@ -9,8 +9,8 @@ import { cn } from "@/lib/utils";
  * Toasts.
  *
  * Written rather than pulled from a library, for two reasons. The dependency
- * budget on a security tool is worth spending carefully, and — more to the
- * point — a general toast library will happily render whatever it is handed,
+ * budget on a security tool is worth spending carefully, and, more to the
+ * point: a general toast library will happily render whatever it is handed,
  * including an object that stringifies to something it should not. This one
  * accepts a string and nothing else, and React escapes it.
  *
@@ -111,7 +111,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
  * Access to the toast queue.
  *
  * Falls back to a no-op outside a provider rather than throwing, so that a
- * component rendered in isolation — a test, a future storybook — does not crash
+ * component rendered in isolation, a test, a future storybook, does not crash
  * over a notification.
  */
 export function useToast(): ToastContextValue {

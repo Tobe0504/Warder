@@ -141,7 +141,7 @@ function TokenRow({ token }: { token: RuntimeToken }) {
             onClick={revoke}
             disabled={pending}
             aria-label={`Revoke ${token.name}`}
-            title="Revoke — this token and any session derived from it stop working immediately"
+            title="Revoke: this token and any session derived from it stop working immediately"
           >
             <Ban />
           </Button>

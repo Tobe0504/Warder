@@ -520,7 +520,7 @@ func TestRevokedGrantConfersNothing(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 // A grant store that is unavailable must not read as "this identity has no
-// grants", which would be a silent, total denial — or worse, if the logic were
+// grants", which would be a silent, total denial, or worse, if the logic were
 // inverted, a silent allow. It must surface as an error the caller cannot
 // mistake for a decision.
 func TestGrantLoadFailureIsNotTreatedAsAbsenceOfGrants(t *testing.T) {
@@ -571,7 +571,7 @@ func TestDefaultIsDenial(t *testing.T) {
 }
 
 // EffectiveCapabilities drives the access screen, so it must agree exactly with
-// what enforcement does — a screen that overstates access is a security bug.
+// what enforcement does, a screen that overstates access is a security bug.
 func TestEffectiveCapabilitiesMatchesEnforcement(t *testing.T) {
 	w := newWorld()
 	dev := w.user(domain.RoleDeveloper)

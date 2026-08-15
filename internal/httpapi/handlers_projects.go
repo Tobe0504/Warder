@@ -13,7 +13,7 @@ import (
 // defaultEnvironments are created with a new project.
 //
 // They are a convenience, not a security boundary. The policy engine attaches
-// no meaning to these names — "production" is not special-cased anywhere — so a
+// no meaning to these names: "production" is not special-cased anywhere, so a
 // team that adds "preview" or "qa" gets exactly the same isolation.
 var defaultEnvironments = []struct{ Name, Slug string }{
 	{"Development", "development"},
@@ -229,7 +229,7 @@ func (s *Server) handleListEnvironments(w http.ResponseWriter, r *http.Request) 
 	// The project is resolved before its children are listed. Relying on the
 	// organization filter in the listing query alone would answer a request for
 	// another tenant's project with an empty list and a 200, which is a
-	// different reply from the 404 every other endpoint gives — and it would
+	// different reply from the 404 every other endpoint gives, and it would
 	// leave the tenancy check implicit for anyone writing the next handler.
 	if _, err := s.projects.GetProject(r.Context(), principal.OrganizationID, projectID); err != nil {
 		writeError(w, r, s.logger, translateError(err), err)

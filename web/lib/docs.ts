@@ -12,7 +12,7 @@ import { join } from "node:path";
  *
  * Everything here runs at build time. `generateStaticParams` enumerates the
  * manifest below, the pages render to static HTML, and the `docs/` directory is
- * not needed at run time — which also means this public surface never reads a
+ * not needed at run time, which also means this public surface never reads a
  * session, a cookie, or the core API.
  */
 
@@ -43,7 +43,7 @@ export type DocSection = {
  * Deliberately hand-written rather than derived from the filesystem, for two
  * reasons. Directory listings sort alphabetically, which would open the
  * documentation on "audit" and bury the page most people actually need. And a
- * listing publishes everything in the directory — including the material that
+ * listing publishes everything in the directory, including the material that
  * belongs to people working on Warder rather than people using it.
  *
  * This list is the whole published site. A file in docs/ that is not named
@@ -56,7 +56,7 @@ export type DocSection = {
  *   building it  local setup, the test suite, the source layout
  *
  * Only the first is published. Someone reading these pages is a developer at
- * an organization that already runs Warder — they did not choose the database,
+ * an organization that already runs Warder; they did not choose the database,
  * they cannot reach the keyring, and telling them how to deploy their own
  * copy answers a question they do not have while advertising the shape of
  * infrastructure they have no business knowing.
@@ -153,7 +153,7 @@ export function slugifyHeading(text: string): string {
   return text
     .toLowerCase()
     // Underscores survive. Half the headings in these documents name an
-    // environment variable — WARDER_TOKEN, WARDER_RUNTIME_ADDR — and stripping
+    // environment variable: WARDER_TOKEN, WARDER_RUNTIME_ADDR, and stripping
     // the underscore turns them into a different word in the contents rail.
     .replace(/[^\p{L}\p{N}_ -]/gu, "")
     .trim()
@@ -194,7 +194,7 @@ function stripLeadingH1(markdown: string): string {
  * Collects headings for the contents rail.
  *
  * Fenced code blocks are tracked and skipped, because a shell comment at the
- * start of a line is indistinguishable from a heading otherwise — and several
+ * start of a line is indistinguishable from a heading otherwise, and several
  * of these documents contain exactly that.
  */
 function extractHeadings(markdown: string): Heading[] {

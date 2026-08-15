@@ -2,7 +2,7 @@
  * The browser's only way to reach the server.
  *
  * Every request goes to this application's own origin. There is no base URL to
- * configure, because the browser has no knowledge of the core API's address —
+ * configure, because the browser has no knowledge of the core API's address:
  * that is the point of the Backend-for-Frontend, and it is why nothing in this
  * file reads an environment variable.
  */

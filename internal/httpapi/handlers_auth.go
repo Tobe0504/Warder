@@ -108,7 +108,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 	membership, err := s.accounts.FindPrimaryMembership(r.Context(), user.ID)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
-			// The membership has expired or been revoked — the contractor whose
+			// The membership has expired or been revoked, the contractor whose
 			// access ended. The password is still correct; it now confers
 			// nothing, and no credential in the organization had to change.
 			s.recordLoginFailure(r, user.ID, email, clientIP, "no active membership")
@@ -280,8 +280,8 @@ type createOrganizationRequest struct {
 // handleCreateOrganization bootstraps an organization with its first owner.
 //
 // This is open in the MVP so a deployment can be brought up. A real deployment
-// should gate it — an invitation, an allowlisted domain, or an operator-only
-// path — because as written, anyone who can reach the API can create a tenant.
+// should gate it, an invitation, an allowlisted domain, or an operator-only
+// path: because as written, anyone who can reach the API can create a tenant.
 // It is called out in docs/security/limitations.md rather than left implicit.
 func (s *Server) handleCreateOrganization(w http.ResponseWriter, r *http.Request) {
 	var req createOrganizationRequest

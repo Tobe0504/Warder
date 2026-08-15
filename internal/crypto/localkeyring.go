@@ -21,8 +21,8 @@ import (
 // HSM-backed provider; see docs/security/key-management.md.
 //
 // The keyring is never read from the database and never from the source tree.
-// It is supplied out of band, so that a database backup — which contains every
-// ciphertext — is not by itself sufficient to recover any plaintext.
+// It is supplied out of band, so that a database backup, which contains every
+// ciphertext: is not by itself sufficient to recover any plaintext.
 type LocalKeyringProvider struct {
 	keys        map[string][]byte // key ID -> 32-byte KEK
 	activeKeyID string

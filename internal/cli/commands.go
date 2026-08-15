@@ -66,7 +66,7 @@ func Execute(ctx context.Context, args []string) error {
 
 // Usage prints the command overview.
 func Usage() {
-	fmt.Fprint(os.Stderr, `ward — run applications with the credentials they need, without holding them yourself
+	fmt.Fprint(os.Stderr, `ward: run applications with the credentials they need, without holding them yourself
 
 Usage:
   ward init                     Point this directory at a project and environment
@@ -103,7 +103,7 @@ command-line arguments.
 // working tree runs against.
 //
 // The file is meant to be committed, so that a team shares one target and
-// nobody has to pass flags. It holds no credential — only two names — which is
+// nobody has to pass flags. It holds no credential, only two names: which is
 // the reason it can be committed at all, and the reason the writer refuses to
 // put anything else in it.
 func commandInit(_ context.Context, args []string) error {
@@ -276,7 +276,7 @@ func commandStatus(_ context.Context, _ []string) error {
 	fmt.Fprintf(writer, "Server\t%s\n", runtimeURLFor(creds))
 
 	if creds.Expired(nowFunc()) {
-		fmt.Fprintf(writer, "Session\texpired — run `ward login`\n")
+		fmt.Fprintf(writer, "Session\texpired: run `ward login`\n")
 	} else {
 		fmt.Fprintf(writer, "Session\tvalid until %s\n", creds.ExpiresAt.Local().Format(time.RFC1123))
 	}

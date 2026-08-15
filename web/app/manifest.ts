@@ -9,7 +9,7 @@ import type { MetadataRoute } from "next";
  *
  * `display: browser` on purpose. A standalone window hides the address bar,
  * and the address bar is where someone checks that the origin asking for their
- * password is the one they expect — which matters more on a credential tool
+ * password is the one they expect: which matters more on a credential tool
  * than an app-like frame does.
  */
 export default function manifest(): MetadataRoute.Manifest {

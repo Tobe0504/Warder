@@ -17,7 +17,7 @@ import (
 //
 // It reports capabilities individually rather than as a role name, because the
 // question the screen has to answer is not "what is this person" but "can they
-// use this, and can they see it" — two different answers that a role would
+// use this, and can they see it": two different answers that a role would
 // collapse into one.
 type grantResponse struct {
 	ID          string `json:"id"`
@@ -460,7 +460,7 @@ func (s *Server) handleCreateIdentity(w http.ResponseWriter, r *http.Request) {
 // This is the offboarding action for a machine: an agent session that is over,
 // a service being decommissioned, a CI pipeline that has been retired. It is
 // one action rather than a hunt through that identity's tokens, and it takes
-// effect on the next request — including for sessions already issued.
+// effect on the next request, including for sessions already issued.
 //
 // There is deliberately no matching re-enable. Bringing a disabled identity
 // back would silently restore whatever grants it still held, which is the kind
@@ -563,7 +563,7 @@ type createTokenRequest struct {
 // handleCreateToken mints a scoped runtime token.
 //
 // The full credential appears in this response and is never retrievable again:
-// only its verifier is stored. That is why the response says so explicitly —
+// only its verifier is stored. That is why the response says so explicitly:
 // a person who closes the dialog without copying it needs to know they must
 // mint a new one rather than go looking for it.
 func (s *Server) handleCreateToken(w http.ResponseWriter, r *http.Request) {

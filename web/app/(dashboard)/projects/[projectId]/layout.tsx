@@ -17,7 +17,7 @@ type Project = {
  * The project shell: header bar, then a nav column beside the section content.
  *
  * The nav lives here rather than in each page so that moving between Secrets,
- * Access, Tokens, and Audit re-renders only the panel — the column stays put
+ * Access, Tokens, and Audit re-renders only the panel: the column stays put
  * and the active item does not flicker.
  *
  * Wider than the organization-level pages, because the nav column takes a

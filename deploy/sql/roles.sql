@@ -84,8 +84,8 @@ GRANT SELECT (id, email, name, created_at, updated_at, disabled_at)
 
 REVOKE SELECT ON user_sessions, machine_tokens, runtime_sessions FROM warder_readonly;
 
--- Invitations are useful to report on — who was invited, by whom, whether it
--- was accepted — but the row also holds the verifier for a live invitation.
+-- Invitations are useful to report on, who was invited, by whom, whether it
+-- was accepted, but the row also holds the verifier for a live invitation.
 -- Everything except that column.
 REVOKE SELECT ON membership_invitations FROM warder_readonly;
 GRANT SELECT (id, organization_id, email, name, role, membership_expires_at,

@@ -37,7 +37,7 @@ cmd/
   ward/               the developer CLI
 
 internal/
-  domain/             capabilities, identities, entities — the vocabulary
+  domain/             capabilities, identities, entities, the vocabulary
   crypto/             envelope encryption and the key provider interface
   authz/              the policy engine, and nothing else
   identity/           credential → principal; the workload-identity seam
@@ -76,7 +76,7 @@ address still cannot use it. Accepts browser sessions only. Never returns
 plaintext except from `POST /secrets/{id}/reveal`.
 
 **Runtime API.** Machine-facing. Accepts machine tokens, runtime sessions, and
-CLI logins. Deliberately does *not* require the service credential — a workload
+CLI logins. Deliberately does *not* require the service credential, a workload
 authenticates as itself, and shipping a shared service credential to every
 container would make one compromised container a foothold on the human API.
 
@@ -126,7 +126,7 @@ Browser ── POST /api/secrets/{id}/reveal ── BFF ── POST /secrets/{id
 ```
 
 The request is recorded before the decision, so a *denied* reveal is visible to
-whoever reviews the trail — often the more interesting event.
+whoever reviews the trail, often the more interesting event.
 
 ## The authorization model
 
@@ -142,8 +142,8 @@ separate, and the gap between them is the product.
 **Roles carry management authority only.** No role anywhere confers `USE_SECRET`
 or `READ_SECRET`. Both always come from an explicit grant. An owner who has
 granted themselves nothing can administer the platform and still not read a
-value. An administrator *can* grant themselves `READ_SECRET` — they hold
-`MANAGE_ACCESS` — and that act is audited, flagged, and normally time-bounded.
+value. An administrator *can* grant themselves `READ_SECRET`; they hold
+`MANAGE_ACCESS`, and that act is audited, flagged, and normally time-bounded.
 That is the honest version of the claim.
 
 **Credential scope narrows, never widens.** Effective authority is the
@@ -153,7 +153,7 @@ production evaluation path at all.
 
 **Deny by default.** `authz.Engine.Authorize` returns a decision, not an error,
 so callers must handle denial explicitly. A failure to *load* grants is an error,
-never an empty grant list — an outage must not read as "this identity has no
+never an empty grant list, an outage must not read as "this identity has no
 access", and certainly not as the inverse.
 
 ## Encryption
@@ -171,7 +171,7 @@ Ciphertext + nonce + tag               ← secret_material schema
 Every value is bound by AEAD additional authenticated data to
 `org | project | environment | secret | version`. An attacker with database write
 access cannot move a production ciphertext into a development secret and have the
-broker decrypt it — the binding fails and it reports as a decryption failure.
+broker decrypt it: the binding fails and it reports as a decryption failure.
 
 Each row records the key version that wrapped its data key, so rotation is
 incremental: add a new key, point `WARDER_ACTIVE_KEY_VERSION` at it, and existing
@@ -184,9 +184,9 @@ handler, repository, or service constructs a cipher.
 
 Two schemas, so the boundary is grantable rather than notional:
 
-- `public` — organizations, users, projects, environments, secret *metadata*,
+- `public`: organizations, users, projects, environments, secret *metadata*,
   grants, tokens, audit. Everything an operator normally needs to look at.
-- `secret_material` — ciphertext and wrapped data keys, keyed by version id, with
+- `secret_material`: ciphertext and wrapped data keys, keyed by version id, with
   no business metadata at all.
 
 `deploy/sql/roles.sql` gives the reporting role the whole of `public` and nothing
@@ -217,6 +217,6 @@ authorization precisely so that replacing "a workload holds a bearer token" with
 ## Related documents
 
 - [Threat model](../security/threat-model.md)
-- [Limitations](../security/limitations.md) — read this one
+- [Limitations](../security/limitations.md): read this one
 - [Key management](../security/key-management.md)
 - [Disaster recovery](../security/disaster-recovery.md)

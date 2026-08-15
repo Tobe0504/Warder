@@ -225,7 +225,7 @@ func (s *Server) handleRevokeInvitation(w http.ResponseWriter, r *http.Request) 
 
 type acceptInvitationRequest struct {
 	Token string `json:"token"`
-	// Name is the invitee's own. The inviter's suggestion is only a default —
+	// Name is the invitee's own. The inviter's suggestion is only a default:
 	// people should control how their name is written.
 	Name     string `json:"name"`
 	Password string `json:"password"`
@@ -234,7 +234,7 @@ type acceptInvitationRequest struct {
 // handleAcceptInvitation redeems an invitation and creates the account.
 //
 // Unauthenticated by necessity: the person accepting has no account yet. The
-// token is the whole authority, and it is deliberately narrow — it can create
+// token is the whole authority, and it is deliberately narrow; it can create
 // exactly the one account the invitation already names, with exactly the role
 // the inviter chose.
 func (s *Server) handleAcceptInvitation(w http.ResponseWriter, r *http.Request) {

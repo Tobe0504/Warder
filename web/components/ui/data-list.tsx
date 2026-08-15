@@ -5,10 +5,10 @@ import { cn } from "@/lib/utils";
  *
  * Modelled on Vercel's deployments table, and a list rather than a `<table>`
  * on purpose. These rows are records with a handful of labelled facts, not a
- * grid people scan down a single column of — and a list lets each row reflow
+ * grid people scan down a single column of, and a list lets each row reflow
  * on a narrow screen instead of forcing a horizontal scrollbar across the page.
  *
- * Where the data really is tabular — audit events, version history — the table
+ * Where the data really is tabular, audit events, version history, the table
  * primitives are still the right tool.
  */
 
@@ -104,7 +104,7 @@ export function StatusDot({
 }
 
 /**
- * A monospace identifier — a commit SHA in Vercel's table, a secret key or
+ * A monospace identifier, a commit SHA in Vercel's table, a secret key or
  * token prefix here.
  */
 export function MonoTag({

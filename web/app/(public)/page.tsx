@@ -5,9 +5,9 @@ import { ArrowRight, Eye, EyeOff, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
-  // `absolute` opts out of the root layout's "%s — Warder" template, which
+  // `absolute` opts out of the root layout's "%s, Warder" template, which
   // would otherwise name the product twice on the one page that leads with it.
-  title: { absolute: "Warder — use credentials without seeing them" },
+  title: { absolute: "Warder, use credentials without seeing them" },
   description:
     "A secret access broker. Applications receive the credentials they need; the people and agents who build those applications do not.",
 };
@@ -37,7 +37,7 @@ function Hero() {
       <p className="mt-5 max-w-[58ch] text-body leading-relaxed text-muted-foreground sm:text-[1.0625rem]">
         Warder separates <em className="not-italic text-foreground">using</em> a
         secret from <em className="not-italic text-foreground">seeing</em> one.
-        Developers run the app, CI deploys it, agents test it — none of them are
+        Developers run the app, CI deploys it, agents test it: none of them are
         handed the value, and none of them need to be.
       </p>
 
@@ -87,7 +87,7 @@ function SplitDemo() {
             ["STRIPE_SECRET_KEY", "••••••••••••••••"],
             ["AUTH_SECRET", "••••••••••••••••••"],
           ]}
-          note="Names, versions, expiry. Never the value — unless someone explicitly granted you that, and it is recorded when you use it."
+          note="Names, versions, expiry. Never the value, unless someone explicitly granted you that, and it is recorded when you use it."
         />
 
         <Pane
@@ -186,7 +186,7 @@ function TwoPermissions() {
             A named person displays the plaintext, and it is recorded.
           </p>
           <p className="mt-2 prose-note text-muted-foreground">
-            Sometimes genuinely necessary — pasting a key into a third-party
+            Sometimes genuinely necessary: pasting a key into a third-party
             console that has no other way in. It is a separate, deliberate
             grant, and every use of it has a name and a timestamp attached.
           </p>
@@ -194,7 +194,7 @@ function TwoPermissions() {
       </div>
 
       <p className="mt-4 prose-note text-muted-foreground">
-        Owner, Admin, Developer, Viewer — those govern administration: creating
+        Owner, Admin, Developer, Viewer, those govern administration: creating
         projects, managing members, reading the audit log.{" "}
         <strong className="font-medium text-foreground">
           None of them confers the ability to use or see a single secret value.
@@ -214,7 +214,7 @@ const SCENARIOS: [string, React.ReactNode][] = [
     "A contractor finishes and leaves.",
     <>
       Revoke their membership.{" "}
-      <strong className="font-medium text-foreground">Nothing rotates</strong> —
+      <strong className="font-medium text-foreground">Nothing rotates</strong>:
       they could use the database, they never held it.
     </>,
   ],
@@ -249,7 +249,7 @@ const SCENARIOS: [string, React.ReactNode][] = [
   [
     "You revoke a token during an incident.",
     <>
-      The next request is denied — including short-lived sessions already
+      The next request is denied, including short-lived sessions already
       derived from it, rather than waiting for them to expire.
     </>,
   ],
@@ -280,7 +280,7 @@ const STEPS: [string, string, string][] = [
   [
     "ward init --project payments-api --env development",
     "Point the repository at an environment",
-    "Writes .warder.json. Two names, no credentials — commit it.",
+    "Writes .warder.json. Two names, no credentials: commit it.",
   ],
   [
     "ward login",
@@ -345,7 +345,7 @@ function Integration() {
  *
  * On a security product this is not modesty, it is load-bearing. Someone
  * deciding whether to trust this needs the boundary stated before they adopt
- * it, not discovered afterwards — and a page that only claims wins is a page
+ * it, not discovered afterwards, and a page that only claims wins is a page
  * that cannot be checked.
  */
 function Honesty() {
@@ -359,7 +359,7 @@ function Honesty() {
         {[
           [
             "It does not get you to zero credentials.",
-            "Your application still holds one token that proves which application it is. Warder makes that one credential scoped, expiring and instantly revocable — it does not make it disappear. Nobody has solved that.",
+            "Your application still holds one token that proves which application it is. Warder makes that one credential scoped, expiring and instantly revocable; it does not make it disappear. Nobody has solved that.",
           ],
           [
             "It does not stop an authorized process from reading its own environment.",
@@ -396,7 +396,7 @@ function ClosingCta() {
     <section className="border-t">
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
         <h2 className="max-w-[30ch] text-title font-medium tracking-tight sm:text-[1.75rem]">
-          A credential should be available to the software that needs it — and
+          A credential should be available to the software that needs it, and
           to nobody else by default.
         </h2>
         <div className="mt-6 flex flex-wrap gap-2">

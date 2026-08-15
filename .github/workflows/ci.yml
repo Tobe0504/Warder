@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   go:
-    name: Go — build, vet, test
+    name: Go: build, vet, test
     runs-on: ubuntu-latest
 
     services:
@@ -65,14 +65,14 @@ jobs:
         run: go build ./...
 
       - name: Test with the race detector
-        # The runtime path is concurrent by nature — many workloads, one process.
+        # The runtime path is concurrent by nature, many workloads, one process.
         # A data race there is a security bug, not just a flake.
         env:
           WARDER_TEST_DATABASE_URL: postgres://warder:ci-only-not-a-real-password@localhost:5432/warder?sslmode=disable
         run: go test -race -count=1 ./...
 
   vulnerabilities:
-    name: Go — known vulnerabilities
+    name: Go: known vulnerabilities
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -80,7 +80,7 @@ jobs:
         with:
           go-version: "1.26"
           # Without this, setup-go reuses whatever patch release the runner has
-          # cached — which is how a scan fails on standard-library
+          # cached: which is how a scan fails on standard-library
           # vulnerabilities that a released patch already fixes.
           check-latest: true
       - name: govulncheck
@@ -89,7 +89,7 @@ jobs:
           govulncheck ./...
 
   web:
-    name: Web — typecheck and build
+    name: Web: typecheck and build
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -177,8 +177,8 @@ jobs:
         # NEXT_PUBLIC_ variables are compiled into the browser bundle. None of
         # this application's configuration belongs there.
         #
-        # Matches real usage — `process.env.NEXT_PUBLIC_X` or a bare
-        # `NEXT_PUBLIC_X=` — rather than the bare string, which also appears in
+        # Matches real usage, `process.env.NEXT_PUBLIC_X` or a bare
+        # `NEXT_PUBLIC_X=`: rather than the bare string, which also appears in
         # the comment explaining why none is used and in the boundary checker
         # that exists to forbid them. `npm run check` does the thorough version
         # of this with comments stripped; this is the blunt second opinion.

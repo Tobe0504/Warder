@@ -5,7 +5,7 @@ import { handlePreAuthRoute, readJson, requireString } from "@/lib/route-helpers
 /**
  * Redeems an invitation and creates the account.
  *
- * Runs before any session exists, so there is no CSRF token to check — but the
+ * Runs before any session exists, so there is no CSRF token to check, but the
  * origin still has to be right, for the same reason sign-in checks it: without
  * it another site could drive somebody's browser through an acceptance they did
  * not intend.

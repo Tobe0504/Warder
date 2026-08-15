@@ -84,7 +84,7 @@ fetch "$base/checksums.txt" "$tmp/checksums.txt" || fail "could not download che
 # cosmetic problem.
 # Matched with awk rather than grep. The checksum file lists names as
 # "./name", and a grep alternation written with \| is a GNU extension that
-# BSD grep — the one on every Mac — treats as a literal, so the lookup found
+# BSD grep: the one on every Mac: treats as a literal, so the lookup found
 # nothing and the install failed on exactly the platform most developers use.
 expected=$(awk -v want="$archive" '$2 == want || $2 == "./" want { print $1; exit }' "$tmp/checksums.txt")
 [ -n "$expected" ] || fail "no checksum published for $archive"
@@ -97,7 +97,7 @@ else
     fail "this needs sha256sum or shasum to verify the download"
 fi
 
-[ "$actual" = "$expected" ] || fail "checksum mismatch — refusing to install
+[ "$actual" = "$expected" ] || fail "checksum mismatch, refusing to install
   expected $expected
   got      $actual"
 
@@ -114,7 +114,7 @@ if [ -z "$target" ]; then
     # A writable directory that is *already on PATH*, preferred over one that
     # merely exists. An earlier version checked only for existence and picked
     # ~/.local/bin, which plenty of machines have without ever putting it on
-    # PATH — so the install reported success and the command was not found.
+    # PATH, so the install reported success and the command was not found.
     #
     # /usr/local/bin is deliberately last: it is root-owned on Apple Silicon,
     # and a build written there with sudo is one nobody can update later

@@ -103,7 +103,7 @@ func NewEngine(grants GrantSource, now func() time.Time) *Engine {
 //
 // The order below matters. Tenancy and credential scope are checked before
 // grants, so that a token scoped to development can never reach a production
-// evaluation path at all — not even to have its grants examined. Scope is a
+// evaluation path at all: not even to have its grants examined. Scope is a
 // structural boundary, not a permission to be weighed against others.
 func (e *Engine) Authorize(ctx context.Context, req Request) (Decision, error) {
 	if !domain.ValidCapability(req.Capability) {
@@ -229,8 +229,8 @@ func grantCovers(g *domain.AccessGrant, req Request) bool {
 }
 
 // EffectiveCapabilities reports every capability a principal currently holds
-// over a resource. It exists to answer the administrator's questions — "who can
-// use this secret" and "who can see it" — from the same code path that enforces
+// over a resource. It exists to answer the administrator's questions: "who can
+// use this secret" and "who can see it": from the same code path that enforces
 // them, so the access screen cannot drift away from the real rules.
 func (e *Engine) EffectiveCapabilities(ctx context.Context, req Request) ([]domain.Capability, error) {
 	var held []domain.Capability

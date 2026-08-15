@@ -18,8 +18,8 @@ import (
 // private key is: in the user's home directory, in a file only they can read.
 // It is deliberately not placed in the working tree, where it would be one
 // mistaken `git add` away from a repository, and not in an environment variable
-// exported from a shell profile, where every process the developer runs — every
-// dependency, every AI agent — would inherit it.
+// exported from a shell profile, where every process the developer runs, every
+// dependency, every AI agent, would inherit it.
 type Credentials struct {
 	APIURL       string    `json:"apiUrl"`
 	RuntimeURL   string    `json:"runtimeUrl"`
@@ -182,7 +182,7 @@ func LoadProjectConfig() (*ProjectConfig, error) {
 //
 // This file is meant to be committed. Someone will eventually try to put a
 // token in it, and the moment that works it becomes the thing the product
-// exists to prevent — a credential in the repository. Failing here, with an
+// exists to prevent, a credential in the repository. Failing here, with an
 // explanation, is better than accepting it.
 func assertNoSecrets(path string, data []byte) error {
 	lowered := strings.ToLower(string(data))

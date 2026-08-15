@@ -99,7 +99,7 @@ function InvitationRow({ invitation }: { invitation: Invitation }) {
             onClick={revoke}
             disabled={pending}
             aria-label={`Withdraw the invitation for ${invitation.email}`}
-            title="Withdraw — the link stops working immediately"
+            title="Withdraw: the link stops working immediately"
           >
             <Ban />
           </Button>

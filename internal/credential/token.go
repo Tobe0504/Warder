@@ -18,7 +18,7 @@ import (
 
 // Kind identifies what a credential is for. The prefix is visible to whoever
 // holds the token, which makes a leaked credential in a log or a paste
-// immediately identifiable — and greppable by secret scanners.
+// immediately identifiable, and greppable by secret scanners.
 type Kind string
 
 const (

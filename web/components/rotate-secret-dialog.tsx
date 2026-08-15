@@ -72,7 +72,7 @@ export function RotateSecretDialog({
           </DialogTitle>
           <DialogDescription>
             A new version becomes active immediately. Applications keep referring to the same key
-            and receive the new value on their next start — nothing needs reconfiguring.
+            and receive the new value on their next start: nothing needs reconfiguring.
           </DialogDescription>
         </DialogHeader>
 
@@ -97,7 +97,7 @@ export function RotateSecretDialog({
           */}
           <p className="rounded-md bg-muted px-2.5 py-2 prose-note text-muted-foreground">
             This changes the value Warder stores. It does not change the credential at the
-            provider — rotate it there first, then paste the new one here.
+            provider: rotate it there first, then paste the new one here.
           </p>
 
           {error && (

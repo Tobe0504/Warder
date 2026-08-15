@@ -27,7 +27,7 @@ Warder does not get you to zero credentials. It gets you to **one**.
 Your application still needs something that proves *which application it is*.
 Without that, Warder has no way to tell your API server from anyone else who can
 reach the port. That one credential is `WARDER_TOKEN`, and the problem it
-represents has a name — "secret zero". Nobody has solved it. HashiCorp Vault,
+represents has a name, "secret zero". Nobody has solved it. HashiCorp Vault,
 AWS Secrets Manager, Doppler and every other broker have exactly the same
 bootstrap step.
 
@@ -60,7 +60,7 @@ WARDER_TOKEN=vlt_...                          # the one credential. Secret.
 Plus a file, which you **commit**:
 
 ```jsonc
-// .warder.json — written by `ward init`
+// .warder.json: written by `ward init`
 { "project": "payments-api", "environment": "production" }
 ```
 
@@ -77,7 +77,7 @@ at all**:
 ward run -- npm run dev
 ```
 
-`WARDER_RUNTIME_URL` and `WARDER_TOKEN` are the *machine* path — CI, containers, servers.
+`WARDER_RUNTIME_URL` and `WARDER_TOKEN` are the *machine* path, CI, containers, servers.
 
 ### Where to put `WARDER_TOKEN`
 
@@ -95,7 +95,7 @@ Never in the repository, never in a `Dockerfile`, never in a shell command
 
 ## Where the two values come from
 
-### `WARDER_TOKEN` — from the dashboard
+### `WARDER_TOKEN`: from the dashboard
 
 **Your project → Tokens → New token.**
 
@@ -104,17 +104,17 @@ optionally narrow it to specific secret keys. The token is displayed **once**,
 on the confirmation screen, with a copy button.
 
 Only a verifier is stored on the server, so it genuinely cannot be shown again.
-If it is lost, revoke it and issue another — that is a thirty-second operation,
+If it is lost, revoke it and issue another; that is a thirty-second operation,
 not an incident.
 
 Before you can issue a token, the identity needs to exist and needs a grant.
 Three steps, covered in [the developer guide](developer-guide.md#giving-an-application-access):
 
-1. **Identities → New identity** — one per thing that runs your code
-2. **Project → Access → Grant access** — choose *Can use*, not *Can see*
+1. **Identities → New identity**, one per thing that runs your code
+2. **Project → Access → Grant access**, choose *Can use*, not *Can see*
 3. **Project → Tokens → New token**
 
-### `WARDER_RUNTIME_URL` — from your deployment, not the dashboard
+### `WARDER_RUNTIME_URL`: from your deployment, not the dashboard
 
 This is the address of your Warder deployment's **runtime listener**. The
 dashboard doesn't display it, because the dashboard has no way to know what
@@ -145,7 +145,7 @@ So:
 
 ### Anything the browser receives is not a secret
 
-`NEXT_PUBLIC_*`, `VITE_*`, `REACT_APP_*` — these are compiled into the
+`NEXT_PUBLIC_*`, `VITE_*`, `REACT_APP_*`: these are compiled into the
 JavaScript bundle and shipped to every visitor. Anyone can open devtools and
 read them.
 
@@ -162,7 +162,7 @@ project key, a public API base URL. They are designed to be visible.
 
 ### The server half is what Warder takes over
 
-In a modern framework, most of your application is server code — route
+In a modern framework, most of your application is server code, route
 handlers, server actions, server components, loaders. `DATABASE_URL`,
 `STRIPE_SECRET_KEY`, `AUTH_SECRET` all live there, and never reach the browser.
 
@@ -241,7 +241,7 @@ confusingly ten seconds in.
 Two separate moments, and it's easy to get caught by the difference.
 
 `NEXT_PUBLIC_*` values are **inlined during `next build`**, not read at
-run time. And a build sometimes needs credentials of its own — a Sentry auth
+run time. And a build sometimes needs credentials of its own, a Sentry auth
 token to upload sourcemaps, a token for a private npm registry.
 
 If your build needs a secret, wrap the build too:
@@ -250,7 +250,7 @@ If your build needs a secret, wrap the build too:
 ward run -- npm run build
 ```
 
-If it doesn't, don't — a build that holds no credentials is a build that can't
+If it doesn't, don't, a build that holds no credentials is a build that can't
 leak any.
 
 ---
@@ -276,7 +276,7 @@ launch command to wrap.
 
 On those, the practical approach is to use Warder as the source of truth and
 push values into the platform's secret store from CI at deploy time. You keep
-one place to rotate and a full audit trail of who changed what — but the
+one place to rotate and a full audit trail of who changed what, but the
 platform then holds plaintext, which is a weaker guarantee than the process
 model. Be clear-eyed that it is a trade, not the same thing.
 
@@ -306,7 +306,7 @@ exactly as `npm test` would.
 cleanly, instead of the CLI exiting and orphaning it.
 
 **There is no `ward export`.** It would be the obvious convenience command, and
-it would write plaintext into a file, a shell history, or a CI log — which is
+it would write plaintext into a file, a shell history, or a CI log, which is
 the exact outcome this product exists to prevent. Secrets go into a process, or
 they are revealed to a named person in the dashboard where it is recorded.
 
@@ -319,7 +319,7 @@ No. You keep reading `process.env.WHATEVER`. The only change is the command that
 starts the process.
 
 **What if Warder is down?**
-Your running processes are unaffected — they already have their values in
+Your running processes are unaffected, they already have their values in
 memory. A process that *restarts* during an outage won't start. Treat the broker
 as a dependency of deployment, the same as your container registry.
 
@@ -333,7 +333,7 @@ not edit any `.env`, any CI configuration, or any deployment manifest.
 
 **Can a developer see the values?**
 Only if someone explicitly granted them *Can see* for that environment. No role
-grants it — not even Owner. And when they do reveal one, it is recorded against
+grants it: not even Owner. And when they do reveal one, it is recorded against
 their name.
 
 **What happens when I revoke a token?**
@@ -349,7 +349,7 @@ token gets an attacker staging.
 
 ## Where to go next
 
-- [Developer guide](developer-guide.md) — every command, in order
-- [Threat model](security/threat-model.md) — what is protected, from whom
-- [Limitations](security/limitations.md) — what this does **not** protect
+- [Developer guide](developer-guide.md): every command, in order
+- [Threat model](security/threat-model.md): what is protected, from whom
+- [Limitations](security/limitations.md): what this does **not** protect
   against, stated plainly. Worth reading before you rely on it.

@@ -35,7 +35,7 @@ databases:
 
 services:
   # -------------------------------------------------------------------------
-  # Admin surface — the dashboard's backend
+  # Admin surface: the dashboard's backend
   # -------------------------------------------------------------------------
   - type: web
     name: warder-admin
@@ -81,7 +81,7 @@ services:
         sync: false
 
   # -------------------------------------------------------------------------
-  # Runtime surface — the ward CLI and deployed workloads
+  # Runtime surface: the ward CLI and deployed workloads
   # -------------------------------------------------------------------------
   - type: web
     name: warder-runtime
@@ -122,7 +122,7 @@ services:
           name: warder-db
           property: connectionString
 
-      # The same keyring as the admin service. Two processes, one set of keys —
+      # The same keyring as the admin service. Two processes, one set of keys:
       # they are reading the same ciphertext.
       - key: WARDER_KEYRING
         sync: false

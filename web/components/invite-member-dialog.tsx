@@ -32,7 +32,7 @@ const ROLES = [
  *
  * Deliberately not a form that sets their password. An owner who chooses
  * somebody else's credential then has to transmit it, knows it afterwards, and
- * can sign in as them — which is a strange thing for a product built on the
+ * can sign in as them, which is a strange thing for a product built on the
  * idea that people should not hold credentials they do not need.
  *
  * So this produces a single-use link instead. The invitee sets their own
@@ -126,7 +126,7 @@ export function InviteMemberDialog() {
 
             <p className="mt-2 prose-note text-muted-foreground">
               Only a verifier is stored, so this cannot be shown again. They will set their own
-              password — you will not know it, and you will not be able to sign in as them.
+              password: you will not know it, and you will not be able to sign in as them.
             </p>
 
             <DialogFooter>
@@ -187,7 +187,7 @@ export function InviteMemberDialog() {
                 <p className="prose-note text-muted-foreground">
                   {ROLES.find(([value]) => value === role)?.[2]} No role grants{" "}
                   <span className="font-mono">USE_SECRET</span> or{" "}
-                  <span className="font-mono">READ_SECRET</span> — those are separate grants on a
+                  <span className="font-mono">READ_SECRET</span>: those are separate grants on a
                   project.
                 </p>
               </div>

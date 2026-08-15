@@ -1,7 +1,7 @@
 -- Tenant erasure.
 --
 -- The audit trail is append-only, which means deleting an organization is not
--- something the application can do as a side effect of an ordinary DELETE — the
+-- something the application can do as a side effect of an ordinary DELETE, the
 -- cascade into audit_events is refused. That is the intended behaviour: erasing
 -- the record of what happened should require someone to decide to erase it.
 --

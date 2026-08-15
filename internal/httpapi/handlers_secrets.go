@@ -44,7 +44,7 @@ type secretResponse struct {
 	EncryptionKeyID string `json:"encryptionKeyId,omitempty"`
 
 	// Capabilities the requesting user holds over this secret, so the interface
-	// can show a reveal control only to someone who could actually use it —
+	// can show a reveal control only to someone who could actually use it:
 	// derived from the same engine that enforces the decision.
 	CanUse    bool `json:"canUse"`
 	CanReveal bool `json:"canReveal"`

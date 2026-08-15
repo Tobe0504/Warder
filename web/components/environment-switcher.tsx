@@ -9,12 +9,12 @@ type Environment = { id: string; name: string; slug: string };
 /**
  * Environment selection.
  *
- * Labels use the environment's display name — "Development", not the
+ * Labels use the environment's display name, "Development", not the
  * lowercase mono `development` slug. The slug is an identifier the CLI takes;
  * it is not what this control is for, and setting proper nouns in lowercase
  * monospace made a simple choice look like configuration.
  *
- * Nothing here treats "production" as a special word — the platform does not
+ * Nothing here treats "production" as a special word, the platform does not
  * either. What distinguishes environments is which grants and tokens name
  * them, so a custom environment gets exactly the same treatment as a built-in
  * one, including in this control.

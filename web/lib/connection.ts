@@ -146,7 +146,7 @@ export function parseConnection(raw: string | undefined): Connection {
 
   const serviceToken = decodeURIComponent(url.username);
   if (serviceToken === "") {
-    // Usually not a missing token — usually a token containing a character
+    // Usually not a missing token, usually a token containing a character
     // that ended the authority before the '@' was reached. `openssl rand
     // -base64` is the common culprit: its alphabet includes '/', which starts
     // the path. The message says so, because "missing the service token" sends
@@ -155,7 +155,7 @@ export function parseConnection(raw: string | undefined): Connection {
       "WARDER_URL has no service token before the '@'.\n\n" +
         "If you did set one, check what it contains: a '/', '@', ':' or '?' ends the\n" +
         "authority early, so the token never reaches this parser. Base64 output is the\n" +
-        "usual cause — its alphabet includes '/'.\n\n" +
+        "usual cause: its alphabet includes '/'.\n\n" +
         "Generate one with only URL-safe characters:\n\n" +
         "  openssl rand -hex 32",
     );

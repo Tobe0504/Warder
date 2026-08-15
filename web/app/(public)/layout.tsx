@@ -8,7 +8,7 @@ import { SiteFooter, SiteHeader } from "@/components/site-header";
  * Separated from the dashboard by a route group because the two have opposite
  * requirements. Dashboard pages render secret metadata, must never be cached or
  * indexed, and are rendered per request. These pages contain nothing but
- * published prose, so they are static, cacheable and indexable — and they read
+ * published prose, so they are static, cacheable and indexable, and they read
  * no session, which is what makes that safe.
  */
 export const metadata: Metadata = {

@@ -81,7 +81,7 @@ func withRecovery(logger *slog.Logger) middleware {
 
 // withSecurityHeaders sets the response headers appropriate to a JSON API.
 //
-// This API serves no HTML and is not meant to be reached by a browser at all —
+// This API serves no HTML and is not meant to be reached by a browser at all:
 // the dashboard talks to the BFF, which talks to this. The headers are set
 // anyway so that a response rendered somewhere unexpected still carries them.
 func withSecurityHeaders(next http.Handler) http.Handler {
@@ -115,7 +115,7 @@ func withServiceToken(expected string, logger *slog.Logger) middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// The health check is exempt. It answers {"status":"ok"} and
-			// nothing else — there is no information in it worth a credential —
+			// nothing else: there is no information in it worth a credential:
 			// and every container platform probes an unauthenticated path to
 			// decide whether an instance is alive. Requiring the service token
 			// here means the platform sees 401, marks the service unhealthy,

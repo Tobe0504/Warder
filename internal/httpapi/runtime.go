@@ -173,7 +173,7 @@ func (s *Server) handleRuntimeAuth(w http.ResponseWriter, r *http.Request) {
 //   - A human's CLI login carries no scope, so the request has to say what to
 //     run against. The named project and environment are resolved within the
 //     caller's own organization, and the resulting session is capped at
-//     USE_SECRET — a runtime session can never reveal a value, whatever its
+//     USE_SECRET: a runtime session can never reveal a value, whatever its
 //     holder may separately be permitted to do in the dashboard.
 //
 // In both cases the ceiling only narrows what the identity's grants already
@@ -227,7 +227,7 @@ type runtimeSecretsRequest struct {
 // runtimeSecretsResponse is the delivery.
 //
 // It contains the environment name and the values, and nothing else. No secret
-// ids, no version ids, no key identifiers, no encryption detail — a runtime
+// ids, no version ids, no key identifiers, no encryption detail, a runtime
 // needs none of it, and every internal identifier included in a response is one
 // more thing to find in a crash dump or a log aggregator.
 type runtimeSecretsResponse struct {

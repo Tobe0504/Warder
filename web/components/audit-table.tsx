@@ -205,7 +205,7 @@ function AuditRow({ event }: { event: AuditEvent }) {
           {DESCRIPTIONS[event.eventType] ?? event.eventType}
         </div>
         <div className="mt-0.5 truncate text-meta text-muted-foreground">
-          {event.actor || "—"} ·{" "}
+          {event.actor || ", "} ·{" "}
           {event.actorType.toLowerCase().replace("_", " ")}
         </div>
       </div>
@@ -218,7 +218,7 @@ function AuditRow({ event }: { event: AuditEvent }) {
         {event.secretKey ? (
           <span className="font-mono text-meta">{event.secretKey}</span>
         ) : (
-          <span className="text-meta text-muted-foreground">—</span>
+          <span className="text-meta text-muted-foreground">, </span>
         )}
         {event.reason && (
           <div className="mt-0.5 truncate text-meta text-muted-foreground">

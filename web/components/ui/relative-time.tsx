@@ -11,7 +11,7 @@ import { formatDate, formatRelative } from "@/lib/utils";
  * match between server and client: the server renders at one instant and the
  * browser hydrates at another, so "just now" and "1 minute ago" disagree and
  * React reports a hydration mismatch. Every page in the dashboard shows several
- * of these, so the console filled with errors that were not really errors —
+ * of these, so the console filled with errors that were not really errors:
  * which is worse than useless, because it hides the ones that are.
  *
  * `suppressHydrationWarning` is the sanctioned answer for exactly this case: it

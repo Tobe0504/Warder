@@ -33,8 +33,8 @@ const newRow = (key = "", value = ""): Row => ({ id: nextRowId++, key, value });
  *
  * There is one dialog rather than a single-secret form plus a separate import
  * screen, because the two are the same act at different sizes. Configuration
- * arrives as a group — a new service needs its database URL, its API key and
- * its signing secret together — and making people repeat a four-field form
+ * arrives as a group, a new service needs its database URL, its API key and
+ * its signing secret together, and making people repeat a four-field form
  * eight times is how keys get missed.
  *
  * Pasting a `.env` into any key field fills the rows out. That is the actual
@@ -98,7 +98,7 @@ export function AddSecretsDialog({
       parts.push(
         `${skipped.length} ${skipped.length === 1 ? "line" : "lines"} could not be read (${skipped
           .map((entry) => `line ${entry.line}`)
-          .join(", ")}) — add ${skipped.length === 1 ? "it" : "them"} by hand.`,
+          .join(", ")}): add ${skipped.length === 1 ? "it" : "them"} by hand.`,
       );
     }
     setNotice(parts.join(" "));
@@ -110,7 +110,7 @@ export function AddSecretsDialog({
    * Intercepts a paste that is really a file.
    *
    * Only on the key field. The value field stays literal, because that is
-   * precisely where somebody pastes a raw credential — and a value that happens
+   * precisely where somebody pastes a raw credential, and a value that happens
    * to contain an equals sign, scattered across rows, would be a far worse
    * outcome than a paste that simply lands as text.
    */
@@ -265,7 +265,7 @@ export function AddSecretsDialog({
                     A single-line input silently strips line breaks: the PEM
                     key pasted a moment ago would display as one run-on string
                     and, the instant anyone touched the field, would lose its
-                    line breaks for good — storing a private key that cannot be
+                    line breaks for good, storing a private key that cannot be
                     used and does not look broken.
                   */}
                   {row.value.includes("\n") ? (

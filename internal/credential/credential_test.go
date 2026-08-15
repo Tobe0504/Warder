@@ -51,7 +51,7 @@ func TestPublicIDIsIndependentOfSecret(t *testing.T) {
 
 // Regression test. An encoding whose alphabet contains the field delimiter
 // produces credentials that split into the wrong number of pieces for some
-// fraction of the random values — a bug that shows up intermittently and
+// fraction of the random values, a bug that shows up intermittently and
 // authenticates nobody, or worse, truncates the compared secret. The encoding
 // must never emit an underscore, so mint a large sample and check the shape.
 func TestCredentialsAlwaysHaveExactlyThreeFields(t *testing.T) {

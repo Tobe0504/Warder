@@ -9,7 +9,7 @@ import (
 )
 
 // These tests all ask one question in different places: can a secret value get
-// out somewhere it should not? Each targets a specific channel — the logs, an
+// out somewhere it should not? Each targets a specific channel, the logs, an
 // error body, a browser response, the audit trail.
 
 // The canonical requirement: the logs should name DATABASE_URL and never say
@@ -94,7 +94,7 @@ func TestDecryptionFailureLeaksNothing(t *testing.T) {
 	}
 
 	// The caller learns the secret is unavailable, and nothing about why. No
-	// mention of authentication tags, key versions, or nonces — each of which
+	// mention of authentication tags, key versions, or nonces, each of which
 	// would tell an attacker which part of a forgery attempt was wrong.
 	for _, forbidden := range []string{"authentication", "cipher", "nonce", "key_id", "local:", "wrapped", "GCM", "aead"} {
 		if strings.Contains(strings.ToLower(delivery.Raw), strings.ToLower(forbidden)) {
@@ -107,7 +107,7 @@ func TestDecryptionFailureLeaksNothing(t *testing.T) {
 		t.Fatalf("expected the key to be reported unavailable: %s", delivery.Raw)
 	}
 
-	// The operator, unlike the caller, does get the detail — in a log line that
+	// The operator, unlike the caller, does get the detail, in a log line that
 	// still carries no plaintext.
 	logs := h.Logs.String()
 	if !strings.Contains(logs, "could not be decrypted") {
@@ -195,8 +195,8 @@ func TestRevealRequiresAnExplicitGrantAndIsAudited(t *testing.T) {
 		t.Fatal("the refusal contained the value")
 	}
 
-	// The owner grants themselves READ_SECRET. This is permitted — they hold
-	// MANAGE_ACCESS — and it is exactly the act the audit trail exists to
+	// The owner grants themselves READ_SECRET. This is permitted; they hold
+	// MANAGE_ACCESS, and it is exactly the act the audit trail exists to
 	// record.
 	h.MustAdmin(http.StatusCreated, apitest.Request{
 		Method:     http.MethodPost,

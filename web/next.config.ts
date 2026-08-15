@@ -37,7 +37,7 @@ const nextConfig: NextConfig = {
 
   // The documentation pages read the repository's markdown, which lives outside
   // this directory. `generateStaticParams` means it is normally consumed at
-  // build time and never needed again — this keeps the files reachable anyway,
+  // build time and never needed again; this keeps the files reachable anyway,
   // so a deployment that falls back to rendering a docs page on demand serves
   // it instead of failing to find the source.
   outputFileTracingIncludes: {

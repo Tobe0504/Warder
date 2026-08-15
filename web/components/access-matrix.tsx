@@ -51,7 +51,7 @@ type Environment = { id: string; name: string; slug: string };
  * Its whole job is to make one distinction obvious at a glance: using a
  * credential and seeing it are different things. So the two capabilities get
  * their own columns, their own colours, and an explicit mark for "no" rather
- * than an empty cell — because a blank space reads as "not loaded yet" and a
+ * than an empty cell, because a blank space reads as "not loaded yet" and a
  * dash reads as "definitely not".
  */
 export function AccessMatrix({
@@ -82,7 +82,7 @@ export function AccessMatrix({
         <EmptyState
           icon={<ShieldCheck className="size-5" />}
           title="No access granted yet"
-          description="Nothing can use these secrets until something is granted USE_SECRET. Roles do not confer it — not even owner."
+          description="Nothing can use these secrets until something is granted USE_SECRET. Roles do not confer it: not even owner."
         />
       </DataList>
     );
@@ -225,7 +225,7 @@ function GrantRow({ projectId, grant }: { projectId: string; grant: Grant }) {
           onClick={revoke}
           disabled={pending}
           aria-label={`Revoke access for ${grant.subjectName}`}
-          title="Revoke — runtime access is denied on the next request"
+          title="Revoke: runtime access is denied on the next request"
         >
           <Trash2 />
         </Button>

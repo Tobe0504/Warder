@@ -34,7 +34,7 @@ export class CoreApiError extends Error {
 /**
  * The address of the browser that caused this request, if there is one.
  *
- * Returns nothing outside a request — a build-time render, say — rather than
+ * Returns nothing outside a request, a build-time render, say, rather than
  * inventing an address, so the core API falls back to the connection it can
  * actually see.
  */
@@ -102,8 +102,8 @@ export async function callCoreApi<T>(path: string, options: CallOptions = {}): P
   //
   // Without this every request reaches the core API from one of Vercel's
   // egress addresses, which breaks two things quietly. Rate limits keyed by IP
-  // become a single shared bucket — five sign-ins a minute across every user
-  // on the deployment — and every audit entry records Vercel instead of the
+  // become a single shared bucket, five sign-ins a minute across every user
+  // on the deployment, and every audit entry records Vercel instead of the
   // person who acted.
   //
   // x-real-ip is preferred over x-forwarded-for: Vercel sets both, and

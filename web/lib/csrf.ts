@@ -11,7 +11,7 @@ import { connection } from "./env";
  *
  *   SameSite=strict on the session cookie means a cross-site request arrives
  *   with no credential at all. This is the strongest of the three and handles
- *   the ordinary case entirely — but it depends on the browser, and older or
+ *   the ordinary case entirely, but it depends on the browser, and older or
  *   unusual clients may not enforce it.
  *
  *   The Origin check refuses requests that announce a different origin. Browsers
@@ -44,8 +44,8 @@ const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
  * is why it is separable from the token check below.
  *
  * Sign-in needs it. Without an origin check, another site can forge a sign-in
- * POST carrying the attacker's own credentials — no cookie required, since the
- * victim has no session yet — and the browser ends up holding a valid session
+ * POST carrying the attacker's own credentials: no cookie required, since the
+ * victim has no session yet, and the browser ends up holding a valid session
  * for the *attacker's* organization. The victim then works in it, and any
  * secret they add lands somewhere the attacker can read. It is a quiet attack,
  * because everything appears to work.
@@ -109,7 +109,7 @@ function originMatches(origin: string, request: Request): boolean {
   //
   // The comparison is against the Host header rather than request.url. Next.js
   // populates request.url from the server's own listening address, so a browser
-  // on http://127.0.0.1:3000 produces a request.url of http://localhost:3000 —
+  // on http://127.0.0.1:3000 produces a request.url of http://localhost:3000:
   // and comparing the two rejects a perfectly ordinary local request with
   // "unexpected origin". That failure is indistinguishable from an attack to
   // whoever hits it, which is how origin checking ends up switched off.

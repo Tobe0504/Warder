@@ -124,7 +124,7 @@ func (r *AccountRepo) RevokeInvitation(ctx context.Context, orgID, invitationID 
 //
 // It returns the row whatever its state, so the caller can distinguish an
 // expired invitation from an unknown one when telling the *invitee* what to do
-// — they hold the token, so nothing is disclosed by being specific.
+// : they hold the token, so nothing is disclosed by being specific.
 func (r *AccountRepo) FindInvitationByPublicID(ctx context.Context, q Queryer, publicID string) (*Invitation, []byte, error) {
 	if q == nil {
 		q = r.db.Pool

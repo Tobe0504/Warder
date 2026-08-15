@@ -82,7 +82,7 @@ The MVP defines no RTO or RPO, and one should be set before real use. What the
 architecture supports:
 
 - The API is stateless. Recovery time is database restore time.
-- Warm standby is straightforward — as long as the standby has key access, which
+- Warm standby is straightforward, as long as the standby has key access, which
   is exactly the thing that gets forgotten.
 - Runtime sessions live minutes and simply re-authenticate.
 - Long-lived machine tokens survive a restore, provided the restore point
@@ -95,7 +95,7 @@ A restore rehearsal that has not tested key recovery has tested the easy half.
 The rehearsal should:
 
 1. Restore into an isolated environment.
-2. Retrieve the keyring **through the same path a real incident would use** — not
+2. Retrieve the keyring **through the same path a real incident would use**: not
    from a developer's `.env`, not from a running production process.
 3. Start the service and successfully retrieve a known secret.
 4. Confirm the audit trail is intact and queryable.

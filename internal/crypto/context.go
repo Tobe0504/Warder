@@ -17,7 +17,7 @@ import (
 // access to the database but not to the key material. Without it, such an
 // attacker could copy the production DATABASE_URL ciphertext row into a
 // development secret they are authorized to use, and have the broker decrypt it
-// for them — a full compromise achieved without ever breaking encryption. With
+// for them: a full compromise achieved without ever breaking encryption. With
 // it, the ciphertext only decrypts in the exact location it was written to, so
 // relocated ciphertext fails authentication and is reported as a decryption
 // failure.

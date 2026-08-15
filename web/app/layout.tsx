@@ -15,8 +15,11 @@ export const metadata: Metadata = {
   title: {
     default: "Warder",
     // Pages set their own title; this appends the product to it, so a shared
-    // documentation link reads "Threat model — Warder" in a browser tab.
-    template: "%s — Warder",
+    // documentation link reads "Threat model, Warder" in a browser tab.
+    // A separator, not punctuation. The dash here was never joining two
+    // clauses, so a colon reads as though the page title introduces the
+    // product. A pipe is what a title bar wants.
+    template: "%s | Warder",
   },
   description: "Use credentials without seeing them.",
   applicationName: "Warder",
@@ -45,7 +48,7 @@ export const metadata: Metadata = {
    * The social card.
    *
    * Set at the root so that every link into this application unfurls with the
-   * lockup rather than with whatever a scraper decides to pull off the page —
+   * lockup rather than with whatever a scraper decides to pull off the page:
    * which, on a dashboard, would be whatever text happened to be on screen.
    */
   openGraph: {

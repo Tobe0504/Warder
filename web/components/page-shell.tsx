@@ -43,7 +43,7 @@ export function PageShell({
  * A page's title block: name on the left, actions on the right.
  *
  * Separate from the header bar, which carries the breadcrumb. Vercel does the
- * same thing — the bar tells you where you are, this tells you what you are
+ * same thing: the bar tells you where you are, this tells you what you are
  * looking at.
  */
 export function PageTitle({

@@ -12,7 +12,7 @@ import (
 // The AI agent scenario, which is the product's motivating example.
 //
 // An agent is treated as an untrusted identity of its own. It can run the tests
-// — which means using development credentials — and it can do nothing else: it
+// : which means using development credentials, and it can do nothing else: it
 // cannot print a value, cannot reach staging or production, cannot rotate or
 // revoke anything, and cannot change who has access. None of that depends on
 // the agent behaving well, because none of it is enforced in the agent.
@@ -71,7 +71,7 @@ func TestAIAgentCanUseDevelopmentAndNothingElse(t *testing.T) {
 		t.Fatal("the agent obtained a production runtime session")
 	}
 
-	// It cannot reveal, rotate, revoke, or change access — the whole admin
+	// It cannot reveal, rotate, revoke, or change access, the whole admin
 	// surface refuses its credential outright.
 	adminAttempts := []struct {
 		method string

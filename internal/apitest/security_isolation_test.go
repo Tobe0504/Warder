@@ -62,7 +62,7 @@ func TestDevelopmentTokenCannotReachProduction(t *testing.T) {
 
 	identityID := h.NewIdentity(org, apitest.Unique("api"), "WORKLOAD")
 
-	// The identity is granted both environments — the mistake a real
+	// The identity is granted both environments, the mistake a real
 	// organization makes. The token's scope is what has to save them.
 	h.Grant(org, project.ID, project.DevelopmentID, "MACHINE", identityID, []string{"USE_SECRET"}, nil)
 	h.Grant(org, project.ID, project.ProductionID, "MACHINE", identityID, []string{"USE_SECRET"}, nil)
@@ -342,8 +342,8 @@ func TestTemporaryAccessExpires(t *testing.T) {
 	}
 }
 
-// An expired secret version must not be delivered, and the caller — who is
-// authorized for it — should be told why rather than left guessing.
+// An expired secret version must not be delivered, and the caller, who is
+// authorized for it, should be told why rather than left guessing.
 func TestExpiredSecretIsNotDelivered(t *testing.T) {
 	h := apitest.New(t)
 

@@ -71,7 +71,7 @@ func (p *MachineTokenProvider) Authenticate(ctx context.Context, req Request) (*
 
 	// The identity behind the token must also still be active. Disabling an
 	// identity has to stop every token it issued, without an administrator
-	// having to find and revoke each one — that is what makes offboarding an
+	// having to find and revoke each one; that is what makes offboarding an
 	// agent or a contractor a single action.
 	if candidate.IdentityDisabledAt != nil && !candidate.IdentityDisabledAt.After(now) {
 		return nil, ErrUnauthenticated

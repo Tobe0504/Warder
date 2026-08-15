@@ -65,7 +65,7 @@ function stripComments(source) {
 // 1. No NEXT_PUBLIC_ anywhere.
 //
 // Anything under that prefix is inlined into the browser bundle at build time.
-// None of this application's configuration belongs there — the browser talks
+// None of this application's configuration belongs there: the browser talks
 // only to this application and needs no address, no token, and no key.
 // ---------------------------------------------------------------------------
 for (const file of files) {

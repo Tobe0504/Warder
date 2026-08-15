@@ -156,7 +156,7 @@ function NavEntry({ item, active }: { item: NavItem; active: boolean }) {
  * The organization switcher.
  *
  * One organization per user in this build, so this is mostly an identity
- * marker — but it occupies the position people expect a switcher to be in, and
+ * marker, but it occupies the position people expect a switcher to be in, and
  * the plan badge carries the same information Vercel's does.
  */
 function OrganizationSwitcher({ user }: { user: SessionUser }) {

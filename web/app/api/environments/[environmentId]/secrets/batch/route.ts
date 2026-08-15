@@ -10,7 +10,7 @@ const MAX_SECRETS = 100;
  * Stores several secrets in one call.
  *
  * The whole batch is one transaction on the core API. This route exists so the
- * browser sends one request rather than twenty — twenty would be twenty chances
+ * browser sends one request rather than twenty: twenty would be twenty chances
  * to be interrupted, and would trip the rate limiter partway through a paste.
  *
  * Values pass through untouched and unlogged. Nothing here inspects them, and

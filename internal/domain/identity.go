@@ -8,8 +8,8 @@ import (
 )
 
 // PrincipalType distinguishes the two kinds of authenticated subject the
-// authorization engine understands. Everything else — whether a machine is a CI
-// runner, an AI coding agent, or a production workload — is descriptive
+// authorization engine understands. Everything else, whether a machine is a CI
+// runner, an AI coding agent, or a production workload, is descriptive
 // metadata carried in ActorType, not a separate authorization path.
 type PrincipalType string
 

@@ -15,7 +15,7 @@ import { apiFetch } from "@/lib/client-api";
  *
  * The token arrives in the URL fragment, which is why this has to be a client
  * component: a fragment is never sent to a server. That is the point of putting
- * it there — the invitation stays out of this application's access log, out of
+ * it there: the invitation stays out of this application's access log, out of
  * any proxy in front of it, and out of the Referer header of whatever the
  * invitee clicks next.
  *
@@ -98,7 +98,7 @@ export function AcceptInvitationForm() {
       <div className="text-center">
         <p role="alert" className="prose-note text-muted-foreground">
           This link does not carry an invitation. It may have been shortened, forwarded as plain
-          text, or truncated by a chat client — the part after the{" "}
+          text, or truncated by a chat client, the part after the{" "}
           <span className="font-mono">#</span> matters. Ask whoever invited you for a fresh link.
         </p>
         <Button asChild variant="outline" className="mt-4 w-full">
@@ -134,7 +134,7 @@ export function AcceptInvitationForm() {
           required
         />
         <p className="prose-note text-muted-foreground">
-          At least 12 characters. Nobody else sees this — not even whoever invited you.
+          At least 12 characters. Nobody else sees this: not even whoever invited you.
         </p>
       </div>
 

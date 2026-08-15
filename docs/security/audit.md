@@ -1,7 +1,7 @@
 # Audit
 
 Two rules hold everywhere in the audit system. Events cannot be altered or
-deleted by the running application. And no event carries secret material — an
+deleted by the running application. And no event carries secret material, an
 event records that `DATABASE_URL` was used, never what `DATABASE_URL` is.
 
 ## Append-only, enforced twice
@@ -19,7 +19,7 @@ REVOKE UPDATE, DELETE ON audit_events FROM warder_app;
 The trigger and the privilege revocation are independent: the trigger holds even
 if privileges are misconfigured, and the revocation holds even if the trigger is
 dropped. An attacker who reaches the application's database role can still write
-misleading events — nothing prevents that — but cannot erase the record of what
+misleading events: nothing prevents that, but cannot erase the record of what
 they did.
 
 **Consequence worth knowing before you meet it:** the trigger also blocks the
@@ -46,7 +46,7 @@ records the connection string.
 | Category | Events |
 |---|---|
 | Secrets | `SECRET_CREATED` `SECRET_ROTATED` `SECRET_ROLLED_BACK` `SECRET_REVOKED` `SECRET_EXPIRY_CHANGED` `SECRET_DELETED` |
-| Use | `SECRET_USED` — one per key, per delivery, success or failure |
+| Use | `SECRET_USED`, one per key, per delivery, success or failure |
 | Disclosure | `SECRET_REVEAL_REQUESTED` `SECRET_REVEALED` |
 | Access | `ACCESS_GRANTED` `ACCESS_REVOKED` `ACCESS_DENIED` |
 | Credentials | `TOKEN_CREATED` `TOKEN_REVOKED` `RUNTIME_AUTHENTICATED` |
@@ -55,7 +55,7 @@ records the connection string.
 | Failures | `DECRYPTION_FAILED` `RATE_LIMITED` |
 
 Each carries the actor and their type, the credential used, the project,
-environment, secret key, client address, user agent, outcome, and — for denials —
+environment, secret key, client address, user agent, outcome, and, for denials:
 a stable `deny_code` alongside a human-readable reason.
 
 Denials are recorded as deliberately as successes. A `SECRET_REVEAL_REQUESTED`
@@ -81,7 +81,7 @@ mid-request cannot prevent the record of a delivery that already happened.
 ## Questions it answers
 
 **Who can use this secret, and who can see it?**
-The access screen, from `GET /projects/{id}/access` — which reports capabilities
+The access screen, from `GET /projects/{id}/access`, which reports capabilities
 individually rather than as a role, because those are two different answers.
 
 **Where is it being used, and when was it last?**

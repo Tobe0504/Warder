@@ -42,7 +42,7 @@ that reaches every secret its identity is granted, so a tampered download is
 not a cosmetic problem. The script refuses to install on a mismatch.
 
 > Piping a script into a shell is a real thing to be uneasy about. If your
-> team's policy says no, download it, read it, then run it — it is a hundred
+> team's policy says no, download it, read it, then run it; it is a hundred
 > lines of POSIX sh and does nothing but fetch, verify, and move a file.
 
 ### With Go
@@ -70,7 +70,7 @@ ward init --project payments-api --env development
 ```
 
 This writes `.warder.json` naming the project and environment. **Commit it.** It
-holds no credentials — only two names — so everyone on the team gets the same
+holds no credentials: only two names, so everyone on the team gets the same
 target without passing flags.
 
 Once per machine:
@@ -109,7 +109,7 @@ than failing confusingly ten seconds later.
 ```bash
 ward status                 # who you are signed in as
 ward project list
-ward secret list            # names, versions, expiry — never values
+ward secret list            # names, versions, expiry: never values
 ```
 
 `ward secret list` shows a `VALUE` column full of dots on purpose. You can see
@@ -124,7 +124,7 @@ happens in the dashboard where it can be recorded against a person.
 In the dashboard: **Projects → your project → Secrets → Add secrets**.
 
 Values are encrypted before they are stored. You will not see one again unless
-someone explicitly grants you permission to reveal it — including if you are the
+someone explicitly grants you permission to reveal it, including if you are the
 person who typed it in.
 
 ### Importing a .env file
@@ -135,11 +135,11 @@ spanning several lines are all understood. Pick the environment once at the top
 and everything in the batch goes there.
 
 Only the key field does this. A value field takes what you paste literally,
-because that is exactly where a raw credential goes — and a connection string
+because that is exactly where a raw credential goes, and a connection string
 or a PEM block scattered across rows would be worse than no help at all.
 
 The whole import is one transaction. If any key is malformed or already exists,
-nothing is stored — an environment holding half a configuration is worse than one
+nothing is stored: an environment holding half a configuration is worse than one
 holding none, because an application will boot on it.
 
 Lines that could not be read are named rather than dropped, so a credential
@@ -156,8 +156,8 @@ applications pick it up on their next start. Nothing they hold changes: same
 project, same environment, same key.
 
 > Rotating here changes the value **Warder stores**. It does not change the
-> credential at the provider. Rotate it at the provider first — generate the new
-> database password, the new API key — then paste the new value here. The
+> credential at the provider. Rotate it at the provider first: generate the new
+> database password, the new API key, then paste the new value here. The
 > dialog says this too, because assuming otherwise leaves a live credential in
 > circulation.
 
@@ -173,24 +173,24 @@ loud failure beats a credential that quietly outlives its purpose.
 
 Three steps, and the order matters.
 
-**1. Create an identity** — *Identities → New identity*
+**1. Create an identity**, *Identities → New identity*
 
 One per thing that runs your code: the API in production, the CI job, an agent.
 Separate identities mean you can revoke one without disturbing the others. A new
 identity holds no access at all.
 
-**2. Grant it access** — *your project → Access → Grant access*
+**2. Grant it access**, *your project → Access → Grant access*
 
 Choose the identity, the environment, and the capabilities. Two checkboxes:
 
-- **Can use** — a runtime receives the value and injects it into a process.
-- **Can see** — a person can display the plaintext in the dashboard.
+- **Can use**: a runtime receives the value and injects it into a process.
+- **Can see**: a person can display the plaintext in the dashboard.
 
 Applications want the first. They almost never want the second.
 
-**3. Issue it a token** — *your project → Tokens → New token*
+**3. Issue it a token**, *your project → Tokens → New token*
 
-The token is shown once. Only a verifier is stored, so it cannot be shown again —
+The token is shown once. Only a verifier is stored, so it cannot be shown again:
 if it is lost, revoke it and issue another.
 
 Then, in the runtime's own environment:
@@ -217,8 +217,8 @@ session would have expired.
 
 ## Onboarding an AI agent
 
-An agent is not you. It reads untrusted input — issues, pull requests,
-dependency READMEs — and can be talked into things. Give it its own identity.
+An agent is not you. It reads untrusted input, issues, pull requests,
+dependency READMEs, and can be talked into things. Give it its own identity.
 
 *Identities → New identity → **AI agent***, and set an expiry. The session ends
 by itself; nobody has to remember to clean it up.
@@ -243,7 +243,7 @@ change who has access. The dashboard API refuses its token outright.
 What this does **not** do: `ward run -- npm test` starts a process whose
 environment holds the test credentials, and the agent can read that process's
 environment. The protection is that those are test credentials, in development,
-scoped as narrowly as you chose — not that the agent is prevented from reading
+scoped as narrowly as you chose: not that the agent is prevented from reading
 what it was authorized to use. See [limitations](security/limitations.md).
 
 ---
@@ -286,11 +286,11 @@ place.
 **Warder never asks you to choose somebody else's password.** The invitee sets
 their own when they open the link, so you do not learn it, you never have to
 send a credential over chat, and you cannot sign in as them afterwards. The
-address and the role are fixed when you create the invitation — whoever opens
+address and the role are fixed when you create the invitation, whoever opens
 the link joins as exactly that person, at exactly that role, and can change
 neither.
 
-The role governs administration. It grants no access to any secret value — that
+The role governs administration. It grants no access to any secret value, that
 is always a separate, explicit grant.
 
 **Removing someone:** *Members*, then remove them. Their sessions stop working
@@ -334,7 +334,7 @@ are not a member of. `ward project list` shows what you can actually see.
 
 It authenticated and was granted nothing. The line above the command names
 what it was refused. An identity needs an explicit **Can use** grant on that
-environment — being a member of the organization is not enough, and no role
+environment: being a member of the organization is not enough, and no role
 confers it.
 
 ### A secret shows `EXPIRED`
@@ -345,8 +345,8 @@ to clear the expiry.
 ### That email and password do not match an account
 
 Exactly what it says, and it does not distinguish which half was wrong. If you
-have never signed in to this deployment, you may not have an account on it yet
-— ask for an invitation.
+have never signed in to this deployment, you may not have an account on it yet:
+ask for an invitation.
 
 ---
 
@@ -356,13 +356,13 @@ have never signed in to this deployment, you may not have an account on it yet
 
 | Command | What it does |
 |---|---|
-| `ward init --project P --env E` | Write `.warder.json` — commit it |
+| `ward init --project P --env E` | Write `.warder.json`, commit it |
 | `ward login` | Sign in and store a session at mode 0600 |
 | `ward logout` | Revoke the session and remove it locally |
 | `ward status` | Who you are signed in as |
 | `ward project list` | Projects you can see |
 | `ward environment list` | Environments in a project |
-| `ward secret list` | Secret names, versions, expiry — never values |
+| `ward secret list` | Secret names, versions, expiry: never values |
 | `ward run -- <cmd>` | Run with authorized secrets injected |
 
 Flags for `ward run`:

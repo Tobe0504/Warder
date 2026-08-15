@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
  * Renders a documentation page.
  *
  * `react-markdown` produces React elements rather than an HTML string, so
- * nothing here goes through `dangerouslySetInnerHTML` — which the boundary
+ * nothing here goes through `dangerouslySetInnerHTML`, which the boundary
  * check forbids outright, and which would be a poor look on a security
  * product's own website.
  *
@@ -23,8 +23,8 @@ export function Markdown({ body, file }: { body: string; file: string }) {
   /*
    * No width cap on the container.
    *
-   * The measure is capped on the elements that need it — `prose-note` puts a
-   * 68ch limit on every paragraph and list — rather than on the wrapper. A cap
+   * The measure is capped on the elements that need it, `prose-note` puts a
+   * 68ch limit on every paragraph and list, rather than on the wrapper. A cap
    * here would apply to tables and code blocks too, and the widest tables in
    * these documents (the threat model's asset inventory, for one) then get
    * squeezed into three cramped columns while the column beside them sits
@@ -68,14 +68,14 @@ function resolveDocHref(href: string, fromFile: string): string | null {
 function markdownComponents(file: string): Components {
   return {
     h1: ({ children }) => (
-      <h2 {...headingProps(children, "text-heading font-semibold mt-10 mb-3")}>{children}</h2>
+      <h2 {...headingProps(children, "text-title font-semibold mt-10 mb-3")}>{children}</h2>
     ),
 
     h2: ({ children }) => (
       <h2
         {...headingProps(
           children,
-          "text-heading font-semibold mt-12 mb-3 pt-6 border-t first:mt-0 first:border-t-0 first:pt-0",
+          "text-title font-semibold mt-12 mb-3 pt-6 border-t first:mt-0 first:border-t-0 first:pt-0",
         )}
       >
         {children}
@@ -83,7 +83,7 @@ function markdownComponents(file: string): Components {
     ),
 
     h3: ({ children }) => (
-      <h3 {...headingProps(children, "text-body font-semibold mt-8 mb-2")}>{children}</h3>
+      <h3 {...headingProps(children, "text-heading font-semibold mt-8 mb-2")}>{children}</h3>
     ),
 
     h4: ({ children }) => (
@@ -92,7 +92,7 @@ function markdownComponents(file: string): Components {
       </h4>
     ),
 
-    p: ({ children }) => <p className="prose-note my-4 text-muted-foreground">{children}</p>,
+    p: ({ children }) => <p className="prose-doc my-4 text-muted-foreground">{children}</p>,
 
     // Emphasis carries the load-bearing sentences in these documents, so it
     // steps up to full-contrast foreground rather than staying muted.
@@ -136,20 +136,20 @@ function markdownComponents(file: string): Components {
         );
       }
 
-      // A path into the source tree — `../internal/cli/run.go` and the like.
+      // A path into the source tree, `../internal/cli/run.go` and the like.
       // There is no page for it, and a dead link is worse than none, so it
       // renders as the file path it is.
       return <code className="rounded bg-muted px-1 py-0.5 font-mono text-meta">{children}</code>;
     },
 
     ul: ({ children }) => (
-      <ul className="my-4 space-y-2 prose-note text-muted-foreground [&_ul]:mt-2 [&_ul]:ml-5">
+      <ul className="my-4 space-y-2 prose-doc text-muted-foreground [&_ul]:mt-2 [&_ul]:ml-5">
         {children}
       </ul>
     ),
 
     ol: ({ children }) => (
-      <ol className="my-4 ml-5 list-decimal space-y-2 prose-note text-muted-foreground marker:text-muted-foreground">
+      <ol className="my-4 ml-5 list-decimal space-y-2 prose-doc text-muted-foreground marker:text-muted-foreground">
         {children}
       </ol>
     ),
@@ -191,13 +191,13 @@ function markdownComponents(file: string): Components {
     thead: ({ children }) => <thead className="border-b bg-muted/50">{children}</thead>,
 
     th: ({ children }) => (
-      <th className="whitespace-nowrap px-3 py-2 text-meta font-medium">{children}</th>
+      <th className="whitespace-nowrap px-3 py-2 text-body font-medium">{children}</th>
     ),
 
     tr: ({ children }) => <tr className="border-b last:border-b-0">{children}</tr>,
 
     td: ({ children }) => (
-      <td className="px-3 py-2 align-top text-meta text-muted-foreground [&>code]:whitespace-nowrap">
+      <td className="px-3 py-2 align-top text-body text-muted-foreground [&>code]:whitespace-nowrap">
         {children}
       </td>
     ),

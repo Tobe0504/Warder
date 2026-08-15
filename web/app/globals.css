@@ -4,7 +4,7 @@
  * Warder's visual language.
  *
  * The interface is a security tool that people look at while under some
- * pressure — during an incident, while onboarding a contractor, while deciding
+ * pressure: during an incident, while onboarding a contractor, while deciding
  * whether to revoke something. So it is quiet: near-monochrome, one accent, and
  * colour reserved for the two states that actually matter, which are "can use"
  * and "can see".
@@ -26,8 +26,8 @@
    * read as more or less important than anything else.
    *
    * Five steps, each far enough from its neighbour to carry hierarchy on its
-   * own. Colour does additional work — muted-foreground separates secondary
-   * text from primary at the same size — so the scale does not need more steps
+   * own. Colour does additional work, muted-foreground separates secondary
+   * text from primary at the same size, so the scale does not need more steps
    * than this.
    */
   --text-title: 1.375rem; /* 22px */
@@ -53,7 +53,7 @@
    *
    * An earlier version aliased them to the steps above with `var()`. Tailwind
    * resolves @theme statically, could not follow a reference to another theme
-   * key, and silently dropped the whole `text-*` namespace — taking the colour
+   * key, and silently dropped the whole `text-*` namespace, taking the colour
    * utilities with it, since `text-primary-foreground` lives in the same
    * family. The result was white text on a white button.
    *
@@ -89,8 +89,8 @@
 /*
  * Prose.
  *
- * The explanatory paragraphs in this interface carry the security model — what
- * a capability means, what revoking actually does — so they are the text most
+ * The explanatory paragraphs in this interface carry the security model: what
+ * a capability means, what revoking actually does, so they are the text most
  * worth reading and were the text least set up for it: 14px running the full
  * width of a 1400px container is roughly 190 characters a line, and the eye
  * loses its place on every return.
@@ -104,8 +104,27 @@
   text-wrap: pretty;
 }
 
+/*
+ * Documentation prose.
+ *
+ * Its own step rather than prose-note's, because the two do different jobs. A
+ * note in the dashboard is an aside beside a table, and it should sit below
+ * the row it explains. A documentation page is the content; it is what someone
+ * came to read, at length, and reading it at the size of an aside is tiring in
+ * a way that a two-line note never is.
+ *
+ * Body size, so the docs match everything else in the product, with leading
+ * loosened for continuous reading and the same cap on the measure.
+ */
+@utility prose-doc {
+  font-size: var(--text-body);
+  line-height: 1.7;
+  max-width: 68ch;
+  text-wrap: pretty;
+}
+
 :root {
-  /* Native widgets — scrollbars, form controls, the caret — follow this. */
+  /* Native widgets: scrollbars, form controls, the caret, follow this. */
   color-scheme: light;
 
   --background: oklch(99% 0 0);
@@ -179,7 +198,7 @@
      *
      * The page and the sidebar are both #000; they are separated by a border
      * rather than by a difference in lightness. Surfaces that need to read as
-     * raised — cards, table bodies, menus — sit just above it. Chroma is zero
+     * raised: cards, table bodies, menus, sit just above it. Chroma is zero
      * throughout, so the greys are actually grey rather than carrying the faint
      * blue cast a tinted neutral gives them.
      */
@@ -205,7 +224,7 @@
     --destructive: oklch(62% 0.19 27);
     --destructive-foreground: oklch(98% 0 0);
 
-    /* The two meaningful colours keep their chroma — they are the only things
+    /* The two meaningful colours keep their chroma; they are the only things
        on the page that are allowed to be coloured. */
     --can-use: oklch(74% 0.15 165);
     --can-use-surface: oklch(24% 0.05 165);
@@ -228,7 +247,7 @@
    *
    * The page and the sidebar are both #000; they are separated by a border
    * rather than by a difference in lightness. Surfaces that need to read as
-   * raised — cards, table bodies, menus — sit just above it. Chroma is zero
+   * raised: cards, table bodies, menus, sit just above it. Chroma is zero
    * throughout, so the greys are actually grey rather than carrying the faint
    * blue cast a tinted neutral gives them.
    */
@@ -254,7 +273,7 @@
   --destructive: oklch(62% 0.19 27);
   --destructive-foreground: oklch(98% 0 0);
 
-  /* The two meaningful colours keep their chroma — they are the only things
+  /* The two meaningful colours keep their chroma; they are the only things
      on the page that are allowed to be coloured. */
   --can-use: oklch(74% 0.15 165);
   --can-use-surface: oklch(24% 0.05 165);

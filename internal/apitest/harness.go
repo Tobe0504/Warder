@@ -139,7 +139,7 @@ func New(t *testing.T) *Harness {
 
 	// The API answers every failure with a deliberately uninformative message,
 	// which is right for callers and useless for a failing test. The captured
-	// server log carries the real cause, so it is printed when a test fails —
+	// server log carries the real cause, so it is printed when a test fails:
 	// and only then, so that passing runs stay quiet.
 	t.Cleanup(func() {
 		if t.Failed() && logs.Len() > 0 {

@@ -10,8 +10,8 @@ import (
 // is unreachable, or the operator has revoked access.
 //
 // It is reported to callers as a generic decryption failure. The distinction
-// matters operationally — a restored database with the wrong keyring configured
-// produces this, not corruption — but it must never reach an API response,
+// matters operationally: a restored database with the wrong keyring configured
+// produces this, not corruption, but it must never reach an API response,
 // where "this key version is unknown here" would be an information leak.
 var ErrKeyUnavailable = errors.New("crypto: key unavailable")
 

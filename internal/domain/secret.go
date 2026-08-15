@@ -17,7 +17,7 @@ type Project struct {
 }
 
 // Environment is the unit at which access is normally granted. Environments are
-// not ranked by the policy engine — "production" holds no special meaning in
+// not ranked by the policy engine, "production" holds no special meaning in
 // code. Isolation comes from grants and token scopes naming a specific
 // environment ID, which is what makes custom environments (preview, qa,
 // sandbox) exactly as safe as the built-in ones.

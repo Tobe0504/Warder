@@ -26,7 +26,7 @@ type LoginResponse = {
  */
 export async function POST(request: Request) {
   return handlePreAuthRoute(async () => {
-    // There is no CSRF token to check yet — no session exists — but the origin
+    // There is no CSRF token to check yet: no session exists, but the origin
     // still has to be right. Without this, another site can forge a sign-in
     // with the attacker's own credentials and leave the victim working inside
     // the attacker's organization.

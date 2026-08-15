@@ -13,7 +13,7 @@ type SecretSummary = { id: string; key: string };
  *
  * A multi-select combobox rather than a free-text field. Narrowing a token to
  * specific keys is a least-privilege decision, and it only works if the names
- * are exactly right — a typo does not fail loudly, it scopes the token to a
+ * are exactly right, a typo does not fail loudly, it scopes the token to a
  * secret that does not exist and the workload gets nothing at runtime for a
  * reason invisible from this dialog. So the options come from the environment
  * that was actually selected, and are picked rather than typed.
@@ -241,7 +241,7 @@ export function SecretKeyPicker({
         </div>
       )}
 
-      {/* Only worth saying once a choice has been made — the placeholder
+      {/* Only worth saying once a choice has been made: the placeholder
           already covers the empty case, and the dialog's own note covers what
           empty means. */}
       {selected.length > 0 && (

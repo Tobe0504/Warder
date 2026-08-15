@@ -29,7 +29,7 @@ deploy. None of them are handed the value, and none of them need to be.
 | An agent's session is prompt-injected. | It holds `USE_SECRET` on development. It cannot print a value, reach production, or grant itself anything. |
 | Someone leaked a `.env`. | There wasn't one. |
 | Who can see this credential? | One query. Usually: nobody. |
-| What happens if I revoke this token? | The next request is denied — including sessions already derived from it. |
+| What happens if I revoke this token? | The next request is denied, including sessions already derived from it. |
 
 ---
 
@@ -88,7 +88,7 @@ WARDER_URL=warder://<service-token>@api.internal:8443/production?origin=https://
 ```
 
 Four separate variables could be configured three-quarters of the way, and the
-result — a production address with a stale token — fails at the first request in
+result: a production address with a stale token: fails at the first request in
 a way that looks like a network problem. One value either parses completely or
 the process refuses to start. It also means the token cannot be left pointing at
 the wrong endpoint, and `warder+insecure://` with `/production` is a startup
@@ -128,7 +128,7 @@ READ_SECRET      a human may see the value
 CREATE_SECRET  ROTATE_SECRET  REVOKE_SECRET  MANAGE_ACCESS  READ_AUDIT
 ```
 
-`USE_SECRET` never implies `READ_SECRET`. **No role confers either one** — both
+`USE_SECRET` never implies `READ_SECRET`. **No role confers either one**: both
 always come from an explicit, audited, usually time-boxed grant. An owner who has
 granted themselves nothing can administer the platform and still not read a
 value.
@@ -144,7 +144,7 @@ the reason the docs never say "developers can never access secrets".
 ```bash
 ward login                              # session stored at mode 0600
 ward project list
-ward secret list                        # names, versions, expiry — never values
+ward secret list                        # names, versions, expiry: never values
 ward run -- npm run dev                 # the one that matters
 ward run --key DATABASE_URL -- npm test # ask for less, expose less
 ```
@@ -175,9 +175,9 @@ For the dashboard:
 cd web && npm run verify
 ```
 
-That runs the boundary checks — which fail on `NEXT_PUBLIC_`, on a client
+That runs the boundary checks, which fail on `NEXT_PUBLIC_`, on a client
 component reaching a server module, on `dangerouslySetInnerHTML`, and on browser
-storage — then typecheck and unit tests.
+storage: then typecheck and unit tests.
 
 The suite in `internal/apitest` is the part worth reading. It is written to fail
 when a guarantee breaks, not to cover lines:
@@ -202,7 +202,7 @@ when a guarantee breaks, not to cover lines:
 | [**Developer guide**](docs/developer-guide.md) | **Every command, in the order you need it** |
 | [Architecture](docs/architecture/overview.md) | Surfaces, request paths, extension points |
 | [Threat model](docs/security/threat-model.md) | Actors, boundaries, mitigations, known gaps |
-| [**Limitations**](docs/security/limitations.md) | **What this does not do — read this** |
+| [**Limitations**](docs/security/limitations.md) | **What this does not do: read this** |
 | [Key management](docs/security/key-management.md) | Envelope encryption, rotation, exposure response |
 | [Disaster recovery](docs/security/disaster-recovery.md) | Restore, and what a restore silently undoes |
 
@@ -210,7 +210,7 @@ when a guarantee breaks, not to cover lines:
 
 ## Status
 
-MVP. The engine — encryption, authorization, identity, delivery, audit — is
+MVP. The engine: encryption, authorization, identity, delivery, audit, is
 built and tested. It has not been audited, certified, or assessed against any
 compliance framework, and several controls a production deployment needs are
 absent and listed in [limitations](docs/security/limitations.md). Read that page

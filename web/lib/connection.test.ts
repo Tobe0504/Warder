@@ -10,7 +10,7 @@ import { ConnectionError, parseConnection } from "./connection.ts";
  *
  * These matter more than their size suggests. Every failure mode here is a
  * misconfiguration that would otherwise surface in production as something
- * else — a network error, an unexplained 401, or worst of all, a token sent
+ * else: a network error, an unexplained 401, or worst of all, a token sent
  * over plain HTTP without anyone noticing.
  */
 

@@ -10,14 +10,14 @@ import { cn } from "@/lib/utils";
  * The command to run against this environment.
  *
  * This is the piece that connects the dashboard to what the product actually
- * does. Someone looking at a list of masked values has a reasonable question —
- * "so how do I use these?" — and the answer should be on the same screen,
+ * does. Someone looking at a list of masked values has a reasonable question:
+ * "so how do I use these?", and the answer should be on the same screen,
  * already filled in with the project and environment they are looking at,
  * rather than in documentation they have to go find.
  *
  * Nothing here is secret. It is a project slug and an environment slug, both of
  * which are already on the page. The credential comes from `ward login` or
- * from the runtime's own environment, and never appears in a command line —
+ * from the runtime's own environment, and never appears in a command line:
  * which is why the snippet shows `ward login` as a separate step rather than
  * offering a flag that would put a token into shell history.
  */
@@ -55,7 +55,7 @@ export function RunCommand({
 
       {/*
         Three steps, side by side on a wide screen and stacked on a narrow one.
-        They are numbered because the order matters — `ward run` before
+        They are numbered because the order matters, `ward run` before
         `ward login` fails with an error that does not explain itself.
       */}
       <div className="grid gap-4 p-3 md:grid-cols-3">
@@ -63,7 +63,7 @@ export function RunCommand({
           step={1}
           label="Point this directory at the environment"
           command={`ward init --project ${project} --env ${environment}`}
-          hint="Writes .warder.json — safe to commit, holds no credentials."
+          hint="Writes .warder.json: safe to commit, holds no credentials."
           copied={copied === "init"}
           onCopy={() => copy(`ward init --project ${project} --env ${environment}`, "init")}
         />
@@ -125,7 +125,7 @@ function Snippet({
         {/*
           Commands wrap rather than scroll. A command clipped at the panel edge
           reads as complete when it is not, and someone retyping from what they
-          can see gets a broken command — which is a worse outcome than two
+          can see gets a broken command, which is a worse outcome than two
           lines of text.
         */}
         <code className="min-w-0 flex-1 whitespace-pre-wrap break-all font-mono prose-note">

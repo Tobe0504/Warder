@@ -20,7 +20,7 @@ export async function GET(request: Request, { params }: Params) {
  *
  * Each field is read and validated individually. `allEnvironments` in
  * particular is only ever true when the client explicitly sent `true`, so a
- * missing or malformed field produces a narrow grant rather than a wildcard —
+ * missing or malformed field produces a narrow grant rather than a wildcard:
  * the direction a mistake should fail in.
  */
 export async function POST(request: Request, { params }: Params) {

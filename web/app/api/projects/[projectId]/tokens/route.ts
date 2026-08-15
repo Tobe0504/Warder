@@ -20,7 +20,7 @@ export async function GET(request: Request, { params }: Params) {
  *
  * The response carries the full credential exactly once. It is passed straight
  * to the caller for display and is not stored here, not logged, and not
- * retrievable afterwards — the core API keeps only a verifier.
+ * retrievable afterwards: the core API keeps only a verifier.
  */
 export async function POST(request: Request, { params }: Params) {
   const { projectId } = await params;

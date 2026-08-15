@@ -35,7 +35,7 @@ export async function handleRoute(request: Request, handler: Handler): Promise<N
  * The same shaping, without the CSRF check.
  *
  * Sign-in and organization creation run before a session exists, so there is no
- * double-submit token to verify — they enforce the origin check themselves.
+ * double-submit token to verify, they enforce the origin check themselves.
  * They need this rather than handleRoute, because routing their failures back
  * through a wrapper that starts by checking CSRF would replace the real error
  * with "missing security token" and send whoever is debugging it somewhere

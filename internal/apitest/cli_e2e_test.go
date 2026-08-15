@@ -44,7 +44,7 @@ func TestCLIRunInjectsSecretsIntoAChildProcess(t *testing.T) {
 	token := h.NewToken(org, project.ID, project.DevelopmentID, identityID, []string{"USE_SECRET"}, nil)
 
 	// The child compares rather than prints, so the value never reaches the
-	// test output — the same discipline the CLI itself follows.
+	// test output: the same discipline the CLI itself follows.
 	script := `
 		if [ "$DATABASE_URL" = "` + value + `" ]; then echo DATABASE_URL_OK; else echo DATABASE_URL_MISSING; fi
 		if [ -n "$REDIS_URL" ]; then echo REDIS_URL_OK; else echo REDIS_URL_MISSING; fi
@@ -119,7 +119,7 @@ func TestCLIWritesNothingToDisk(t *testing.T) {
 		t.Fatalf("ward run failed: %v\n%s", err, output)
 	}
 
-	// Nothing was created in the working directory at all — no .env, no cache,
+	// Nothing was created in the working directory at all: no .env, no cache,
 	// no temporary file.
 	entries, err := os.ReadDir(workDir)
 	if err != nil {
