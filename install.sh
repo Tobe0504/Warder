@@ -111,15 +111,32 @@ chmod +x "$tmp/$BINARY"
 
 target="${WARD_INSTALL_DIR:-}"
 if [ -z "$target" ]; then
-    # The first writable directory already on PATH. /usr/local/bin is
-    # deliberately not assumed: it is root-owned on Apple Silicon, and a build
-    # written there with sudo is one nobody can update later without sudo.
+    # A writable directory that is *already on PATH*, preferred over one that
+    # merely exists. An earlier version checked only for existence and picked
+    # ~/.local/bin, which plenty of machines have without ever putting it on
+    # PATH — so the install reported success and the command was not found.
+    #
+    # /usr/local/bin is deliberately last: it is root-owned on Apple Silicon,
+    # and a build written there with sudo is one nobody can update later
+    # without sudo.
     for candidate in "$HOME/.local/bin" /opt/homebrew/bin "$HOME/bin" /usr/local/bin; do
         if [ -d "$candidate" ] && [ -w "$candidate" ]; then
-            target="$candidate"
-            break
+            case ":$PATH:" in
+                *":$candidate:"*) target="$candidate"; break ;;
+            esac
         fi
     done
+
+    # Nothing on PATH is writable. Fall back to any writable candidate and let
+    # the closing message explain what to add.
+    if [ -z "$target" ]; then
+        for candidate in "$HOME/.local/bin" /opt/homebrew/bin "$HOME/bin"; do
+            if [ -d "$candidate" ] && [ -w "$candidate" ]; then
+                target="$candidate"
+                break
+            fi
+        done
+    fi
 fi
 [ -n "$target" ] || target="$HOME/.local/bin"
 

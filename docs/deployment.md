@@ -56,21 +56,26 @@ Install the API binary locally first — you will use it to generate keys and to
 run the migration:
 
 ```bash
-go build -o "$HOME/.local/bin/warder-api" ./cmd/warder-api
+go build -o "$(dirname "$(command -v go)")/warder-api" ./cmd/warder-api
 ```
 
-Check it is reachable before going on:
+Or name a directory yourself — it has to be one that is already on your PATH,
+not merely one that exists. On a Mac with Homebrew, `/opt/homebrew/bin` is the
+reliable answer; `~/.local/bin` exists on plenty of machines that never put it
+on PATH.
+
+```bash
+go build -o /opt/homebrew/bin/warder-api ./cmd/warder-api
+```
+
+Check it before going on:
 
 ```bash
 warder-api
 ```
 
-That prints the list of commands. If instead you get `command not found`, the
-directory is not on your PATH:
-
-```bash
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc && exec zsh
-```
+That prints the list of commands. `command not found` means the directory you
+chose is not on your PATH — `echo $PATH` will show you which ones are.
 
 ## 1. Generate the keys
 
