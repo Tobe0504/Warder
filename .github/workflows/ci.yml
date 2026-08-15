@@ -1,0 +1,179 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Least privilege by default. A job that needs more asks for it explicitly.
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  go:
+    name: Go — build, vet, test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: warder
+          POSTGRES_PASSWORD: ci-only-not-a-real-password
+          POSTGRES_DB: warder
+        options: >-
+          --health-cmd "pg_isready -U warder"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          check-latest: true
+
+      - name: Verify module checksums
+        # Fails if go.sum does not match what the modules actually contain,
+        # which is the check that catches a tampered dependency.
+        run: go mod verify
+
+      - name: Confirm go.mod is tidy
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod go.sum
+
+      - name: Check formatting
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "These files need gofmt:"; echo "$unformatted"; exit 1
+          fi
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Build
+        run: go build ./...
+
+      - name: Test with the race detector
+        # The runtime path is concurrent by nature — many workloads, one process.
+        # A data race there is a security bug, not just a flake.
+        env:
+          WARDER_TEST_DATABASE_URL: postgres://warder:ci-only-not-a-real-password@localhost:5432/warder?sslmode=disable
+        run: go test -race -count=1 ./...
+
+  vulnerabilities:
+    name: Go — known vulnerabilities
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+      - name: govulncheck
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
+  web:
+    name: Web — typecheck and build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install from the lockfile
+        # `ci` installs exactly what the lockfile pins and fails if package.json
+        # and the lockfile disagree. `install` would quietly resolve new versions.
+        run: npm ci
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+
+      - name: Client/server boundary checks
+        # Fails on NEXT_PUBLIC_, on a client component reaching a server module,
+        # on dangerouslySetInnerHTML, and on browser storage.
+        run: npm run check
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build
+        env:
+          # A build-time placeholder. The real connection URI is supplied at
+          # deploy time and is never present in CI.
+          WARDER_URL: warder+insecure://ci-placeholder-token-at-least-32-characters@127.0.0.1:8080/development
+        run: npm run build
+
+  secret-scan:
+    name: Secret scanning
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Gitleaks needs history to scan commits, not just the tree.
+          fetch-depth: 0
+
+      - name: Scan for committed credentials
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check for the project's own credential formats
+        # A committed Warder credential would be caught by the pattern above
+        # only if gitleaks knows the shape, so it is checked directly.
+        run: |
+          if git grep -nE '\b(vlt|vrt|vsn)_[A-Z2-7]{10}_[A-Z2-7]{52}\b' -- . ':!*_test.go' ':!docs/*'; then
+            echo "A Warder credential appears to be committed."
+            exit 1
+          fi
+
+  leak-check:
+    name: Plaintext exposure surface
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Review every point plaintext leaves the system
+        # Extracting plaintext requires calling Expose, so the set of places it
+        # can escape is exactly the set of call sites. This prints them on every
+        # run: the list should be short, and growth should be noticed in review.
+        run: |
+          echo "Call sites that extract plaintext:"
+          git grep -n '\.Expose()\|\.ExposeString()' -- '*.go' || true
+          count=$(git grep -c '\.Expose()\|\.ExposeString()' -- '*.go' ':!*_test.go' | awk -F: '{s+=$2} END {print s+0}')
+          echo "Non-test call sites: $count"
+          if [ "$count" -gt 8 ]; then
+            echo "More places now extract plaintext than expected. Review each one."
+            exit 1
+          fi
+
+      - name: Refuse client-exposed secrets
+        # NEXT_PUBLIC_ variables are compiled into the browser bundle. None of
+        # this application's configuration belongs there.
+        run: |
+          if git grep -n 'NEXT_PUBLIC_' -- web/; then
+            echo "NEXT_PUBLIC_ variables are shipped to the browser. Nothing here belongs in one."
+            exit 1
+          fi

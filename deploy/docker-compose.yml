@@ -1,0 +1,30 @@
+# Local development dependencies only.
+#
+# Redis is deliberately absent. Plaintext secrets are never cached, and the MVP
+# rate limiter runs in process, so there is nothing for it to do yet. Adding it
+# would mean adding a service that sees request patterns without earning it.
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: warder-postgres
+    environment:
+      # Development-only credentials. Nothing here is a real secret, and the
+      # container is not exposed beyond the loopback interface below.
+      POSTGRES_USER: warder
+      POSTGRES_PASSWORD: warder-local-dev-only
+      POSTGRES_DB: warder
+    ports:
+      # Bound to loopback so the development database is not reachable from the
+      # local network.
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - warder-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U warder -d warder"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  warder-postgres-data:

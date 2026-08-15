@@ -1,0 +1,37 @@
+# Secrets and key material must never reach the repository. The .env.example
+# file is committed and contains only obviously fake placeholder values.
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+keyring.txt
+
+# The CLI's stored login, in case anyone runs it with WARDER_CONFIG_DIR set to
+# somewhere inside the tree.
+credentials.json
+.warder/
+
+# Build output
+/bin/
+/dist/
+warder-api
+ward
+
+# Go
+*.test
+*.out
+coverage.*
+
+# Node
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# Editors and platform files
+.DS_Store
+.idea/
+.vscode/
+*.swp
