@@ -1,5 +1,7 @@
 import "server-only";
 
+import { headers } from "next/headers";
+
 import { connection } from "./env";
 import { getSessionToken } from "./session";
 
@@ -26,6 +28,27 @@ export class CoreApiError extends Error {
     this.status = status;
     this.code = code;
     this.details = details;
+  }
+}
+
+/**
+ * The address of the browser that caused this request, if there is one.
+ *
+ * Returns nothing outside a request — a build-time render, say — rather than
+ * inventing an address, so the core API falls back to the connection it can
+ * actually see.
+ */
+async function callerAddress(): Promise<string | null> {
+  try {
+    const incoming = await headers();
+    const real = incoming.get("x-real-ip")?.trim();
+    if (real) return real;
+
+    const forwarded = incoming.get("x-forwarded-for");
+    const first = forwarded?.split(",")[0]?.trim();
+    return first || null;
+  } catch {
+    return null;
   }
 }
 
@@ -73,6 +96,23 @@ export async function callCoreApi<T>(path: string, options: CallOptions = {}): P
       throw new NotAuthenticatedError();
     }
     headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  // Forward the browser's address.
+  //
+  // Without this every request reaches the core API from one of Vercel's
+  // egress addresses, which breaks two things quietly. Rate limits keyed by IP
+  // become a single shared bucket — five sign-ins a minute across every user
+  // on the deployment — and every audit entry records Vercel instead of the
+  // person who acted.
+  //
+  // x-real-ip is preferred over x-forwarded-for: Vercel sets both, and
+  // x-forwarded-for can also carry entries a client supplied. The core API
+  // reads the left-most entry of the header it is given, so it is given
+  // exactly one address and no list to be confused by.
+  const clientIP = await callerAddress();
+  if (clientIP) {
+    headers.set("X-Forwarded-For", clientIP);
   }
 
   let body: string | undefined;
@@ -132,6 +172,21 @@ export async function callCoreApi<T>(path: string, options: CallOptions = {}): P
     }
 
     if (response.status === 401) {
+      // On an anonymous call there is no session to have ended. Sign-in
+      // reaching here means the credentials were refused, and telling someone
+      // their session expired while they are trying to start one sends them
+      // looking for a problem that does not exist.
+      if (options.anonymous) {
+        throw new CoreApiError(
+          401,
+          "invalid_credentials",
+          // Deliberately does not say which half was wrong: the core API
+          // spends the same work either way so that a response cannot answer
+          // "does this address have an account", and this message must not
+          // give away what the timing does not.
+          "That email and password do not match an account.",
+        );
+      }
       throw new NotAuthenticatedError();
     }
 
