@@ -48,6 +48,11 @@ type Config struct {
 	// code.
 	RuntimeAddr string
 
+	// AllowPublicRuntimeBind acknowledges that something outside this process
+	// decides what can reach the runtime port. Required in production when the
+	// listener binds every interface, which is the only option in a container.
+	AllowPublicRuntimeBind bool
+
 	// ServiceToken authenticates the BFF to the core API. Requests carrying a
 	// user session but no valid service token are refused, which is what stops
 	// a browser that has learned the core API's address from calling it
@@ -76,14 +81,15 @@ type Config struct {
 // Load reads configuration from the environment and validates it.
 func Load() (*Config, error) {
 	cfg := &Config{
-		Env:                  Environment(getenv("WARDER_ENV", string(EnvDevelopment))),
-		DatabaseURL:          os.Getenv("WARDER_DATABASE_URL"),
-		MigrationDatabaseURL: os.Getenv("WARDER_MIGRATION_DATABASE_URL"),
-		AdminAddr:            getenv("WARDER_ADMIN_ADDR", "127.0.0.1:8080"),
-		RuntimeAddr:          getenv("WARDER_RUNTIME_ADDR", "127.0.0.1:8081"),
-		ServiceToken:         os.Getenv("WARDER_SERVICE_TOKEN"),
-		Keyring:              os.Getenv("WARDER_KEYRING"),
-		ActiveKeyVersion:     getenv("WARDER_ACTIVE_KEY_VERSION", "v1"),
+		Env:                    Environment(getenv("WARDER_ENV", string(EnvDevelopment))),
+		DatabaseURL:            os.Getenv("WARDER_DATABASE_URL"),
+		MigrationDatabaseURL:   os.Getenv("WARDER_MIGRATION_DATABASE_URL"),
+		AdminAddr:              getenv("WARDER_ADMIN_ADDR", "127.0.0.1:8080"),
+		RuntimeAddr:            getenv("WARDER_RUNTIME_ADDR", "127.0.0.1:8081"),
+		ServiceToken:           os.Getenv("WARDER_SERVICE_TOKEN"),
+		Keyring:                os.Getenv("WARDER_KEYRING"),
+		ActiveKeyVersion:       getenv("WARDER_ACTIVE_KEY_VERSION", "v1"),
+		AllowPublicRuntimeBind: getenv("WARDER_ALLOW_PUBLIC_RUNTIME_BIND", "") == "true",
 	}
 
 	var err error
@@ -151,8 +157,20 @@ func (c *Config) validate() error {
 		// Binding the runtime API to every interface in production is the kind
 		// of default that turns a network mistake into secret delivery, so it
 		// has to be stated deliberately.
-		if strings.HasPrefix(c.RuntimeAddr, ":") || strings.HasPrefix(c.RuntimeAddr, "0.0.0.0:") {
-			problems = append(problems, "WARDER_RUNTIME_ADDR must bind a specific interface in production")
+		//
+		// "Deliberately" is the operative word, not "never": inside a container
+		// there is no specific interface to name, because the address is
+		// assigned at start and the platform decides what reaches it. So the
+		// requirement is an explicit acknowledgement rather than a prohibition
+		// — someone has to have thought about what sits in front of this port.
+		bindsEverything := strings.HasPrefix(c.RuntimeAddr, ":") ||
+			strings.HasPrefix(c.RuntimeAddr, "0.0.0.0:") ||
+			strings.HasPrefix(c.RuntimeAddr, "[::]:")
+
+		if bindsEverything && !c.AllowPublicRuntimeBind {
+			problems = append(problems, "WARDER_RUNTIME_ADDR binds every interface. "+
+				"Name a specific one, or set WARDER_ALLOW_PUBLIC_RUNTIME_BIND=true if a "+
+				"container platform or load balancer controls what reaches this port")
 		}
 	}
 

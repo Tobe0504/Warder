@@ -1,0 +1,42 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+
+  "//": [
+    "Set the project's Root Directory to `web` in Vercel, so this file and",
+    "package.json are found. One environment variable is required:",
+    "",
+    "  WARDER_URL=warder://<service-token>@<admin-host>:443/production?origin=https://<your-domain>",
+    "",
+    "It is a server-side variable. There is deliberately no NEXT_PUBLIC_",
+    "anything in this application — the browser talks only to this app, so it",
+    "needs no address, no token and no key. CI fails the build if one appears."
+  ],
+
+  "git": {
+    "deploymentEnabled": {
+      "main": true
+    }
+  },
+
+  "headers": [
+    {
+      "//": [
+        "Content-Security-Policy, HSTS and the rest are set per request in",
+        "middleware.ts, where the policy can carry a fresh nonce. Only the two",
+        "that cannot vary per request are declared here."
+      ],
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        }
+      ]
+    }
+  ]
+}

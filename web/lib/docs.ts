@@ -40,10 +40,16 @@ export type DocSection = {
 /**
  * The reading order.
  *
- * Deliberately hand-written rather than derived from the filesystem. Directory
- * listings sort alphabetically, which would open the documentation on "audit"
- * and bury the page most people actually need. The order here is the order
- * someone adopting the product needs things in.
+ * Deliberately hand-written rather than derived from the filesystem, for two
+ * reasons. Directory listings sort alphabetically, which would open the
+ * documentation on "audit" and bury the page most people actually need. And a
+ * listing publishes everything in the directory — including the material that
+ * belongs to people working on Warder rather than people using it.
+ *
+ * Local setup, the test suite and database spelunking live in CONTRIBUTING.md
+ * at the repository root, outside docs/ and therefore outside this site. A
+ * reader here wants to know how to use the product; how to start a Postgres
+ * container is somebody else's question.
  */
 export const DOC_SECTIONS: DocSection[] = [
   {
@@ -62,6 +68,18 @@ export const DOC_SECTIONS: DocSection[] = [
         file: "developer-guide.md",
         title: "Developer guide",
         summary: "Every command you need, in the order you need them.",
+      },
+    ],
+  },
+  {
+    title: "Running Warder",
+    blurb: "For whoever operates the deployment everyone else uses.",
+    docs: [
+      {
+        slug: "deployment",
+        file: "deployment.md",
+        title: "Deploying Warder",
+        summary: "The API, the database and the dashboard — what goes where, and what it costs.",
       },
     ],
   },

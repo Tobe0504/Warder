@@ -1,98 +1,76 @@
 # Developer guide
 
-Every command you need, in the order you need them.
+Everything you need to use Warder day to day, in the order you need it.
 
-- [First run](#first-run) — one time, about five minutes
+This assumes Warder is already running somewhere and you have its address. If
+you are setting up a deployment, see [deployment](deployment.md). If you are
+working on Warder itself, see `CONTRIBUTING.md` in the repository.
+
+- [Installing the CLI](#installing-the-cli)
 - [Daily development](#daily-development)
 - [Adding and rotating secrets](#adding-and-rotating-secrets)
 - [Giving an application access](#giving-an-application-access)
 - [Onboarding an AI agent](#onboarding-an-ai-agent)
 - [CI and containers](#ci-and-containers)
 - [Onboarding and offboarding people](#onboarding-and-offboarding-people)
-- [Installing on a team's machines](#installing-on-a-teams-machines)
-- [Looking in the database](#looking-in-the-database)
-- [Running the tests](#running-the-tests)
 - [Troubleshooting](#troubleshooting)
 - [Command reference](#command-reference)
 
 ---
 
-## First run
+## Installing the CLI
 
-### 1. Start the database
+Developers who are not working on Warder itself should not have to clone it and
+have a Go toolchain to get the CLI. Three ways in, in the order most people
+want them.
 
-```bash
-docker compose -f deploy/docker-compose.yml up -d
-```
-
-Postgres only. There is no Redis: plaintext secrets are never cached, so there
-is nothing for it to do.
-
-### 2. Generate configuration
+### The install script
 
 ```bash
-go run ./cmd/warder-api init
+curl -fsSL https://raw.githubusercontent.com/Tobe0504/Warder/main/install.sh | sh
 ```
 
-This prints two blocks. It generates the encryption key, the service
-credential, and the dashboard's connection URI together, so they agree with each
-other — which is the part that is tedious and easy to get wrong by hand.
-
-Save the first block as `.env` in the repository root, and the line beginning
-`WARDER_URL=` as `web/.env.local`. Both are git-ignored.
-
-> The keyring is the one thing you cannot regenerate. Lose it and every secret
-> encrypted under it is gone. For anything beyond local development, put it in a
-> KMS — see [key management](security/key-management.md).
-
-### 3. Create the schema
+Detects the platform, downloads the matching build from the GitHub release,
+**verifies its SHA-256 against the published checksums**, and installs to the
+first writable directory on PATH. Pin a version or choose a location:
 
 ```bash
-set -a && source .env && set +a
-go run ./cmd/warder-api migrate
+WARD_VERSION=v0.2.0 WARD_INSTALL_DIR="$HOME/.local/bin" ./install.sh
 ```
 
-### 4. Start the API
+The checksum check is not decoration. This binary ends up holding a credential
+that reaches every secret its identity is granted, so a tampered download is
+not a cosmetic problem. The script refuses to install on a mismatch.
+
+> Piping a script into a shell is a real thing to be uneasy about. If your
+> team's policy says no, download it, read it, then run it — it is a hundred
+> lines of POSIX sh and does nothing but fetch, verify, and move a file.
+
+### With Go
 
 ```bash
-go run ./cmd/warder-api serve
+go install github.com/Tobe0504/Warder/cmd/ward@latest
 ```
 
-Two listeners come up: `127.0.0.1:8080` for the dashboard's backend, and
-`127.0.0.1:8081` for runtimes. They are separate so a deployment can put them on
-separate networks.
+Lands in `$(go env GOPATH)/bin`. The version reports as `0.1.0-dev`, because
+the real tag is stamped by the release build rather than compiled in.
 
-A quick check, in another terminal:
+### Straight from a release
+
+Download the archive for the platform from the releases page, check it against
+`checksums.txt`, extract, and put `ward` somewhere on PATH.
+
+### Publishing a release
+
+Tag and push. The release workflow cross-compiles for macOS and Linux on both
+architectures, publishes the checksums, and creates the GitHub release.
 
 ```bash
-curl -s http://127.0.0.1:8081/health
+git tag v0.2.0 && git push origin v0.2.0
 ```
 
-`{"status":"ok"}`. The admin port answers `401` to the same request, which is
-correct — it requires the service credential that only the dashboard holds.
-
-### 5. Start the dashboard
-
-```bash
-cd web && npm install && npm run dev
-```
-
-Open <http://localhost:3000>, choose **Create an organization**, and you are in.
-
-### 6. Install the CLI
-
-From this checkout:
-
-```bash
-go build -o "$HOME/.local/bin/ward" ./cmd/ward
-```
-
-Not `/usr/local/bin` — it is root-owned on Apple Silicon, so that build fails
-silently and leaves you with `command not found`. Use a directory you own that
-is already on your PATH.
-
-See [installing on a team's machines](#installing-on-a-teams-machines) for
-everyone who is not working on Warder itself.
+Binaries are built with `CGO_ENABLED=0` and `-trimpath`, so each one is static
+— no libc to match — and carries no local filesystem paths.
 
 ---
 
@@ -334,153 +312,6 @@ is still correct.
 
 **No credential needs rotating.** That is the point. Someone who could *use*
 `DATABASE_URL` never held it, so their leaving does not put it at risk.
-
----
-
-## Installing on a team's machines
-
-Developers who are not working on Warder itself should not have to clone it and
-have a Go toolchain to get the CLI. Three ways in, in the order most people
-want them.
-
-### The install script
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/Tobe0504/Warder/main/install.sh | sh
-```
-
-Detects the platform, downloads the matching build from the GitHub release,
-**verifies its SHA-256 against the published checksums**, and installs to the
-first writable directory on PATH. Pin a version or choose a location:
-
-```bash
-WARD_VERSION=v0.2.0 WARD_INSTALL_DIR="$HOME/.local/bin" ./install.sh
-```
-
-The checksum check is not decoration. This binary ends up holding a credential
-that reaches every secret its identity is granted, so a tampered download is
-not a cosmetic problem. The script refuses to install on a mismatch.
-
-> Piping a script into a shell is a real thing to be uneasy about. If your
-> team's policy says no, download it, read it, then run it — it is a hundred
-> lines of POSIX sh and does nothing but fetch, verify, and move a file.
-
-### With Go
-
-```bash
-go install github.com/Tobe0504/Warder/cmd/ward@latest
-```
-
-Lands in `$(go env GOPATH)/bin`. The version reports as `0.1.0-dev`, because
-the real tag is stamped by the release build rather than compiled in.
-
-### Straight from a release
-
-Download the archive for the platform from the releases page, check it against
-`checksums.txt`, extract, and put `ward` somewhere on PATH.
-
-### Publishing a release
-
-Tag and push. The release workflow cross-compiles for macOS and Linux on both
-architectures, publishes the checksums, and creates the GitHub release.
-
-```bash
-git tag v0.2.0 && git push origin v0.2.0
-```
-
-Binaries are built with `CGO_ENABLED=0` and `-trimpath`, so each one is static
-— no libc to match — and carries no local filesystem paths.
-
----
-
-## Looking in the database
-
-Useful for understanding what is actually stored, and for convincing yourself
-the separation is real.
-
-Local connection details come from `deploy/docker-compose.yml`:
-
-| Field | Value |
-|---|---|
-| Host | `127.0.0.1` |
-| Port | `5432` |
-| Database | `warder` |
-| User | `warder` |
-| Password | `warder-local-dev-only` |
-
-Development-only credentials, and the container is bound to loopback so nothing
-on the local network can reach it.
-
-### The two schemas
-
-`public` holds metadata: who exists, what secrets exist, who may use them.
-`secret_material` holds ciphertext and wrapped data keys, and nothing else.
-
-That split is the point. A reporting tool, a support dashboard, or an analytics
-replica can be given the whole of `public` while holding no privilege at all on
-`secret_material`.
-
-### Seeing that encryption is doing something
-
-```sql
-SELECT s.key, v.version, v.encryption_key_id,
-       length(m.ciphertext) AS ct_bytes,
-       encode(substring(m.ciphertext from 1 for 12), 'hex') AS first_bytes
-FROM secrets s
-JOIN secret_versions v ON v.secret_id = s.id
-JOIN secret_material.secret_version_material m ON m.secret_version_id = v.id
-ORDER BY s.key;
-```
-
-Two rows holding the *same* value produce completely different ciphertext:
-every version gets its own data key and its own nonce. There is no way to tell
-from this table which secrets share a value.
-
-### Connect as the read-only role instead
-
-Browsing as the owning user shows you everything, which is not how anyone
-should be looking at a production database. `deploy/sql/roles.sql` creates
-`warder_readonly`, which has no privilege on `secret_material` at all, and
-cannot select password hashes or credential verifiers.
-
-Connect DBeaver as that role and the ciphertext tables are simply not there —
-which is the most direct demonstration of the model there is.
-
-> Read that file before running it. It reassigns ownership of every table to
-> `warder_migrator`, so an API still connecting as the old user will stop
-> working until its connection string is updated. It is a production step, not
-> something to run against a local database you are in the middle of using.
-
----
-
-## Running the tests
-
-```bash
-go test ./...
-```
-
-Integration tests skip themselves without a database. With one:
-
-```bash
-export WARDER_TEST_DATABASE_URL="postgres://warder:warder-local-dev-only@127.0.0.1:5432/warder?sslmode=disable"
-go test -race ./...
-```
-
-The suite in `internal/apitest` is the interesting part — it is written to fail
-when a guarantee breaks: a development token reaching production, a value
-appearing in a log, a revoked token's existing sessions still working.
-
-For the dashboard:
-
-```bash
-cd web
-npm run verify     # boundary checks, typecheck, unit tests
-npm run build
-```
-
-`npm run check` alone is the fast one. It fails on `NEXT_PUBLIC_`, on a client
-component reaching a server module, on `dangerouslySetInnerHTML`, and on browser
-storage.
 
 ---
 

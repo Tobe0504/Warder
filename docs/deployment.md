@@ -1,0 +1,218 @@
+# Deploying Warder
+
+Warder is three things: a Go API, a Postgres database, and a Next.js
+dashboard. This walks through putting them on Render and Vercel, which is the
+path with the fewest moving parts.
+
+- [What goes where, and why](#what-goes-where-and-why)
+- [Before you start](#before-you-start)
+- [1. Generate the keys](#1-generate-the-keys)
+- [2. Deploy the API and database](#2-deploy-the-api-and-database)
+- [3. Create the schema](#3-create-the-schema)
+- [4. Deploy the dashboard](#4-deploy-the-dashboard)
+- [5. Point the CLI at it](#5-point-the-cli-at-it)
+- [What to check afterwards](#what-to-check-afterwards)
+- [Things this deployment does not do](#things-this-deployment-does-not-do)
+
+---
+
+## What goes where, and why
+
+Warder serves two HTTP surfaces, and keeping them apart is most of the design.
+
+| Surface | Who talks to it | What it trusts |
+|---|---|---|
+| **Admin** | Only the dashboard's backend | A service credential the dashboard holds |
+| **Runtime** | The `ward` CLI and deployed workloads | Each workload's own token — no shared credential |
+
+They are separate because collapsing them would mean shipping the service
+credential to every workload, and one stolen container would then be a foothold
+on the human-facing API.
+
+Render gives a service one public port, so this runs **two services from one
+image**. Each publishes its own surface and leaves the other on loopback, where
+nothing outside the container can reach it. That is what
+[`render.yaml`](../render.yaml) declares.
+
+```
+  Browser ──► Vercel (dashboard + BFF) ──► Render: warder-admin ──┐
+                                                                  ├──► Postgres
+  ward CLI, your apps ─────────────────► Render: warder-runtime ──┘
+```
+
+> **One consequence worth understanding.** Putting the dashboard on Vercel
+> means its backend reaches the admin surface across the public internet, so
+> the admin port has to be publicly addressable — protected by the service
+> token and nothing else. Running the dashboard on Render instead would let it
+> use the private network and the admin port could stay unreachable. The
+> Vercel path is simpler; this is what it costs.
+
+## Before you start
+
+You need a GitHub account with this repository, a Render account, and a Vercel
+account. All three have free tiers that fit this.
+
+Install the CLI locally first — you will use it to generate keys:
+
+```bash
+go build -o "$HOME/.local/bin/warder-api" ./cmd/warder-api
+```
+
+## 1. Generate the keys
+
+Two secrets, generated once:
+
+```bash
+warder-api keygen
+```
+
+That prints a key encryption key. Every secret Warder stores is encrypted under
+it.
+
+> **This is the one thing you cannot regenerate.** Lose it and every stored
+> secret is unrecoverable — there is no reset, by design. Put a copy somewhere
+> durable and separate from the database before you go further. See
+> [key management](security/key-management.md) and
+> [disaster recovery](security/disaster-recovery.md).
+
+And a service credential, at least 32 characters from a real random source:
+
+```bash
+openssl rand -base64 48
+```
+
+Keep both somewhere you can paste from in the next step. Not in the repository,
+not in a chat message.
+
+## 2. Deploy the API and database
+
+In Render: **New → Blueprint**, pick this repository. Render reads
+`render.yaml` and proposes a database and two services.
+
+It will stop and ask for the values marked `sync: false`. Set the **same value
+on both services**:
+
+| Variable | Value |
+|---|---|
+| `WARDER_KEYRING` | the key from `warder-api keygen` |
+| `WARDER_SERVICE_TOKEN` | the string from `openssl rand` |
+
+Both services read the same ciphertext, so they need the same keyring. The
+service token is only *used* by the admin surface, but the binary requires it
+at startup on both.
+
+Apply. Render builds the image once and starts both services. When they are
+live you will have two URLs:
+
+```
+https://warder-admin-XXXX.onrender.com      the dashboard's backend talks here
+https://warder-runtime-XXXX.onrender.com    the ward CLI talks here
+```
+
+<!-- TODO: replace with the real hostnames once the first deploy is done. -->
+
+Check both:
+
+```bash
+curl -s https://warder-runtime-XXXX.onrender.com/health
+```
+
+`{"status":"ok"}` from each. The admin service answers the same on `/health`
+and refuses everything else without the service token, which is correct.
+
+## 3. Create the schema
+
+The migration runs once, against the database Render created. Copy the
+**external** connection string from the Render database page, then:
+
+```bash
+WARDER_DATABASE_URL="postgres://…" warder-api migrate
+```
+
+Run this again after any deploy that adds a migration. It is safe to run when
+there is nothing to apply — it says so and exits.
+
+## 4. Deploy the dashboard
+
+In Vercel: **Add New → Project**, pick this repository, and set the **root
+directory to `web`**. Vercel detects Next.js on its own.
+
+One environment variable:
+
+```
+WARDER_URL=warder://<service-token>@warder-admin-XXXX.onrender.com:443/production?origin=https://<your-vercel-domain>
+```
+
+That single URI carries everything the dashboard needs: the scheme states the
+transport, the userinfo is the service token, the path is the posture, and
+`origin` is the address browsers will announce. See
+[connection.ts](../web/lib/connection.ts) for the full grammar.
+
+Three details that will bite if you get them wrong:
+
+- **`warder://` not `warder+insecure://`.** The plain scheme means HTTPS.
+  Production refuses the insecure one.
+- **Port `443`.** Render serves HTTPS on the standard port; the URI needs it
+  stated.
+- **`origin` is required in production.** It is what lets the BFF refuse
+  cross-site requests. Set it to your real Vercel domain, including `https://`.
+
+Deploy. Open the domain and choose **Create an organization**.
+
+## 5. Point the CLI at it
+
+Developers set one variable, or pass `--api`:
+
+```bash
+export WARDER_RUNTIME_URL=https://warder-runtime-XXXX.onrender.com
+ward login
+```
+
+For deployed workloads, the runtime URL and a machine token go into the
+platform's secret store. See
+[using Warder in your application](using-warder.md).
+
+## What to check afterwards
+
+Worth doing once, in this order, because each proves a different boundary:
+
+1. **The admin surface refuses anonymous callers.**
+   `curl https://warder-admin-XXXX.onrender.com/projects` → `service_unauthorized`.
+2. **The runtime surface does not accept the service token.** It has no
+   service-token middleware at all; a workload authenticates as itself.
+3. **A token with no grant gets nothing.** Create an identity and a token
+   *without* granting access, then `ward run`. It should authenticate and
+   deliver zero secrets, naming what it was refused.
+4. **Sign-out ends the session.** The next request should redirect to sign-in
+   rather than serving a cached page.
+
+## Things this deployment does not do
+
+Stated plainly, because a deployment guide that only lists successes is not
+useful.
+
+**The free tiers sleep and expire.** Render free services spin down when idle,
+so the first `ward run` after a quiet period waits for a cold start. Render's
+free Postgres expires after 30 days. Neither is suitable for anything real —
+they are fine for evaluating.
+
+**The keyring sits in an environment variable.** That is the local key
+provider, and it means anyone who can read the service's configuration can read
+the key that decrypts everything. For production, move to a KMS so the key
+never leaves the provider — the `KeyProvider` interface exists for exactly this
+and the cloud implementations are stubbed in
+[`internal/crypto/kms_cloud.go`](../internal/crypto/kms_cloud.go). See
+[key management](security/key-management.md).
+
+**Organization creation is unauthenticated.** Anyone who can reach the
+dashboard can create a tenant. Gate this before you put it anywhere public —
+it is the first item in [limitations](security/limitations.md).
+
+**Nothing backs up the database.** Render's free tier does not, and a Warder
+database without its keyring is unrecoverable ciphertext. Read
+[disaster recovery](security/disaster-recovery.md) before you rely on this.
+
+**The database roles are not applied.** `deploy/sql/roles.sql` splits migrator,
+application, and read-only privileges so that a leaked reporting credential
+exposes no ciphertext. Render's default user owns everything. Applying it is a
+deliberate step — read it first, because it reassigns table ownership.

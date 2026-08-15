@@ -1,0 +1,126 @@
+# Warder on Render.
+#
+# Two services from one image, because Warder has two HTTP surfaces and Render
+# gives a service exactly one public port. Collapsing them onto one port would
+# throw away the separation the whole design rests on: the admin surface trusts
+# a service credential the dashboard holds, and the runtime surface trusts no
+# shared credential at all, because every workload would have to carry it.
+#
+#   warder-admin     the dashboard's backend talks to this
+#   warder-runtime   the ward CLI and deployed workloads talk to this
+#
+# Each service binds its own surface to Render's $PORT and leaves the other on
+# loopback, where nothing outside the container can reach it.
+#
+# First deploy, in order:
+#   1. Push this file. In Render: New → Blueprint → pick the repo.
+#   2. Render creates the database and both services, then stops at the
+#      secrets marked sync:false below. Fill them in (see docs/deployment.md).
+#   3. Run the migration once — Render Shell on warder-admin, or locally with
+#      the external database URL:  warder-api migrate
+
+databases:
+  - name: warder-db
+    databaseName: warder
+    user: warder
+    plan: free
+    # Keep the database and both services in one region. Every request the
+    # dashboard makes crosses this link, and a cross-region hop is a hop an
+    # attacker could be sitting on.
+    region: oregon
+
+services:
+  # -------------------------------------------------------------------------
+  # Admin surface — the dashboard's backend
+  # -------------------------------------------------------------------------
+  - type: web
+    name: warder-admin
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon
+    healthCheckPath: /health
+
+    envVars:
+      - key: WARDER_ENV
+        value: production
+
+      # This service publishes the admin surface and keeps the runtime
+      # listener on loopback, unreachable from outside the container.
+      - key: WARDER_ADMIN_ADDR
+        value: 0.0.0.0:10000
+      - key: WARDER_RUNTIME_ADDR
+        value: 127.0.0.1:8081
+      - key: PORT
+        value: 10000
+
+      # Render terminates TLS and forwards the caller's address in
+      # X-Forwarded-For. Without this, every rate limit and every audit entry
+      # records the load balancer instead of the client.
+      - key: WARDER_TRUST_PROXY_HEADERS
+        value: "true"
+
+      - key: WARDER_DATABASE_URL
+        fromDatabase:
+          name: warder-db
+          property: connectionString
+
+      # Set once, by hand, and never rotated casually: every secret in the
+      # system is encrypted under this. Generate with `warder-api keygen`.
+      - key: WARDER_KEYRING
+        sync: false
+
+      # Shared with the dashboard's WARDER_URL. Nothing else may hold it.
+      - key: WARDER_SERVICE_TOKEN
+        sync: false
+
+  # -------------------------------------------------------------------------
+  # Runtime surface — the ward CLI and deployed workloads
+  # -------------------------------------------------------------------------
+  - type: web
+    name: warder-runtime
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon
+    healthCheckPath: /health
+
+    envVars:
+      - key: WARDER_ENV
+        value: production
+
+      # The mirror image: runtime surface public, admin on loopback. A stolen
+      # machine token reaching this service cannot touch the human-facing API
+      # even if it learns the address, because that listener is not bound to
+      # anything the internet can address.
+      - key: WARDER_RUNTIME_ADDR
+        value: 0.0.0.0:10000
+      - key: WARDER_ADMIN_ADDR
+        value: 127.0.0.1:8080
+      - key: PORT
+        value: 10000
+
+      # Binding every interface is the only option inside a container. Render's
+      # load balancer decides what reaches this port; saying so explicitly is
+      # what the config guard asks for.
+      - key: WARDER_ALLOW_PUBLIC_RUNTIME_BIND
+        value: "true"
+
+      - key: WARDER_TRUST_PROXY_HEADERS
+        value: "true"
+
+      - key: WARDER_DATABASE_URL
+        fromDatabase:
+          name: warder-db
+          property: connectionString
+
+      # The same keyring as the admin service. Two processes, one set of keys —
+      # they are reading the same ciphertext.
+      - key: WARDER_KEYRING
+        sync: false
+
+      # Present because the binary requires it at startup, and unused on this
+      # surface: the runtime handler has no service-token middleware. Give it
+      # the same value as the admin service.
+      - key: WARDER_SERVICE_TOKEN
+        sync: false

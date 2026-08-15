@@ -114,6 +114,17 @@ func withServiceToken(expected string, logger *slog.Logger) middleware {
 	expectedBytes := []byte(expected)
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// The health check is exempt. It answers {"status":"ok"} and
+			// nothing else — there is no information in it worth a credential —
+			// and every container platform probes an unauthenticated path to
+			// decide whether an instance is alive. Requiring the service token
+			// here means the platform sees 401, marks the service unhealthy,
+			// and refuses to route traffic to a process that is working fine.
+			if r.Method == http.MethodGet && r.URL.Path == "/health" {
+				next.ServeHTTP(w, r)
+				return
+			}
+
 			presented := []byte(r.Header.Get("X-Service-Token"))
 
 			if subtle.ConstantTimeCompare(presented, expectedBytes) != 1 {
