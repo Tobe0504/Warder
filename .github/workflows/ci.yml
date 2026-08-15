@@ -79,6 +79,10 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: "1.26"
+          # Without this, setup-go reuses whatever patch release the runner has
+          # cached — which is how a scan fails on standard-library
+          # vulnerabilities that a released patch already fixes.
+          check-latest: true
       - name: govulncheck
         run: |
           go install golang.org/x/vuln/cmd/govulncheck@latest
@@ -172,8 +176,15 @@ jobs:
       - name: Refuse client-exposed secrets
         # NEXT_PUBLIC_ variables are compiled into the browser bundle. None of
         # this application's configuration belongs there.
+        #
+        # Matches real usage — `process.env.NEXT_PUBLIC_X` or a bare
+        # `NEXT_PUBLIC_X=` — rather than the bare string, which also appears in
+        # the comment explaining why none is used and in the boundary checker
+        # that exists to forbid them. `npm run check` does the thorough version
+        # of this with comments stripped; this is the blunt second opinion.
         run: |
-          if git grep -n 'NEXT_PUBLIC_' -- web/; then
+          if git grep -nE '(process\.env\.NEXT_PUBLIC_|^\s*NEXT_PUBLIC_[A-Z0-9_]+=)' \
+               -- web/ ':!web/scripts/' ':!*.md'; then
             echo "NEXT_PUBLIC_ variables are shipped to the browser. Nothing here belongs in one."
             exit 1
           fi
