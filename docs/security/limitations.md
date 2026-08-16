@@ -14,19 +14,45 @@ a program that uses a database password must have the database password. Secure
 enclaves, sealed file descriptors, and in-memory-only delivery each narrow the
 window, and none of them remove it.
 
-What Warder actually changes is who needs to hold the credential in order for the
-software to run:
+### A developer with USE_SECRET can still read the value
+
+This follows directly from the paragraph above, and it is worth stating on its
+own because the name `USE_SECRET` invites the opposite reading.
+
+Anyone who can run `ward run` can run this:
+
+```bash
+ward run -- node -e "console.log(process.env.DATABASE_URL)"
+```
+
+The value is in the process; the process prints it. `READ_SECRET` is not a
+cryptographic barrier against a human who holds `USE_SECRET` on the same
+environment. It gates the dashboard's reveal button, and nothing more.
+
+So the split is not "developers cannot see secrets". It is three narrower
+things, and they are the ones that matter in practice:
+
+- **Nothing is visible by default.** Seeing a value takes a deliberate act
+  rather than opening a file that was already on the laptop.
+- **The act is recorded.** Every delivery writes a `SECRET_USED` event naming
+  the actor, the key and the time. Reading a `.env` leaves nothing behind.
+- **Scope is what actually protects production.** A developer usually holds
+  `USE_SECRET` on development only. They cannot extract a production value
+  because it is never delivered to them, not because printing is blocked.
+
+What Warder changes is who needs to hold a credential for the software to run:
 
 | | Before | With Warder |
 |---|---|---|
-| Developer | Has it in `.env` | Never sees it |
-| Agent | Reads the developer's `.env` | Uses a scoped credential it cannot print |
+| Developer | Has it in `.env`, indefinitely, invisibly | Can extract it deliberately, in scope, on the record |
+| Agent | Reads the developer's `.env` | Uses a scoped credential; cannot reach production or grant itself more |
 | CI | Holds it as a build variable | Authenticates and receives only its scope |
 | The process | Has it | Has it |
 | Departing contractor | Has copies | Loses access without rotation |
 
-The last row is where the real operational value sits. Ending someone's access
-is a grant change, not a rotation of every credential they might have seen.
+The first and last rows are where the value sits. Not "nobody can see it", but
+"nobody holds a standing copy, and ending access is a grant change rather than
+a rotation of every credential they might have seen".
 
 ## What the CLI can and cannot promise
 
