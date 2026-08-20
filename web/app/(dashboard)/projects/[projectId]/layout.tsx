@@ -58,9 +58,7 @@ export default async function ProjectLayout({
             <Crumb>{project.name}</Crumb>
             <span className="hidden sm:contents">
               <CrumbSeparator />
-              <Crumb muted mono>
-                {project.slug}
-              </Crumb>
+              <Crumb muted>{project.slug}</Crumb>
             </span>
           </>
         }

@@ -66,11 +66,11 @@ export function SignOutDialog({
 
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline" size="sm" disabled={pending}>
+            <Button variant="outline" disabled={pending}>
               Stay signed in
             </Button>
           </DialogClose>
-          <Button size="sm" onClick={signOut} loading={pending}>
+          <Button onClick={signOut} loading={pending}>
             Sign out
           </Button>
         </DialogFooter>

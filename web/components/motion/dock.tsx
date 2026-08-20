@@ -82,7 +82,7 @@ export function Dock({
         }}
         onPointerLeave={() => pointerX.set(Number.POSITIVE_INFINITY)}
         className={cn(
-          "inline-flex h-auto items-end gap-1.5 rounded-2xl border border-border bg-card/80 px-2 py-1 shadow-2xl backdrop-blur-xl",
+          "inline-flex h-auto items-end gap-1.5 rounded-2xl bg-card/80 px-2 py-1 shadow-2xl backdrop-blur-xl",
           className,
         )}
       >

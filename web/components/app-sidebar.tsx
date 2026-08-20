@@ -159,62 +159,64 @@ function UserMenu({ user }: { user: SessionUser }) {
 
   return (
     <>
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          title={user.name}
-          className="flex w-full min-w-0 items-center gap-2.5 rounded-xl px-2 py-1.5 text-left outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-muted"
-        >
-          <Avatar name={user.name} />
-          <div className="grid min-w-0 flex-1 leading-tight group-data-[state=collapsed]/sidebar:hidden">
-            <span className="truncate text-meta font-medium text-foreground">
-              {user.name}
-            </span>
-            <span className="truncate text-meta text-muted-foreground">
-              {user.email}
-            </span>
-          </div>
-          <ChevronsUpDown className="ml-auto size-3.5 shrink-0 text-muted-foreground group-data-[state=collapsed]/sidebar:hidden" />
-        </button>
-      </DropdownMenuTrigger>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            title={user.name}
+            className="flex w-full min-w-0 items-center gap-2.5 rounded-xl px-2 py-1.5 text-left outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-muted"
+          >
+            <Avatar name={user.name} />
+            <div className="grid min-w-0 flex-1 leading-tight group-data-[state=collapsed]/sidebar:hidden">
+              <span className="truncate text-meta font-medium text-foreground">
+                {user.name}
+              </span>
+              <span className="truncate text-meta text-muted-foreground">
+                {user.email}
+              </span>
+            </div>
+            <ChevronsUpDown className="ml-auto size-3.5 shrink-0 text-muted-foreground group-data-[state=collapsed]/sidebar:hidden" />
+          </button>
+        </DropdownMenuTrigger>
 
-      <DropdownMenuContent side="top" align="start" className="w-56">
-        <DropdownMenuLabel className="flex items-center gap-2 py-2">
-          <Avatar name={user.name} />
-          <div className="grid flex-1 leading-tight">
-            <span className="truncate text-meta font-medium text-foreground">
-              {user.name}
-            </span>
-            <span className="truncate text-meta font-normal">{user.email}</span>
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href="/settings">
-            <Settings />
-            Settings
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/identities">
-            <KeyRound />
-            Identities
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem destructive onSelect={() => setConfirming(true)}>
-          <LogOut />
-          Sign out
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        <DropdownMenuContent side="top" align="start" className="w-56">
+          <DropdownMenuLabel className="flex items-center gap-2 py-2">
+            <Avatar name={user.name} />
+            <div className="grid flex-1 leading-tight">
+              <span className="truncate text-meta font-medium text-foreground">
+                {user.name}
+              </span>
+              <span className="truncate text-meta font-normal">
+                {user.email}
+              </span>
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link href="/settings">
+              <Settings />
+              Settings
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/identities">
+              <KeyRound />
+              Identities
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem destructive onSelect={() => setConfirming(true)}>
+            <LogOut />
+            Sign out
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
-    {/*
+      {/*
       A sibling of the menu, not a child: Radix unmounts the menu content when
       the menu closes, and the modal would go with it.
     */}
-    <SignOutDialog open={confirming} onOpenChange={setConfirming} />
+      <SignOutDialog open={confirming} onOpenChange={setConfirming} />
     </>
   );
 }
