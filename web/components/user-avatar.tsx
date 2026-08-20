@@ -5,7 +5,7 @@ import Link from "next/link";
 import { KeyRound, LayoutGrid, LogOut, Settings } from "lucide-react";
 
 import { Avatar } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/motion/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useToast } from "@/components/ui/toast";
+import { SignOutDialog } from "@/components/sign-out-dialog";
 import { apiFetch } from "@/lib/client-api";
 
 /** Only what the header shows. The endpoint deliberately sends nothing more. */
@@ -34,8 +34,8 @@ type HeaderUser = { name: string; email: string; organization: string };
  * both correct and the fastest useful paint.
  */
 export default function UserAvatar() {
-  const toast = useToast();
   const [user, setUser] = useState<HeaderUser | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -53,17 +53,6 @@ export default function UserAvatar() {
       cancelled = true;
     };
   }, []);
-
-  async function signOut() {
-    try {
-      await apiFetch("/api/auth/logout", { method: "POST" });
-    } catch {
-      // The redirect happens regardless; a failed revoke surfaces as the next
-      // request being refused.
-    } finally {
-      window.location.href = "/login";
-    }
-  }
 
   if (!user) {
     return (
@@ -126,18 +115,18 @@ export default function UserAvatar() {
 
           <DropdownMenuSeparator />
 
-          <DropdownMenuItem
-            destructive
-            onSelect={() => {
-              toast.success("Signing out…");
-              void signOut();
-            }}
-          >
+          <DropdownMenuItem destructive onSelect={() => setConfirming(true)}>
             <LogOut />
             Sign out
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {/*
+        A sibling of the menu, not a child: Radix unmounts the menu content
+        when the menu closes, and the modal would go with it.
+      */}
+      <SignOutDialog open={confirming} onOpenChange={setConfirming} />
     </div>
   );
 }

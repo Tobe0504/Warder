@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Ban, KeySquare } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/motion/button";
 import {
   DataList,
   DataListRow,
@@ -139,7 +139,7 @@ function TokenRow({ token }: { token: RuntimeToken }) {
             size="icon"
             className="size-7"
             onClick={revoke}
-            disabled={pending}
+            loading={pending}
             aria-label={`Revoke ${token.name}`}
             title="Revoke: this token and any session derived from it stop working immediately"
           >

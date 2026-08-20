@@ -26,7 +26,6 @@ import {
 } from "@/components/ui/filter-bar";
 import { RelativeTime } from "@/components/ui/relative-time";
 
-
 export type AuditEvent = {
   id: string;
   occurredAt: string;
@@ -205,21 +204,15 @@ function AuditRow({ event }: { event: AuditEvent }) {
           {DESCRIPTIONS[event.eventType] ?? event.eventType}
         </div>
         <div className="mt-0.5 truncate text-meta text-muted-foreground">
-          {event.actor || ", "} ·{" "}
+          {event.actor || " "} ·{" "}
           {event.actorType.toLowerCase().replace("_", " ")}
         </div>
       </div>
 
-      {/*
-        The secret's key, which is the whole point: a trail that says which
-        credential was involved and never what it is.
-      */}
       <div className="min-w-0 flex-1 basis-40">
         {event.secretKey ? (
           <span className="font-mono text-meta">{event.secretKey}</span>
-        ) : (
-          <span className="text-meta text-muted-foreground">, </span>
-        )}
+        ) : null}
         {event.reason && (
           <div className="mt-0.5 truncate text-meta text-muted-foreground">
             {event.reason}

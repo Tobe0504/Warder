@@ -2,11 +2,18 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Copy, Eye, KeyRound, MoreHorizontal, RotateCw } from "lucide-react";
+import {
+  CircleOff,
+  Copy,
+  Eye,
+  KeyRound,
+  MoreHorizontal,
+  RotateCw,
+} from "lucide-react";
 
 import { RotateSecretDialog } from "@/components/rotate-secret-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/motion/button";
 import {
   DataList,
   DataListRow,
@@ -113,7 +120,11 @@ export function SecretsTable({ secrets }: { secrets: Secret[] }) {
 
       <DataList>
         {filtered.length === 0 ? (
-          <EmptyState title="No secrets match those filters" />
+          <EmptyState
+            title="No secrets match those filters"
+            description="Either there are no secrets for this environment or try a different search keyword"
+            icon={<CircleOff />}
+          />
         ) : (
           filtered.map((secret) => (
             <SecretRow key={secret.id} secret={secret} />
@@ -274,12 +285,12 @@ function SecretRow({ secret }: { secret: Secret }) {
               variant="ghost"
               size="sm"
               onClick={reveal}
-              disabled={pending}
+              loading={pending}
               className="h-7 gap-1.5 px-2"
             >
               <Eye />
               <span className="text-meta">
-                {pending ? "Revealing…" : "Reveal"}
+                Reveal
               </span>
             </Button>
           )}

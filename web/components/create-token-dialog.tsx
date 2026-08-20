@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Copy, Plus } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/motion/button";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +14,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input, Select } from "@/components/ui/input";
+import { Input } from "@/components/motion/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/motion/select";
 import { SecretKeyPicker } from "@/components/secret-key-picker";
 import { Label } from "@/components/ui/label";
 import { apiFetch } from "@/lib/client-api";
@@ -163,47 +170,45 @@ export function CreateTokenDialog({
 
             <form onSubmit={submit} className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="token-name">Name</Label>
                 <Input
                   id="token-name"
+                  label="Name"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={setName}
                   placeholder="production deploy"
                   required
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="token-identity">Identity</Label>
-                <Select
-                  id="token-identity"
-                  value={identityId}
-                  onChange={(e) => setIdentityId(e.target.value)}
-                  required
-                >
-                  <option value="">Choose an identity…</option>
-                  {identities.map((identity) => (
-                    <option key={identity.id} value={identity.id}>
-                      {identity.name} ·{" "}
-                      {identity.actorType.toLowerCase().replace("_", " ")}
-                    </option>
-                  ))}
+                <Label>Identity</Label>
+                <Select value={identityId} onValueChange={setIdentityId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose an identity…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {identities.map((identity) => (
+                      <SelectItem key={identity.id} value={identity.id}>
+                        {`${identity.name} · ${identity.actorType.toLowerCase().replace("_", " ")}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="token-environment">Environment</Label>
-                <Select
-                  id="token-environment"
-                  value={environmentId}
-                  onChange={(e) => setEnvironmentId(e.target.value)}
-                  required
-                >
-                  {environments.map((environment) => (
-                    <option key={environment.id} value={environment.id}>
-                      {environment.name}
-                    </option>
-                  ))}
+                <Label>Environment</Label>
+                <Select value={environmentId} onValueChange={setEnvironmentId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose an environment…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {environments.map((environment) => (
+                      <SelectItem key={environment.id} value={environment.id}>
+                        {environment.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               </div>
 
@@ -222,12 +227,12 @@ export function CreateTokenDialog({
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="token-expiry">Expires (optional)</Label>
                 <Input
                   id="token-expiry"
+                  label="Expires (optional)"
                   type="datetime-local"
                   value={expiresAt}
-                  onChange={(e) => setExpiresAt(e.target.value)}
+                  onChange={setExpiresAt}
                 />
               </div>
 
@@ -241,8 +246,8 @@ export function CreateTokenDialog({
                 <Button type="button" variant="ghost" onClick={close}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={pending}>
-                  {pending ? "Creating…" : "Create token"}
+                <Button type="submit" loading={pending}>
+                  Create token
                 </Button>
               </DialogFooter>
             </form>

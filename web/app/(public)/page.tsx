@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Eye, EyeOff, Terminal } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/motion/button";
 
 export const metadata: Metadata = {
   // `absolute` opts out of the root layout's "%s, Warder" template, which

@@ -45,7 +45,7 @@ export function AuthShell({
           )}
         </div>
 
-        <div className="rounded-xl border bg-card p-5">{children}</div>
+        <div className="rounded-xl bg-card p-5">{children}</div>
 
         {footer && (
           <div className="mt-5 text-center text-meta text-muted-foreground">

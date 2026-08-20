@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, ShieldPlus } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/motion/button";
+import { Checkbox } from "@/components/motion/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +15,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input, Select } from "@/components/ui/input";
+import { Input } from "@/components/motion/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/motion/select";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast";
 import { apiFetch } from "@/lib/client-api";
@@ -124,60 +132,51 @@ export function GrantAccessDialog({
 
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="grant-subject">For</Label>
-            <Select
-              id="grant-subject"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              required
-            >
-              <option value="">Choose an identity…</option>
-              {members.length > 0 && (
-                <optgroup label="People">
-                  {members.map((member) => (
-                    <option key={member.userId} value={`USER:${member.userId}`}>
-                      {member.name} · {member.email}
-                    </option>
-                  ))}
-                </optgroup>
-              )}
-              {identities.length > 0 && (
-                <optgroup label="Machines and agents">
-                  {identities.map((identity) => (
-                    <option key={identity.id} value={`MACHINE:${identity.id}`}>
-                      {identity.name} · {identity.actorType.toLowerCase().replace("_", " ")}
-                    </option>
-                  ))}
-                </optgroup>
-              )}
+            <Label>For</Label>
+            <Select value={subject} onValueChange={setSubject}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose an identity…" />
+              </SelectTrigger>
+              <SelectContent>
+                {members.map((member) => (
+                  <SelectItem key={member.userId} value={`USER:${member.userId}`}>
+                    {`${member.name} · ${member.email}`}
+                  </SelectItem>
+                ))}
+                {identities.map((identity) => (
+                  <SelectItem key={identity.id} value={`MACHINE:${identity.id}`}>
+                    {`${identity.name} · ${identity.actorType.toLowerCase().replace("_", " ")}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="grant-environment">Environment</Label>
-            <Select
-              id="grant-environment"
-              value={environmentId}
-              onChange={(e) => setEnvironmentId(e.target.value)}
-              required
-            >
-              {environments.map((environment) => (
-                <option key={environment.id} value={environment.id}>
-                  {environment.name}
-                </option>
-              ))}
+            <Label>Environment</Label>
+            <Select value={environmentId} onValueChange={setEnvironmentId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose an environment…" />
+              </SelectTrigger>
+              <SelectContent>
+                {environments.map((environment) => (
+                  <SelectItem key={environment.id} value={environment.id}>
+                    {environment.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
 
           <fieldset className="space-y-2 rounded-md border p-2.5">
             <legend className="px-1 text-meta font-medium text-muted-foreground">Capabilities</legend>
 
-            <label className="flex cursor-pointer items-start gap-2">
-              <input
-                type="checkbox"
+            <div className="flex items-start gap-2">
+              <Checkbox
                 checked={canUse}
-                onChange={(e) => setCanUse(e.target.checked)}
-                className="mt-0.5 accent-[var(--can-use)]"
+                onCheckedChange={setCanUse}
+                aria-label="Can use"
+                className="mt-0.5"
               />
               <span className="text-meta">
                 <span className="font-medium">Can use</span>
@@ -186,14 +185,14 @@ export function GrantAccessDialog({
                   sees it.
                 </span>
               </span>
-            </label>
+            </div>
 
-            <label className="flex cursor-pointer items-start gap-2">
-              <input
-                type="checkbox"
+            <div className="flex items-start gap-2">
+              <Checkbox
                 checked={canReveal}
-                onChange={(e) => setCanReveal(e.target.checked)}
-                className="mt-0.5 accent-[var(--can-reveal)]"
+                onCheckedChange={setCanReveal}
+                aria-label="Can see"
+                className="mt-0.5"
               />
               <span className="text-meta">
                 <span className="font-medium">Can see</span>
@@ -201,7 +200,7 @@ export function GrantAccessDialog({
                   The plaintext can be displayed in this dashboard. Every disclosure is recorded.
                 </span>
               </span>
-            </label>
+            </div>
           </fieldset>
 
           {canReveal && (
@@ -215,23 +214,21 @@ export function GrantAccessDialog({
           )}
 
           <div className="space-y-1.5">
-            <Label htmlFor="grant-expiry">
-              Expires {canReveal ? "(recommended)" : "(optional)"}
-            </Label>
             <Input
               id="grant-expiry"
+              label={`Expires ${canReveal ? "(recommended)" : "(optional)"}`}
               type="datetime-local"
               value={expiresAt}
-              onChange={(e) => setExpiresAt(e.target.value)}
+              onChange={setExpiresAt}
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="grant-reason">Reason {canReveal ? "(required)" : "(optional)"}</Label>
             <Input
               id="grant-reason"
+              label={`Reason ${canReveal ? "(required)" : "(optional)"}`}
               value={reason}
-              onChange={(e) => setReason(e.target.value)}
+              onChange={setReason}
               placeholder="Debugging a failed migration"
             />
           </div>
@@ -246,8 +243,8 @@ export function GrantAccessDialog({
             <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={pending}>
-              {pending ? "Granting…" : "Grant access"}
+            <Button type="submit" loading={pending}>
+              Grant access
             </Button>
           </DialogFooter>
         </form>

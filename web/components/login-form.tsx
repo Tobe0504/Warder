@@ -4,9 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/motion/button";
+import { Input } from "@/components/motion/input";
 
 /**
  * Sign-in.
@@ -57,34 +56,28 @@ export function LoginForm() {
 
   return (
     <form onSubmit={onSubmit} className="space-y-3.5">
-      <div className="space-y-1.5">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="username"
-          autoFocus
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="h-9"
-        />
-      </div>
+      <Input
+        id="email"
+        name="email"
+        label="Email"
+        type="email"
+        autoComplete="username"
+        autoFocus
+        required
+        value={email}
+        onChange={setEmail}
+      />
 
-      <div className="space-y-1.5">
-        <Label htmlFor="password">Password</Label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="h-9"
-        />
-      </div>
+      <Input
+        id="password"
+        name="password"
+        label="Password"
+        type="password"
+        autoComplete="current-password"
+        required
+        value={password}
+        onChange={setPassword}
+      />
 
       {error && (
         // Rendered as text, never as markup. Every value in this interface
@@ -94,8 +87,8 @@ export function LoginForm() {
         </p>
       )}
 
-      <Button type="submit" size="lg" className="w-full" disabled={pending}>
-        {pending ? "Signing in…" : "Continue"}
+      <Button type="submit" size="lg" className="w-full" loading={pending}>
+        Continue
         {!pending && <ArrowRight />}
       </Button>
     </form>

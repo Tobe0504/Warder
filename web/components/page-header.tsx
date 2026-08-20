@@ -1,4 +1,6 @@
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { PanelLeft } from "lucide-react";
+
+import { AnimatedSidebarTrigger } from "@/components/motion/animated-sidebar";
 
 /**
  * The bar across the top of every dashboard page.
@@ -17,7 +19,9 @@ export function PageHeader({
 }) {
   return (
     <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background/90 px-4 backdrop-blur">
-      <SidebarTrigger className="-ml-1" />
+      <AnimatedSidebarTrigger className="-ml-1 size-8 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+        <PanelLeft aria-hidden="true" className="size-4" />
+      </AnimatedSidebarTrigger>
       <div className="mx-1 h-4 w-px bg-border" />
       <div className="flex min-w-0 flex-1 items-center gap-2 text-body">{breadcrumb}</div>
       {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}

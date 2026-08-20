@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/motion/button";
 import {
   Dialog,
   DialogContent,
@@ -14,8 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Input } from "@/components/motion/input";
 import { useToast } from "@/components/ui/toast";
 import { apiFetch } from "@/lib/client-api";
 
@@ -85,28 +84,26 @@ export function CreateProjectDialog() {
         </DialogHeader>
 
         <form onSubmit={submit} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="project-name">Name</Label>
-            <Input
-              id="project-name"
-              value={name}
-              onChange={(e) => onNameChange(e.target.value)}
-              placeholder="Payments API"
-              required
-            />
-          </div>
+          <Input
+            id="project-name"
+            label="Name"
+            value={name}
+            onChange={onNameChange}
+            placeholder="Payments API"
+            required
+          />
 
           <div className="space-y-1.5">
-            <Label htmlFor="project-slug">Slug</Label>
             <Input
               id="project-slug"
+              label="Slug"
               value={slug}
-              onChange={(e) => {
+              onChange={(v) => {
                 setSlugEdited(true);
-                setSlug(e.target.value);
+                setSlug(v);
               }}
               placeholder="payments-api"
-              className="font-mono"
+              classNames={{ input: "font-mono" }}
               pattern="[a-z0-9]([a-z0-9-]*[a-z0-9])?"
               required
             />
@@ -125,8 +122,8 @@ export function CreateProjectDialog() {
             <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={pending}>
-              {pending ? "Creating…" : "Create project"}
+            <Button type="submit" loading={pending}>
+              Create project
             </Button>
           </DialogFooter>
         </form>

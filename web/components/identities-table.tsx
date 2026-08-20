@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/motion/button";
 import {
   DataList,
   DataListRow,
@@ -212,9 +212,9 @@ function IdentityRow({ identity }: { identity: Identity }) {
               type="button"
               variant="destructive"
               onClick={revoke}
-              disabled={pending}
+              loading={pending}
             >
-              {pending ? "Revoking…" : "Revoke identity"}
+              Revoke identity
             </Button>
           </DialogFooter>
         </DialogContent>

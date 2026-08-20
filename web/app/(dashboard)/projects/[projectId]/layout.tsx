@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Crumb, CrumbSeparator, PageHeader } from "@/components/page-header";
-import { ProjectNav } from "@/components/project-nav";
+import { ProjectDock } from "@/components/project-dock";
 import { callCoreApi, CoreApiError } from "@/lib/core-api";
 
 type Params = { params: Promise<{ projectId: string }> };
@@ -14,14 +14,15 @@ type Project = {
 };
 
 /**
- * The project shell: header bar, then a nav column beside the section content.
+ * The project shell: header bar, then the section content at full width.
  *
  * The nav lives here rather than in each page so that moving between Secrets,
- * Access, Tokens, and Audit re-renders only the panel: the column stays put
- * and the active item does not flicker.
+ * Access, Tokens, and Audit re-renders only the panel and the active item does
+ * not flicker. It is a dock rather than a second column: the organization
+ * sidebar already owns a rail, and two of them beside a secrets table left the
+ * rows wrapping into three lines each.
  *
- * Wider than the organization-level pages, because the nav column takes a
- * chunk of the width and the tables underneath it should not pay for that.
+ * The bottom padding is what keeps the last row of a table clear of the dock.
  */
 export default async function ProjectLayout({
   children,
@@ -65,13 +66,13 @@ export default async function ProjectLayout({
         }
       />
 
-      <div className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-4 px-4 py-4 md:flex-row md:gap-7">
-        <ProjectNav projectId={projectId} />
-
-        <main id="main" className="min-w-0 flex-1">
+      <div className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-4 pb-24">
+        <main id="main" className="min-w-0">
           {children}
         </main>
       </div>
+
+      <ProjectDock projectId={projectId} />
     </>
   );
 }

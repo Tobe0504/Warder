@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { RefreshCw, ServerCrash } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/motion/button";
 import { Card } from "@/components/ui/card";
 
 /**

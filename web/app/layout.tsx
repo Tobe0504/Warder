@@ -2,10 +2,15 @@ import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 
+import { ThemeProvider } from "@/components/theme-provider";
 import { ToastProvider } from "@/components/ui/toast";
 import { publicOrigin } from "@/lib/env";
 
 import "./globals.css";
+import { Geist } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   // Absolute URLs are built from this. Without it the social card would point
@@ -92,9 +97,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
+    // suppressHydrationWarning is required by next-themes, not optional: its
+    // script sets the theme attribute on <html> before React hydrates, so the
+    // server markup and the client's first read of the DOM legitimately differ.
+    // Scoped to this element, so a real mismatch anywhere else still reports.
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={cn(GeistSans.variable, GeistMono.variable, "font-sans", geist.variable)}
+    >
       <body className="min-h-dvh antialiased">
-        <ToastProvider>{children}</ToastProvider>
+        <ThemeProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

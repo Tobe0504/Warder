@@ -11,7 +11,7 @@
  * Run with: npm run check
  */
 
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative, resolve, dirname } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
@@ -161,6 +161,28 @@ for (const [file, source] of sources) {
   for (const api of ["localStorage", "sessionStorage", "indexedDB"]) {
     if (source.includes(api)) {
       problems.push(`${relative(root, file)}: uses ${api}; secrets and sessions must not be stored there`);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 5. lib/utils.ts still teaches tailwind-merge about the type scale.
+//
+// The shadcn CLI rewrites that file with its own two-line version on every
+// `shadcn add`, which is how beUI components are installed. Losing the config
+// files `text-body` and friends as text *colours*, so merging a sized button
+// silently drops `text-primary-foreground` and the button renders white on
+// white. Nothing else catches it: it type-checks, builds, and looks like a
+// theming bug.
+// ---------------------------------------------------------------------------
+{
+  const utils = join(root, "lib", "utils.ts");
+  if (existsSync(utils)) {
+    const source = readFileSync(utils, "utf8");
+    if (!source.includes("extendTailwindMerge")) {
+      problems.push(
+        "lib/utils.ts: cn() lost its extendTailwindMerge config, probably to a `shadcn add`. Restore it or primary buttons render white on white.",
+      );
     }
   }
 }

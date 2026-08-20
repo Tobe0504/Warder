@@ -5,21 +5,35 @@ import { RunCommand } from "@/components/run-command";
 import { SecretsTable, type Secret } from "@/components/secrets-table";
 import { callCoreApi } from "@/lib/core-api";
 
-type Params = { params: Promise<{ projectId: string; environmentId: string }> };
+type Params = {
+  params: Promise<{ projectId: string; environmentId: string }>;
+  searchParams: Promise<{ env?: string }>;
+};
 
 type Environment = { id: string; name: string; slug: string };
 type Project = { id: string; name: string; slug: string };
 
-export default async function EnvironmentSecretsPage({ params }: Params) {
-  const { projectId, environmentId } = await params;
+export default async function EnvironmentSecretsPage({ params, searchParams }: Params) {
+  const [{ projectId, environmentId }, { env }] = await Promise.all([params, searchParams]);
 
-  const [project, { environments }, listing] = await Promise.all([
+  const [project, { environments }] = await Promise.all([
     callCoreApi<Project>(`/projects/${projectId}`),
-    callCoreApi<{ environments: Environment[] | null }>(`/projects/${projectId}/environments`),
-    callCoreApi<{ environment: Environment; secrets: Secret[] | null }>(
-      `/environments/${environmentId}/secrets`,
+    callCoreApi<{ environments: Environment[] | null }>(
+      `/projects/${projectId}/environments`,
     ),
   ]);
+
+  // `?env=<slug>` selects the environment; the route parameter is the fallback.
+  // An unknown slug falls back rather than 404ing, so a stale or hand-edited
+  // link still lands somewhere useful.
+  const selected =
+    (env ? environments?.find((candidate) => candidate.slug === env) : undefined)?.id ??
+    environmentId;
+
+  const listing = await callCoreApi<{
+    environment: Environment;
+    secrets: Secret[] | null;
+  }>(`/environments/${selected}/secrets`);
 
   const secrets = listing.secrets ?? [];
 
@@ -31,16 +45,12 @@ export default async function EnvironmentSecretsPage({ params }: Params) {
         actions={
           <AddSecretsDialog
             environments={environments ?? []}
-            currentEnvironmentId={environmentId}
+            currentEnvironmentId={selected}
           />
         }
       />
 
-      <EnvironmentSwitcher
-        projectId={projectId}
-        environments={environments ?? []}
-        currentId={environmentId}
-      />
+      <EnvironmentSwitcher environments={environments ?? []} currentId={selected} />
 
       {/*
         The table gets the full width, as Vercel's deployments table does. A
@@ -55,7 +65,10 @@ export default async function EnvironmentSecretsPage({ params }: Params) {
         how do I use these?", and the answer belongs on the same screen,
         already filled in with the project and environment they are looking at.
       */}
-      <RunCommand project={project.slug} environment={listing.environment.slug} />
+      <RunCommand
+        project={project.slug}
+        environment={listing.environment.slug}
+      />
     </div>
   );
 }

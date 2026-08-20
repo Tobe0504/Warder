@@ -1,29 +1,26 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { LogOut } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { apiFetch } from "@/lib/client-api";
+import { Button } from "@/components/motion/button";
+import { SignOutDialog } from "@/components/sign-out-dialog";
 
 export function SignOutButton() {
-  const router = useRouter();
-  const [pending, setPending] = useState(false);
-
-  async function signOut() {
-    setPending(true);
-    try {
-      await apiFetch("/api/auth/logout", { method: "POST" });
-    } finally {
-      router.replace("/login");
-      router.refresh();
-    }
-  }
+  const [confirming, setConfirming] = useState(false);
 
   return (
-    <Button variant="ghost" size="icon" onClick={signOut} disabled={pending} aria-label="Sign out">
-      <LogOut />
-    </Button>
+    <>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setConfirming(true)}
+        aria-label="Sign out"
+      >
+        <LogOut />
+      </Button>
+
+      <SignOutDialog open={confirming} onOpenChange={setConfirming} />
+    </>
   );
 }

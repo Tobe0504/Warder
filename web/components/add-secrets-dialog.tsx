@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/motion/button";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +14,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input, Select, Textarea } from "@/components/ui/input";
+import { Input } from "@/components/motion/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/motion/select";
+import { Textarea } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast";
 import { apiFetch } from "@/lib/client-api";
@@ -209,17 +217,18 @@ export function AddSecretsDialog({
 
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="batch-environment">Environment</Label>
-            <Select
-              id="batch-environment"
-              value={environmentId}
-              onChange={(e) => setEnvironmentId(e.target.value)}
-            >
-              {environments.map((environment) => (
-                <option key={environment.id} value={environment.id}>
-                  {environment.name}
-                </option>
-              ))}
+            <Label>Environment</Label>
+            <Select value={environmentId} onValueChange={setEnvironmentId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose an environment…" />
+              </SelectTrigger>
+              <SelectContent>
+                {environments.map((environment) => (
+                  <SelectItem key={environment.id} value={environment.id}>
+                    {environment.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
             <p className="prose-note text-muted-foreground">
               Everything below goes here. Production values belong in
@@ -241,21 +250,18 @@ export function AddSecretsDialog({
                 <div key={row.id} className="flex items-start gap-1.5">
                   <Input
                     value={row.key}
-                    onChange={(e) =>
+                    onChange={(next) =>
                       setRows((current) =>
                         current.map((candidate) =>
                           candidate.id === row.id
-                            ? {
-                                ...candidate,
-                                key: e.target.value.toUpperCase(),
-                              }
+                            ? { ...candidate, key: next.toUpperCase() }
                             : candidate,
                         ),
                       )
                     }
                     onPaste={(e) => onPasteIntoKey(e, index)}
                     placeholder="DATABASE_URL"
-                    className="basis-2/5 font-mono"
+                    className="basis-2/5"
                     autoComplete="off"
                     spellCheck={false}
                     aria-label={`Key ${index + 1}`}
@@ -280,7 +286,7 @@ export function AddSecretsDialog({
                           ),
                         )
                       }
-                      className="min-h-9 flex-1 font-mono text-meta"
+                      className="min-h-9 flex-1 text-meta"
                       rows={3}
                       autoComplete="off"
                       spellCheck={false}
@@ -289,11 +295,11 @@ export function AddSecretsDialog({
                   ) : (
                     <Input
                       value={row.value}
-                      onChange={(e) =>
+                      onChange={(next) =>
                         setRows((current) =>
                           current.map((candidate) =>
                             candidate.id === row.id
-                              ? { ...candidate, value: e.target.value }
+                              ? { ...candidate, value: next }
                               : candidate,
                           ),
                         )
@@ -339,12 +345,12 @@ export function AddSecretsDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="batch-expiry">Expires (optional)</Label>
             <Input
               id="batch-expiry"
+              label="Expires (optional)"
               type="datetime-local"
               value={expiresAt}
-              onChange={(e) => setExpiresAt(e.target.value)}
+              onChange={setExpiresAt}
             />
             <p className="prose-note text-muted-foreground">
               Applies to every secret above.
@@ -369,12 +375,10 @@ export function AddSecretsDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={pending}>
-              {pending
-                ? "Saving…"
-                : filled.length > 1
-                  ? `Add ${filled.length} secrets`
-                  : "Add secret"}
+            <Button type="submit" loading={pending}>
+              {filled.length > 1
+                ? `Add ${filled.length} secrets`
+                : "Add secret"}
             </Button>
           </DialogFooter>
         </form>

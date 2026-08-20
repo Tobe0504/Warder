@@ -4,9 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Check, X } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/motion/button";
+import { Input } from "@/components/motion/input";
 import { ApiError, apiFetch } from "@/lib/client-api";
 import { cn } from "@/lib/utils";
 
@@ -82,69 +81,70 @@ export function SignupForm() {
 
   return (
     <form onSubmit={onSubmit} className="space-y-3.5">
-      <Field label="Organization" htmlFor="organizationName" error={fieldErrors.organizationName}>
-        <Input
-          id="organizationName"
-          value={organizationName}
-          onChange={(e) => onOrganizationNameChange(e.target.value)}
-          placeholder="Acme"
-          autoComplete="organization"
-          autoFocus
-          required
-          className="h-9"
-        />
-      </Field>
+      <Input
+        id="organizationName"
+        label="Organization"
+        value={organizationName}
+        onChange={onOrganizationNameChange}
+        placeholder="Acme"
+        autoComplete="organization"
+        error={fieldErrors.organizationName}
+        autoFocus
+        required
+      />
 
-      <Field label="Slug" htmlFor="slug" error={fieldErrors.slug}>
-        <Input
-          id="slug"
-          value={slug}
-          onChange={(e) => {
-            setSlugEdited(true);
-            setSlug(e.target.value);
-          }}
-          placeholder="acme"
-          className="font-mono"
-          pattern="[a-z0-9]([a-z0-9-]*[a-z0-9])?"
-          required
-        />
-      </Field>
+      <Input
+        id="slug"
+        label="Slug"
+        value={slug}
+        onChange={(v) => {
+          setSlugEdited(true);
+          setSlug(v);
+        }}
+        placeholder="acme"
+        classNames={{ input: "font-mono" }}
+        pattern="[a-z0-9]([a-z0-9-]*[a-z0-9])?"
+        error={fieldErrors.slug}
+        required
+      />
 
-      <Field label="Your name" htmlFor="name" error={fieldErrors.name}>
-        <Input
-          id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          autoComplete="name"
-          required
-        />
-      </Field>
+      <Input
+        id="name"
+        label="Your name"
+        value={name}
+        onChange={setName}
+        autoComplete="name"
+        error={fieldErrors.name}
+        required
+      />
 
-      <Field label="Email" htmlFor="email" error={fieldErrors.email}>
-        <Input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          autoComplete="username"
-          required
-        />
-      </Field>
+      <Input
+        id="email"
+        label="Email"
+        type="email"
+        value={email}
+        onChange={setEmail}
+        autoComplete="username"
+        error={fieldErrors.email}
+        required
+      />
 
-      <Field label="Password" htmlFor="password" error={fieldErrors.password}>
+      <div className="space-y-1.5">
         <Input
           id="password"
+          label="Password"
           type="password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={setPassword}
           autoComplete="new-password"
           aria-describedby="password-requirement"
+          error={fieldErrors.password}
           required
         />
         <p
           id="password-requirement"
           className={cn(
-            "flex items-center gap-1 text-meta",
+            "flex items-center gap-1 px-1 text-meta",
             password.length === 0
               ? "text-muted-foreground"
               : passwordLongEnough
@@ -156,7 +156,7 @@ export function SignupForm() {
             (passwordLongEnough ? <Check className="size-3" /> : <X className="size-3" />)}
           At least {MIN_PASSWORD_LENGTH} characters. Length matters more than symbols.
         </p>
-      </Field>
+      </div>
 
       {error && (
         <p role="alert" className="text-meta text-destructive">
@@ -164,34 +164,10 @@ export function SignupForm() {
         </p>
       )}
 
-      <Button type="submit" size="lg" className="w-full" disabled={pending}>
-        {pending ? "Creating…" : "Create organization"}
+      <Button type="submit" size="lg" className="w-full" loading={pending}>
+        Create organization
         {!pending && <ArrowRight />}
       </Button>
     </form>
-  );
-}
-
-function Field({
-  label,
-  htmlFor,
-  error,
-  children,
-}: {
-  label: string;
-  htmlFor: string;
-  error?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <Label htmlFor={htmlFor}>{label}</Label>
-      {children}
-      {error && (
-        <p role="alert" className="text-meta text-destructive">
-          {error}
-        </p>
-      )}
-    </div>
   );
 }

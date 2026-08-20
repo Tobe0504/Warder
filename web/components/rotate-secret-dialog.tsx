@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/motion/button";
 import {
   Dialog,
   DialogContent,
@@ -110,8 +110,8 @@ export function RotateSecretDialog({
             <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={pending}>
-              {pending ? "Rotating…" : "Rotate"}
+            <Button type="submit" loading={pending}>
+              Rotate
             </Button>
           </DialogFooter>
         </form>

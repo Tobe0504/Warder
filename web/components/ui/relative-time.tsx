@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { formatDate, formatRelative } from "@/lib/utils";
+import { formatDate, formatRelative } from "@/lib/format";
 
 /**
  * A timestamp rendered as "3 minutes ago", kept honest over time.

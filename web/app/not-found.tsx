@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { Mark } from "@/components/logo";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/motion/button";
 import { Card } from "@/components/ui/card";
 
 /**

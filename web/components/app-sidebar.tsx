@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
+import { motion } from "motion/react";
 import {
   ChevronsUpDown,
   Cpu,
@@ -12,8 +14,23 @@ import {
   ScrollText,
   Settings,
   Users,
+  X,
 } from "lucide-react";
 
+import {
+  AnimatedSidebar,
+  AnimatedSidebarClose,
+  AnimatedSidebarContent,
+  AnimatedSidebarFooter,
+  AnimatedSidebarGroup,
+  AnimatedSidebarGroupContent,
+  AnimatedSidebarGroupLabel,
+  AnimatedSidebarHeader,
+  AnimatedSidebarMenu,
+  AnimatedSidebarMenuButton,
+  AnimatedSidebarMenuItem,
+  AnimatedSidebarRail,
+} from "@/components/motion/animated-sidebar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,22 +39,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarRail,
-} from "@/components/ui/sidebar";
+import { SignOutDialog } from "@/components/sign-out-dialog";
 import { Avatar } from "@/components/ui/avatar";
-import { useToast } from "@/components/ui/toast";
-import { apiFetch } from "@/lib/client-api";
 import type { SessionUser } from "@/lib/session-user";
+
+/**
+ * Client-side navigation. The beUI menu button renders a plain anchor for an
+ * `href`, which would reload the whole application on every move between
+ * sections; `linkComponent` swaps in the router-aware link instead.
+ */
+const MotionLink = motion.create(Link);
 
 type NavItem = {
   href: string;
@@ -62,6 +73,11 @@ const GOVERNANCE: NavItem[] = [
   { href: "/members", label: "Members", icon: Users },
 ];
 
+const SUPPORT: NavItem[] = [
+  { href: "/docs", label: "Docs", icon: LifeBuoy },
+  { href: "/settings", label: "Settings", icon: Settings },
+];
+
 export function AppSidebar({ user }: { user: SessionUser }) {
   const pathname = usePathname();
 
@@ -69,197 +85,136 @@ export function AppSidebar({ user }: { user: SessionUser }) {
     pathname === href || pathname.startsWith(`${href}/`);
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader>
-        <OrganizationSwitcher user={user} />
-      </SidebarHeader>
-
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Platform</SidebarGroupLabel>
-          <SidebarMenu>
-            {PLATFORM.map((item) => (
-              <NavEntry
-                key={item.href}
-                item={item}
-                active={isActive(item.href)}
-              />
-            ))}
-          </SidebarMenu>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Governance</SidebarGroupLabel>
-          <SidebarMenu>
-            {GOVERNANCE.map((item) => (
-              <NavEntry
-                key={item.href}
-                item={item}
-                active={isActive(item.href)}
-              />
-            ))}
-          </SidebarMenu>
-        </SidebarGroup>
-      </SidebarContent>
-
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Documentation">
-              {/*
-                Points at this application's own documentation now that it has
-                some. It used to open github.com, which was a placeholder.
-              */}
-              <Link href="/docs">
-                <LifeBuoy />
-                <span>Docs</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={isActive("/settings")}
-              tooltip="Settings"
-            >
-              <Link href="/settings">
-                <Settings />
-                <span>Settings</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-
-        <UserMenu user={user} />
-      </SidebarFooter>
-
-      <SidebarRail />
-    </Sidebar>
-  );
-}
-
-function NavEntry({ item, active }: { item: NavItem; active: boolean }) {
-  const Icon = item.icon;
-  return (
-    <SidebarMenuItem>
-      <SidebarMenuButton asChild isActive={active} tooltip={item.label}>
-        <Link href={item.href}>
-          <Icon />
-          <span>{item.label}</span>
-        </Link>
-      </SidebarMenuButton>
-    </SidebarMenuItem>
-  );
-}
-
-/**
- * The organization switcher.
- *
- * One organization per user in this build, so this is mostly an identity
- * marker, but it occupies the position people expect a switcher to be in, and
- * the plan badge carries the same information Vercel's does.
- */
-function OrganizationSwitcher({ user }: { user: SessionUser }) {
-  return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <SidebarMenuButton
-          size="lg"
-          className="data-[state=open]:bg-sidebar-accent"
-          tooltip={user.organization}
-        >
-          <div className="grid flex-1 text-left leading-tight">
-            <span className="truncate text-meta font-medium">
+    <AnimatedSidebar
+      ariaLabel="Warder navigation"
+      collapsible="icon"
+      panelClassName="border-border"
+    >
+      <AnimatedSidebarHeader className="p-3 pb-2">
+        <div className="flex min-h-11 items-center gap-3 overflow-hidden px-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <span className="truncate text-body font-semibold text-foreground">
               {user.organization}
             </span>
-            <span className="truncate text-meta text-sidebar-foreground/55">
-              Organization
-            </span>
+            <ChevronsUpDown
+              aria-hidden="true"
+              className="size-3.5 shrink-0 text-muted-foreground"
+            />
           </div>
-          <ChevronsUpDown className="ml-auto size-3.5 text-sidebar-foreground/45" />
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    </SidebarMenu>
+          <AnimatedSidebarClose className="ml-auto text-muted-foreground hover:bg-muted md:hidden">
+            <X aria-hidden="true" className="size-4" />
+          </AnimatedSidebarClose>
+        </div>
+      </AnimatedSidebarHeader>
+
+      <AnimatedSidebarContent className="px-2 pt-1">
+        <NavGroup label="Platform" items={PLATFORM} isActive={isActive} />
+        <NavGroup label="Governance" items={GOVERNANCE} isActive={isActive} />
+        <NavGroup label="Support" items={SUPPORT} isActive={isActive} />
+      </AnimatedSidebarContent>
+
+      <AnimatedSidebarFooter>
+        <UserMenu user={user} />
+      </AnimatedSidebarFooter>
+
+      <AnimatedSidebarRail />
+    </AnimatedSidebar>
+  );
+}
+
+function NavGroup({
+  label,
+  items,
+  isActive,
+}: {
+  label: string;
+  items: NavItem[];
+  isActive: (href: string) => boolean;
+}) {
+  return (
+    <AnimatedSidebarGroup>
+      <AnimatedSidebarGroupLabel>{label}</AnimatedSidebarGroupLabel>
+      <AnimatedSidebarGroupContent>
+        <AnimatedSidebarMenu>
+          {items.map(({ href, label: itemLabel, icon: Icon }) => (
+            <AnimatedSidebarMenuItem key={href}>
+              <AnimatedSidebarMenuButton
+                href={href}
+                linkComponent={MotionLink}
+                isActive={isActive(href)}
+                icon={<Icon className="size-4" />}
+              >
+                {itemLabel}
+              </AnimatedSidebarMenuButton>
+            </AnimatedSidebarMenuItem>
+          ))}
+        </AnimatedSidebarMenu>
+      </AnimatedSidebarGroupContent>
+    </AnimatedSidebarGroup>
   );
 }
 
 function UserMenu({ user }: { user: SessionUser }) {
-  const toast = useToast();
-
-  async function signOut() {
-    try {
-      await apiFetch("/api/auth/logout", { method: "POST" });
-    } catch {
-      // The redirect happens regardless; a failed revoke is reported by the
-      // next request being refused.
-    } finally {
-      window.location.href = "/login";
-    }
-  }
+  const [confirming, setConfirming] = useState(false);
 
   return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent"
-              tooltip={user.name}
-            >
-              <Avatar name={user.name} />
-              <div className="grid flex-1 text-left leading-tight">
-                <span className="truncate text-meta font-medium">
-                  {user.name}
-                </span>
-                <span className="truncate text-meta text-sidebar-foreground/55">
-                  {user.email}
-                </span>
-              </div>
-              <ChevronsUpDown className="ml-auto size-3.5 text-sidebar-foreground/45" />
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
+    <>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          title={user.name}
+          className="flex w-full min-w-0 items-center gap-2.5 rounded-xl px-2 py-1.5 text-left outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-muted"
+        >
+          <Avatar name={user.name} />
+          <div className="grid min-w-0 flex-1 leading-tight group-data-[state=collapsed]/sidebar:hidden">
+            <span className="truncate text-meta font-medium text-foreground">
+              {user.name}
+            </span>
+            <span className="truncate text-meta text-muted-foreground">
+              {user.email}
+            </span>
+          </div>
+          <ChevronsUpDown className="ml-auto size-3.5 shrink-0 text-muted-foreground group-data-[state=collapsed]/sidebar:hidden" />
+        </button>
+      </DropdownMenuTrigger>
 
-          <DropdownMenuContent side="top" align="start" className="w-56">
-            <DropdownMenuLabel className="flex items-center gap-2 py-2">
-              <Avatar name={user.name} />
-              <div className="grid flex-1 leading-tight">
-                <span className="truncate text-meta font-medium text-foreground">
-                  {user.name}
-                </span>
-                <span className="truncate text-meta font-normal">
-                  {user.email}
-                </span>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href="/settings">
-                <Settings />
-                Settings
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/identities">
-                <KeyRound />
-                Identities
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              destructive
-              onSelect={() => {
-                toast.success("Signing out…");
-                void signOut();
-              }}
-            >
-              <LogOut />
-              Sign out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </SidebarMenuItem>
-    </SidebarMenu>
+      <DropdownMenuContent side="top" align="start" className="w-56">
+        <DropdownMenuLabel className="flex items-center gap-2 py-2">
+          <Avatar name={user.name} />
+          <div className="grid flex-1 leading-tight">
+            <span className="truncate text-meta font-medium text-foreground">
+              {user.name}
+            </span>
+            <span className="truncate text-meta font-normal">{user.email}</span>
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/settings">
+            <Settings />
+            Settings
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/identities">
+            <KeyRound />
+            Identities
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem destructive onSelect={() => setConfirming(true)}>
+          <LogOut />
+          Sign out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+
+    {/*
+      A sibling of the menu, not a child: Radix unmounts the menu content when
+      the menu closes, and the modal would go with it.
+    */}
+    <SignOutDialog open={confirming} onOpenChange={setConfirming} />
+    </>
   );
 }
-

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Copy, Link2, UserPlus } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/motion/button";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +14,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input, Select } from "@/components/ui/input";
+import { Input } from "@/components/motion/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/motion/select";
 import { Label } from "@/components/ui/label";
 import { apiFetch } from "@/lib/client-api";
 
@@ -144,23 +151,23 @@ export function InviteMemberDialog() {
 
             <form onSubmit={submit} className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="invite-name">Name</Label>
                 <Input
                   id="invite-name"
+                  label="Name"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={setName}
                   placeholder="Ada Lovelace"
                   required
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="invite-email">Email</Label>
                 <Input
                   id="invite-email"
+                  label="Email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={setEmail}
                   placeholder="ada@example.com"
                   required
                 />
@@ -171,18 +178,18 @@ export function InviteMemberDialog() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="invite-role">Role</Label>
-                <Select
-                  id="invite-role"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  required
-                >
-                  {ROLES.map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
+                <Label>Role</Label>
+                <Select value={role} onValueChange={setRole}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a role…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ROLES.map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
                 <p className="prose-note text-muted-foreground">
                   {ROLES.find(([value]) => value === role)?.[2]} No role grants{" "}
@@ -193,12 +200,12 @@ export function InviteMemberDialog() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="invite-expiry">Membership ends (optional)</Label>
                 <Input
                   id="invite-expiry"
+                  label="Membership ends (optional)"
                   type="datetime-local"
                   value={expiresAt}
-                  onChange={(e) => setExpiresAt(e.target.value)}
+                  onChange={setExpiresAt}
                 />
                 <p className="prose-note text-muted-foreground">
                   The contractor case: set a date now and their access ends on its own, with
@@ -216,8 +223,8 @@ export function InviteMemberDialog() {
                 <Button type="button" variant="ghost" onClick={close}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={pending}>
-                  {pending ? "Creating…" : "Create invitation"}
+                <Button type="submit" loading={pending}>
+                  Create invitation
                 </Button>
               </DialogFooter>
             </form>

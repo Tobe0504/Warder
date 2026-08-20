@@ -1,30 +1,22 @@
 "use client";
 
 import * as React from "react";
-import { AlertTriangle, Check, X } from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import {
+  AnimatedToastStack,
+  useAnimatedToastStack,
+} from "@/components/motion/animated-toast-stack";
 
 /**
  * Toasts.
  *
- * Written rather than pulled from a library, for two reasons. The dependency
- * budget on a security tool is worth spending carefully, and, more to the
- * point: a general toast library will happily render whatever it is handed,
- * including an object that stringifies to something it should not. This one
- * accepts a string and nothing else, and React escapes it.
- *
- * Announced through an aria-live region so that a screen reader hears the
- * result of an action rather than nothing happening.
+ * The queue and the presentation are beUI's; this file is the seam that keeps
+ * the rest of the application on a two-method API. `toast.success(string)` and
+ * `toast.error(string)` accept a string and nothing else, so no call site can
+ * hand the renderer an object that stringifies into something it should not,
+ * and React escapes what does get through. Thirteen components call this, and
+ * none of them should have to know how a toast is drawn.
  */
-
-type ToastTone = "success" | "error";
-
-type Toast = {
-  id: number;
-  tone: ToastTone;
-  message: string;
-};
 
 type ToastContextValue = {
   success: (message: string) => void;
@@ -40,68 +32,36 @@ const SUCCESS_MS = 4000;
 const ERROR_MS = 8000;
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
-  const [toasts, setToasts] = React.useState<Toast[]>([]);
-  const nextId = React.useRef(0);
-
-  const dismiss = React.useCallback((id: number) => {
-    setToasts((current) => current.filter((toast) => toast.id !== id));
-  }, []);
-
-  const push = React.useCallback(
-    (tone: ToastTone, message: string) => {
-      const id = nextId.current++;
-      setToasts((current) => [...current, { id, tone, message }]);
-      setTimeout(() => dismiss(id), tone === "error" ? ERROR_MS : SUCCESS_MS);
-    },
-    [dismiss],
-  );
+  const { toasts, showToast, dismissToast } = useAnimatedToastStack({
+    defaultDuration: SUCCESS_MS,
+  });
 
   const value = React.useMemo<ToastContextValue>(
     () => ({
-      success: (message: string) => push("success", message),
-      error: (message: string) => push("error", message),
+      success: (message: string) =>
+        showToast({ title: message, status: "success", duration: SUCCESS_MS }),
+      error: (message: string) =>
+        showToast({ title: message, status: "error", duration: ERROR_MS }),
     }),
-    [push],
+    [showToast],
   );
 
   return (
     <ToastContext.Provider value={value}>
       {children}
 
-      <div
-        // 'polite' rather than 'assertive': a confirmation should not interrupt
-        // whatever a screen reader is in the middle of saying.
-        aria-live="polite"
-        aria-atomic="false"
-        className="pointer-events-none fixed bottom-3 right-3 z-50 flex w-full max-w-xs flex-col gap-2"
-      >
-        {toasts.map((toast) => (
-          <div
-            key={toast.id}
-            role={toast.tone === "error" ? "alert" : "status"}
-            className={cn(
-              "pointer-events-auto flex items-start gap-2 rounded-lg border bg-card px-3 py-2.5 shadow-lg",
-              "duration-150 animate-in fade-in-0 slide-in-from-bottom-2",
-              toast.tone === "error" && "border-destructive/30",
-            )}
-          >
-            {toast.tone === "success" ? (
-              <Check className="mt-0.5 size-3.5 shrink-0 text-can-use" />
-            ) : (
-              <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-destructive" />
-            )}
-
-            <p className="flex-1 text-meta leading-relaxed">{toast.message}</p>
-
-            <button
-              onClick={() => dismiss(toast.id)}
-              aria-label="Dismiss"
-              className="rounded-sm text-muted-foreground transition-opacity hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <X className="size-3.5" />
-            </button>
-          </div>
-        ))}
+      {/*
+        'polite' rather than 'assertive': a confirmation should not interrupt
+        whatever a screen reader is in the middle of saying. The stack renders
+        into a portal, so the live region has to wrap it here.
+      */}
+      <div aria-live="polite" aria-atomic="false">
+        <AnimatedToastStack
+          toasts={toasts}
+          onDismiss={dismissToast}
+          position="bottom-right"
+          maxVisible={3}
+        />
       </div>
     </ToastContext.Provider>
   );

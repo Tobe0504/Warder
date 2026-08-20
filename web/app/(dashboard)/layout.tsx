@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
 
 import { AppSidebar } from "@/components/app-sidebar";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import {
+  AnimatedSidebarInset,
+  AnimatedSidebarProvider,
+} from "@/components/motion/animated-sidebar";
 import { callCoreApi, NotAuthenticatedError } from "@/lib/core-api";
 import { getSessionToken } from "@/lib/session";
 import type { SessionUser } from "@/lib/session-user";
@@ -24,6 +26,11 @@ export type { SessionUser };
  * trusted from the cookie. That is what makes revocation immediate: when a
  * membership expires or an administrator removes someone, the very next page
  * they load sends them to sign-in, without waiting for a cookie to lapse.
+ *
+ * That check is the reason this file stays a server component: it reads an
+ * httpOnly cookie and calls the core API with it, neither of which a browser
+ * bundle may do. The sidebar's own state is client state, so it lives in
+ * AppSidebar rather than here.
  *
  * If the core API is unreachable, this throws and app/(dashboard)/error.tsx
  * renders a page explaining what is not running. That path exists so nobody
@@ -50,10 +57,9 @@ export default async function DashboardLayout({
   }
 
   return (
-    <TooltipProvider delayDuration={200}>
-      <SidebarProvider>
+    <AnimatedSidebarProvider>
         <AppSidebar user={user} />
-        <SidebarInset>
+        <AnimatedSidebarInset>
           <a
             href="#main"
             className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded-md focus:bg-card focus:px-3 focus:py-2 focus:text-meta focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-ring"
@@ -61,8 +67,7 @@ export default async function DashboardLayout({
             Skip to content
           </a>
           {children}
-        </SidebarInset>
-      </SidebarProvider>
-    </TooltipProvider>
+        </AnimatedSidebarInset>
+    </AnimatedSidebarProvider>
   );
 }

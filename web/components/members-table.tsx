@@ -6,7 +6,7 @@ import { Clock, UserMinus, Users } from "lucide-react";
 
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/motion/button";
 import { DataList, DataListRow, EmptyState, RowMeta, StatusDot } from "@/components/ui/data-list";
 import { RelativeTime } from "@/components/ui/relative-time";
 import { useToast } from "@/components/ui/toast";
@@ -97,7 +97,7 @@ function MemberRow({ member, currentUserId }: { member: Member; currentUserId: s
             size="icon"
             className="size-7"
             onClick={remove}
-            disabled={pending}
+            loading={pending}
             aria-label={`Remove ${member.name}`}
             title="Remove: their sessions end on the next request, and no credential rotates"
           >

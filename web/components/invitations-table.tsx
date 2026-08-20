@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Ban, MailCheck } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/motion/button";
 import { DataList, DataListRow, EmptyState, MonoTag, RowMeta } from "@/components/ui/data-list";
 import { RelativeTime } from "@/components/ui/relative-time";
 import { useToast } from "@/components/ui/toast";
@@ -97,7 +97,7 @@ function InvitationRow({ invitation }: { invitation: Invitation }) {
             size="icon"
             className="size-7"
             onClick={revoke}
-            disabled={pending}
+            loading={pending}
             aria-label={`Withdraw the invitation for ${invitation.email}`}
             title="Withdraw: the link stops working immediately"
           >

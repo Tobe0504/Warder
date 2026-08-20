@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bot, GitBranch, Plus, Server, Workflow } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/motion/button";
 import {
   Dialog,
   DialogContent,
@@ -14,8 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Input } from "@/components/motion/input";
 import { useToast } from "@/components/ui/toast";
 import { apiFetch } from "@/lib/client-api";
 import { cn } from "@/lib/utils";
@@ -111,16 +110,14 @@ export function CreateIdentityDialog() {
         </DialogHeader>
 
         <form onSubmit={submit} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="identity-name">Name</Label>
-            <Input
-              id="identity-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="payments-api"
-              required
-            />
-          </div>
+          <Input
+            id="identity-name"
+            label="Name"
+            value={name}
+            onChange={setName}
+            placeholder="payments-api"
+            required
+          />
 
           <fieldset className="space-y-1.5">
             <legend className="mb-1.5 text-meta font-medium text-muted-foreground">Kind</legend>
@@ -160,14 +157,12 @@ export function CreateIdentityDialog() {
           </fieldset>
 
           <div className="space-y-1.5">
-            <Label htmlFor="identity-expiry">
-              Expires {isAgent ? "(recommended)" : "(optional)"}
-            </Label>
             <Input
               id="identity-expiry"
+              label={`Expires ${isAgent ? "(recommended)" : "(optional)"}`}
               type="datetime-local"
               value={expiresAt}
-              onChange={(e) => setExpiresAt(e.target.value)}
+              onChange={setExpiresAt}
             />
             {isAgent && (
               // Surfaced only for agents, where it is the difference between a
@@ -190,8 +185,8 @@ export function CreateIdentityDialog() {
             <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={pending}>
-              {pending ? "Creating…" : "Create identity"}
+            <Button type="submit" loading={pending}>
+              Create identity
             </Button>
           </DialogFooter>
         </form>

@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/motion/button";
 import {
   DataList,
   DataListHeader,
@@ -25,7 +25,6 @@ import {
 import { useToast } from "@/components/ui/toast";
 import { RelativeTime } from "@/components/ui/relative-time";
 import { apiFetch } from "@/lib/client-api";
-
 
 export type Grant = {
   id: string;
@@ -184,10 +183,12 @@ function GrantRow({ projectId, grant }: { projectId: string; grant: Grant }) {
       /> */}
 
       <div className="min-w-0 flex-1">
-        <div className="truncate text-body">{grant.subjectName || "Unknown"}</div>
+        <div className="truncate text-body">
+          {grant.subjectName || "Unknown"}
+        </div>
         <div className="truncate text-meta text-muted-foreground">
           {grant.subjectKind.toLowerCase().replace("_", " ")}
-          {grant.reason && <span className="italic"> · {grant.reason}</span>}
+          {grant.reason && <span> · {grant.reason}</span>}
         </div>
       </div>
 
@@ -223,7 +224,7 @@ function GrantRow({ projectId, grant }: { projectId: string; grant: Grant }) {
           size="icon"
           className="size-7"
           onClick={revoke}
-          disabled={pending}
+          loading={pending}
           aria-label={`Revoke access for ${grant.subjectName}`}
           title="Revoke: runtime access is denied on the next request"
         >

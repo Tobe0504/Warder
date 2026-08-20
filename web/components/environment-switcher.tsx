@@ -1,59 +1,59 @@
 "use client";
 
-import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { cn } from "@/lib/utils";
+import { Tabs, TabsList, TabsTrigger } from "@/components/motion/tabs";
 
 type Environment = { id: string; name: string; slug: string };
 
 /**
  * Environment selection.
  *
- * Labels use the environment's display name, "Development", not the
- * lowercase mono `development` slug. The slug is an identifier the CLI takes;
- * it is not what this control is for, and setting proper nouns in lowercase
- * monospace made a simple choice look like configuration.
+ * Writes `?env=<slug>` rather than navigating to another route. The page is
+ * the same page either way, so a route change made the whole thing unmount and
+ * remount to swap one list. `replace` rather than `push` keeps Back meaning
+ * "the screen before this one" instead of walking through every environment
+ * somebody clicked.
  *
- * Nothing here treats "production" as a special word, the platform does not
- * either. What distinguishes environments is which grants and tokens name
- * them, so a custom environment gets exactly the same treatment as a built-in
- * one, including in this control.
+ * Labels use the display name, "Development", not the lowercase mono
+ * `development` slug. The slug is an identifier the CLI takes; setting proper
+ * nouns in lowercase monospace made a simple choice look like configuration.
+ *
+ * Nothing here treats "production" as a special word, and the platform does not
+ * either. What distinguishes environments is which grants and tokens name them.
  */
 export function EnvironmentSwitcher({
-  projectId,
   environments,
   currentId,
 }: {
-  projectId: string;
   environments: Environment[];
   currentId: string;
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
+
+  const current =
+    environments.find((environment) => environment.id === currentId) ??
+    environments[0];
+
+  function select(slug: string) {
+    const next = new URLSearchParams(params);
+    next.set("env", slug);
+    router.replace(`${pathname}?${next}`, { scroll: false });
+  }
+
+  if (!current) return null;
+
   return (
-    <div
-      className="inline-flex items-center gap-0.5 rounded-lg border bg-card p-1"
-      role="tablist"
-      aria-label="Environments"
-    >
-      {environments.map((environment) => {
-        const active = environment.id === currentId;
-        return (
-          <Link
-            key={environment.id}
-            href={`/projects/${projectId}/environments/${environment.id}`}
-            role="tab"
-            aria-selected={active}
-            className={cn(
-              "rounded-md px-3 py-1 text-meta transition-colors font-medium",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              active
-                ? "bg-muted font-medium text-foreground"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
+    <Tabs value={current.slug} onValueChange={select} variant="segment">
+      <TabsList>
+        {environments.map((environment) => (
+          <TabsTrigger key={environment.id} value={environment.slug}>
             {environment.name}
-          </Link>
-        );
-      })}
-    </div>
+          </TabsTrigger>
+        ))}
+      </TabsList>
+    </Tabs>
   );
 }

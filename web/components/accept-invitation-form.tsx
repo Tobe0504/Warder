@@ -5,9 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/motion/button";
+import { Input } from "@/components/motion/input";
 import { apiFetch } from "@/lib/client-api";
 
 /**
@@ -110,46 +109,42 @@ export function AcceptInvitationForm() {
 
   return (
     <form onSubmit={submit} className="space-y-4">
-      <div className="space-y-1.5">
-        <Label htmlFor="accept-name">Your name</Label>
-        <Input
-          id="accept-name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Ada Lovelace"
-          autoComplete="name"
-          required
-        />
-      </div>
+      <Input
+        id="accept-name"
+        label="Your name"
+        value={name}
+        onChange={setName}
+        placeholder="Ada Lovelace"
+        autoComplete="name"
+        required
+      />
 
       <div className="space-y-1.5">
-        <Label htmlFor="accept-password">Choose a password</Label>
         <Input
           id="accept-password"
+          label="Choose a password"
           type="password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={setPassword}
           autoComplete="new-password"
           minLength={12}
           required
         />
-        <p className="prose-note text-muted-foreground">
-          At least 12 characters. Nobody else sees this: not even whoever invited you.
+        <p className="px-1 prose-note text-muted-foreground">
+          At least 12 characters. Nobody else sees this, not even whoever invited you.
         </p>
       </div>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="accept-confirm">Confirm password</Label>
-        <Input
-          id="accept-confirm"
-          type="password"
-          value={confirm}
-          onChange={(e) => setConfirm(e.target.value)}
-          autoComplete="new-password"
-          minLength={12}
-          required
-        />
-      </div>
+      <Input
+        id="accept-confirm"
+        label="Confirm password"
+        type="password"
+        value={confirm}
+        onChange={setConfirm}
+        autoComplete="new-password"
+        minLength={12}
+        required
+      />
 
       {error && (
         <p role="alert" className="text-meta text-destructive">
@@ -157,8 +152,8 @@ export function AcceptInvitationForm() {
         </p>
       )}
 
-      <Button type="submit" className="w-full" disabled={pending}>
-        {pending ? "Creating your account…" : "Accept invitation"}
+      <Button type="submit" className="w-full" loading={pending}>
+        Accept invitation
       </Button>
     </form>
   );
