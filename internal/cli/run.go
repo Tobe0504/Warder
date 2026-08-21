@@ -67,7 +67,7 @@ func Run(ctx context.Context, opts runOptions) error {
 		}
 	}
 
-	client := NewClient(baseURL)
+	client := NewClientFrom(baseURL, source)
 
 	// Step one: exchange the long-lived credential for a short-lived session.
 	auth, err := client.RuntimeAuth(ctx, credential, project, environment)
@@ -250,5 +250,19 @@ func resolveRuntimeCredential() (credential, baseURL, source string, err error) 
 	if url == "" {
 		url = creds.APIURL
 	}
+
+	// A session is only valid at the server that issued it. When the committed
+	// project file names a different one, the request would fail as an
+	// unhelpful 401 against a server the developer never meant to call; saying
+	// so here names both addresses and the one command that fixes it.
+	if cfg, err := LoadProjectConfig(); err == nil && cfg != nil {
+		want := strings.TrimSpace(cfg.RuntimeURL)
+		if want != "" && !sameServer(want, url) {
+			return "", "", "", fmt.Errorf(
+				"this project targets %s, but you are signed in to %s\n\nRun: ward login --url %s",
+				redactURL(want), redactURL(url), redactURL(want))
+		}
+	}
+
 	return creds.SessionToken, url, "", nil
 }

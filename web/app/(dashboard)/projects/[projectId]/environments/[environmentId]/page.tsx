@@ -4,6 +4,7 @@ import { PageTitle } from "@/components/page-shell";
 import { RunCommand } from "@/components/run-command";
 import { SecretsTable, type Secret } from "@/components/secrets-table";
 import { callCoreApi } from "@/lib/core-api";
+import { cliRuntimeUrl } from "@/lib/env";
 
 type Params = {
   params: Promise<{ projectId: string; environmentId: string }>;
@@ -68,6 +69,7 @@ export default async function EnvironmentSecretsPage({ params, searchParams }: P
       <RunCommand
         project={project.slug}
         environment={listing.environment.slug}
+        runtimeUrl={cliRuntimeUrl()}
       />
     </div>
   );

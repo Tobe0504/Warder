@@ -110,6 +110,7 @@ func commandInit(_ context.Context, args []string) error {
 	flags := flag.NewFlagSet("init", flag.ContinueOnError)
 	project := flags.String("project", "", "Project slug")
 	environment := flags.String("env", "development", "Environment slug")
+	runtimeURL := flags.String("url", "", "Warder runtime URL for this project")
 	force := flags.Bool("force", false, "Overwrite an existing .warder.json")
 	if err := flags.Parse(args); err != nil {
 		return err
@@ -124,7 +125,15 @@ func commandInit(_ context.Context, args []string) error {
 		return fmt.Errorf("%s already exists\n\nPass --force to replace it", filename)
 	}
 
-	cfg := ProjectConfig{Project: *project, Environment: *environment}
+	// The runtime URL belongs in the committed file, not in every teammate's
+	// shell. It is an address, not a credential: knowing where Warder lives
+	// gets nobody a secret, and the alternative is each developer discovering
+	// it by asking whoever deployed it.
+	cfg := ProjectConfig{
+		Project:     *project,
+		Environment: *environment,
+		RuntimeURL:  strings.TrimSpace(*runtimeURL),
+	}
 	encoded, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
 		return fmt.Errorf("could not encode the configuration: %w", err)
@@ -138,9 +147,12 @@ func commandInit(_ context.Context, args []string) error {
 		return fmt.Errorf("could not write %s: %w", filename, err)
 	}
 
-	fmt.Fprintf(os.Stderr,
-		"Wrote %s for %s/%s.\n\nThis file holds no credentials and is safe to commit.\nNext: ward login, then ward run -- <your command>\n",
-		filename, *project, *environment)
+	fmt.Fprintf(os.Stderr, "Wrote %s for %s/%s.\n", filename, *project, *environment)
+	if cfg.RuntimeURL != "" {
+		fmt.Fprintf(os.Stderr, "Server: %s\n", redactURL(cfg.RuntimeURL))
+	}
+	fmt.Fprint(os.Stderr,
+		"\nThis file holds no credentials and is safe to commit.\nNext: ward login, then ward run -- <your command>\n")
 	return nil
 }
 
@@ -156,9 +168,17 @@ func commandLogin(ctx context.Context, args []string) error {
 		return err
 	}
 
-	url := *apiURL
+	// Precedence, most explicit first. The project file sits above the default
+	// so that someone who clones a repository and runs `ward login` reaches the
+	// team's Warder rather than a loopback address with nothing behind it.
+	url := strings.TrimSpace(*apiURL)
 	if url == "" {
 		url = strings.TrimSpace(os.Getenv("WARDER_RUNTIME_URL"))
+	}
+	if url == "" {
+		if cfg, err := LoadProjectConfig(); err == nil && cfg != nil {
+			url = strings.TrimSpace(cfg.RuntimeURL)
+		}
 	}
 	if url == "" {
 		url = defaultRuntimeURL
@@ -180,7 +200,14 @@ func commandLogin(ctx context.Context, args []string) error {
 		return err
 	}
 
-	client := NewClient(url)
+	// Printed before the attempt, not after: when this is the wrong server the
+	// request fails, and the failure should arrive with the address already on
+	// screen. `ward login` defaults to loopback, which is right on a developer
+	// machine and wrong everywhere else, and saying nothing made that default
+	// invisible until the first `ward run` failed.
+	fmt.Fprintf(os.Stderr, "Signing in to %s\n", redactURL(url))
+
+	client := NewClientFrom(url, loginURLSource(*apiURL))
 	result, err := client.Login(ctx, address, password)
 
 	// The password is cleared as soon as it has been used. Best effort: Go
@@ -286,6 +313,20 @@ func commandStatus(_ context.Context, _ []string) error {
 		fmt.Fprintf(writer, "Environment\t%s\n", cfg.Environment)
 	}
 	return writer.Flush()
+}
+
+// loginURLSource names where a login URL came from, for error messages.
+func loginURLSource(flagValue string) string {
+	if strings.TrimSpace(flagValue) != "" {
+		return "--url"
+	}
+	if strings.TrimSpace(os.Getenv("WARDER_RUNTIME_URL")) != "" {
+		return "WARDER_RUNTIME_URL"
+	}
+	if cfg, err := LoadProjectConfig(); err == nil && cfg != nil && strings.TrimSpace(cfg.RuntimeURL) != "" {
+		return ".warder.json"
+	}
+	return ""
 }
 
 func runtimeURLFor(creds *Credentials) string {

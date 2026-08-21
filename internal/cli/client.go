@@ -18,13 +18,23 @@ var ErrNotLoggedIn = errors.New("not logged in")
 // Client talks to the Warder API.
 type Client struct {
 	baseURL string
-	http    *http.Client
+	// source names where baseURL came from, for error messages. Empty means
+	// the stored login.
+	source string
+	http   *http.Client
 }
 
 // NewClient constructs a client for a base URL.
 func NewClient(baseURL string) *Client {
+	return NewClientFrom(baseURL, "")
+}
+
+// NewClientFrom constructs a client, recording where the address came from so
+// that an unreachable server can say which setting to correct.
+func NewClientFrom(baseURL, source string) *Client {
 	return &Client{
 		baseURL: strings.TrimRight(baseURL, "/"),
+		source:  source,
 		http: &http.Client{
 			Timeout: 30 * time.Second,
 			// Redirects are not followed. A redirect from the API would send
@@ -85,9 +95,14 @@ func (c *Client) do(ctx context.Context, method, path, credential string, body, 
 
 	resp, err := c.http.Do(req)
 	if err != nil {
-		// The transport error can quote the request URL. It cannot quote the
-		// header, so this is safe, but the message is kept short regardless.
-		return fmt.Errorf("could not reach %s", c.baseURL)
+		// The transport error is not wrapped in: it can quote the request URL,
+		// which may carry userinfo, and it says nothing a reader can act on
+		// that the typed error below does not say better.
+		return &UnreachableError{
+			BaseURL:  redactURL(c.baseURL),
+			Source:   c.source,
+			Loopback: isLoopbackURL(c.baseURL),
+		}
 	}
 	defer resp.Body.Close()
 

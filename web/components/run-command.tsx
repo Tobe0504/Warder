@@ -12,10 +12,21 @@ import {
 export function RunCommand({
   project,
   environment,
+  runtimeUrl,
   className,
 }: {
   project: string;
   environment: string;
+  /**
+   * Where this Warder's runtime API lives, when the operator has published it.
+   *
+   * Without it the commands below say a bare `ward init` and `ward login`,
+   * which point the CLI at 127.0.0.1:8081. That is right for someone running
+   * Warder locally and useless for everyone else: a person who installed
+   * `ward` to use a deployed Warder has no way to guess the address, and the
+   * failure arrives later, from a different command, as a connection error.
+   */
+  runtimeUrl?: string | null;
   className?: string;
 }) {
   const [copied, setCopied] = useState<string | null>(null);
@@ -27,6 +38,12 @@ export function RunCommand({
     environment === "development"
       ? `ward run -- npm run dev`
       : `ward run --env ${environment} -- npm run dev`;
+
+  const server = runtimeUrl ? ` --url ${runtimeUrl}` : "";
+  const initCommand = `ward init --project ${project} --env ${environment}${server}`;
+  // The URL is recorded by `ward init`, so login only needs it when there is no
+  // project file to read it from.
+  const loginCommand = "ward login";
 
   async function copy(text: string, label: string) {
     await navigator.clipboard.writeText(text);
@@ -47,21 +64,19 @@ export function RunCommand({
         <Snippet
           step={1}
           label="Point this directory at the environment"
-          command={`ward init --project ${project} --env ${environment}`}
+          command={initCommand}
           hint="Writes .warder.json: safe to commit, holds no credentials."
           copied={copied === "init"}
-          onCopy={() =>
-            copy(`ward init --project ${project} --env ${environment}`, "init")
-          }
+          onCopy={() => copy(initCommand, "init")}
         />
 
         <Snippet
           step={2}
           label="Sign in once per machine"
-          command="ward login"
+          command={loginCommand}
           hint="Stores a session in your home directory, readable only by you."
           copied={copied === "login"}
-          onCopy={() => copy("ward login", "login")}
+          onCopy={() => copy(loginCommand, "login")}
         />
 
         <Snippet

@@ -185,10 +185,11 @@ either Vercel's default or already handled in `middleware.ts`, which sets the
 security headers per request so the Content-Security-Policy can carry a fresh
 nonce. A second place to configure headers is a second place for them to drift.
 
-One environment variable:
+Two environment variables:
 
 ```
 WARDER_URL=warder://<service-token>@warder-admin-XXXX.onrender.com:443/production?origin=https://<your-vercel-domain>
+WARDER_PUBLIC_RUNTIME_URL=https://warder-runtime-XXXX.onrender.com
 ```
 
 That single URI carries everything the dashboard needs: the scheme states the
@@ -205,11 +206,23 @@ Three details that will bite if you get them wrong:
 - **`origin` is required in production.** It is what lets the BFF refuse
   cross-site requests. Set it to your real Vercel domain, including `https://`.
 
+`WARDER_PUBLIC_RUNTIME_URL` is the **runtime** host, not the admin one, and it
+is not a credential: it is the address the dashboard prints into the setup
+commands on every environment page, so that someone who did not deploy Warder
+can copy a `ward init` that works. Leave it unset and the dashboard prints a
+bare `ward init`, which points the CLI at `127.0.0.1:8081` and fails with a
+connection error the first time anyone runs `ward run`.
+
 Deploy. Open the domain and choose **Create an organization**.
 
 ## 5. Point the CLI at it
 
-Developers set one variable, or pass `--api`:
+With `WARDER_PUBLIC_RUNTIME_URL` set above, developers do not have to know the
+address at all: the dashboard hands them a `ward init` that records it in
+`.warder.json`, which is committed, so everyone who clones the repository picks
+it up and `ward login` finds it without a flag.
+
+The address can also be given directly, which is what CI does:
 
 ```bash
 export WARDER_RUNTIME_URL=https://warder-runtime-XXXX.onrender.com

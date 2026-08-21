@@ -66,3 +66,32 @@ export function publicOrigin(): string {
     return "http://localhost:3000";
   }
 }
+
+/**
+ * The address the ward CLI should talk to, if the operator has published one.
+ *
+ * Not a credential, and deliberately not a NEXT_PUBLIC variable: it reaches the
+ * browser as a prop from a server component, which keeps the "no client-side
+ * configuration" rule intact for a value that is only ever rendered into a
+ * copyable command.
+ *
+ * Absent means the dashboard shows the bare `ward login`, which is right for a
+ * developer running Warder on their own machine and wrong for everyone using a
+ * deployed one. Operators should set it. See docs/deployment.md.
+ */
+export function cliRuntimeUrl(): string | null {
+  const raw = process.env.WARDER_PUBLIC_RUNTIME_URL?.trim();
+  if (!raw) return null;
+
+  try {
+    const parsed = new URL(raw);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
+    // Userinfo in this value would be an operator mistake, and it would be
+    // rendered into a command people copy and paste into shell history.
+    parsed.username = "";
+    parsed.password = "";
+    return parsed.toString().replace(/\/$/, "");
+  } catch {
+    return null;
+  }
+}
