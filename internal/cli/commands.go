@@ -312,7 +312,7 @@ func commandStatus(_ context.Context, _ []string) error {
 	writer := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	fmt.Fprintf(writer, "Signed in as\t%s\n", creds.Email)
 	fmt.Fprintf(writer, "Organization\t%s\n", creds.Organization)
-	fmt.Fprintf(writer, "Server\t%s\n", runtimeURLFor(creds))
+	fmt.Fprintf(writer, "Signed in to\t%s\n", redactURL(runtimeURLFor(creds)))
 
 	if creds.Expired(nowFunc()) {
 		fmt.Fprintf(writer, "Session\texpired: run `ward login`\n")
@@ -323,6 +323,12 @@ func commandStatus(_ context.Context, _ []string) error {
 	if cfg, err := LoadProjectConfig(); err == nil && cfg != nil {
 		fmt.Fprintf(writer, "Project\t%s\n", cfg.Project)
 		fmt.Fprintf(writer, "Environment\t%s\n", cfg.Environment)
+
+		// Shown only when it disagrees with the session, because that is the
+		// one case where two addresses on screen explains something.
+		if want := strings.TrimSpace(cfg.RuntimeURL); want != "" && !sameServer(want, runtimeURLFor(creds)) {
+			fmt.Fprintf(writer, "Project server\t%s (run `ward login`)\n", redactURL(want))
+		}
 	}
 	return writer.Flush()
 }
@@ -339,6 +345,31 @@ func loginURLSource(flagValue string) string {
 		return ".warder.json"
 	}
 	return ""
+}
+
+// sessionServer returns the address a stored session is valid at, refusing when
+// the committed project file names a different one.
+//
+// A session is only valid at the server that issued it. Every command that
+// carries one goes through here, so a stale login produces the same explanation
+// whether it is `ward run` or `ward environment list` that hits it, rather than
+// a connection error naming an address the reader never chose.
+func sessionServer(creds *Credentials) (string, error) {
+	url := runtimeURLFor(creds)
+
+	cfg, err := LoadProjectConfig()
+	if err != nil || cfg == nil {
+		return url, nil
+	}
+
+	want := strings.TrimSpace(cfg.RuntimeURL)
+	if want == "" || sameServer(want, url) {
+		return url, nil
+	}
+
+	return "", fmt.Errorf(
+		"this project targets %s, but you are signed in to %s\n\nRun: ward login",
+		redactURL(want), redactURL(url))
 }
 
 func runtimeURLFor(creds *Credentials) string {
@@ -366,7 +397,12 @@ func requireLogin() (*Credentials, *Client, error) {
 	if creds.Expired(nowFunc()) {
 		return nil, nil, errors.New("your session has expired\n\nRun `ward login`")
 	}
-	return creds, NewClient(runtimeURLFor(creds)), nil
+
+	url, err := sessionServer(creds)
+	if err != nil {
+		return nil, nil, err
+	}
+	return creds, NewClient(url), nil
 }
 
 func commandProject(ctx context.Context, args []string) error {
