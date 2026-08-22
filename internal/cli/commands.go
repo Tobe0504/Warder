@@ -106,7 +106,7 @@ command-line arguments.
 // nobody has to pass flags. It holds no credential, only two names: which is
 // the reason it can be committed at all, and the reason the writer refuses to
 // put anything else in it.
-func commandInit(_ context.Context, args []string) error {
+func commandInit(ctx context.Context, args []string) error {
 	flags := flag.NewFlagSet("init", flag.ContinueOnError)
 	project := flags.String("project", "", "Project slug")
 	environment := flags.String("env", "development", "Environment slug")
@@ -129,10 +129,18 @@ func commandInit(_ context.Context, args []string) error {
 	// shell. It is an address, not a credential: knowing where Warder lives
 	// gets nobody a secret, and the alternative is each developer discovering
 	// it by asking whoever deployed it.
+	// Resolved here rather than stored raw, so the committed file names the
+	// runtime address whichever address was passed. Everything downstream then
+	// compares like with like.
+	resolved := strings.TrimSpace(*runtimeURL)
+	if resolved != "" {
+		resolved = DiscoverRuntimeURL(ctx, resolved)
+	}
+
 	cfg := ProjectConfig{
 		Project:     *project,
 		Environment: *environment,
-		RuntimeURL:  strings.TrimSpace(*runtimeURL),
+		RuntimeURL:  resolved,
 	}
 	encoded, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
@@ -184,6 +192,17 @@ func commandLogin(ctx context.Context, args []string) error {
 		url = defaultRuntimeURL
 	}
 
+	// A dashboard address resolves to the runtime address behind it, so nobody
+	// has to know there are two. Given the runtime address already, this is a
+	// lookup that 404s and changes nothing.
+	url = DiscoverRuntimeURL(ctx, url)
+
+	// Printed before the password is asked for, not after. This names the host
+	// the password is about to be sent to, and after discovery that host is not
+	// necessarily the one that was typed: a reader who is about to type a
+	// credential is entitled to see where it goes while they can still stop.
+	fmt.Fprintf(os.Stderr, "Signing in to %s\n", redactURL(url))
+
 	address := *email
 	if address == "" {
 		fmt.Fprint(os.Stderr, "Email: ")
@@ -199,13 +218,6 @@ func commandLogin(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
-
-	// Printed before the attempt, not after: when this is the wrong server the
-	// request fails, and the failure should arrive with the address already on
-	// screen. `ward login` defaults to loopback, which is right on a developer
-	// machine and wrong everywhere else, and saying nothing made that default
-	// invisible until the first `ward run` failed.
-	fmt.Fprintf(os.Stderr, "Signing in to %s\n", redactURL(url))
 
 	client := NewClientFrom(url, loginURLSource(*apiURL))
 	result, err := client.Login(ctx, address, password)

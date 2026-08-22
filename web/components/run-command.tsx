@@ -18,13 +18,13 @@ export function RunCommand({
   project: string;
   environment: string;
   /**
-   * Where this Warder's runtime API lives, when the operator has published it.
+   * This dashboard's own address, handed to `ward init`.
    *
-   * Without it the commands below say a bare `ward init` and `ward login`,
-   * which point the CLI at 127.0.0.1:8081. That is right for someone running
-   * Warder locally and useless for everyone else: a person who installed
-   * `ward` to use a deployed Warder has no way to guess the address, and the
-   * failure arrives later, from a different command, as a connection error.
+   * The CLI resolves it to the runtime host through /.well-known/warder, so
+   * the command names the one address the reader already has rather than a
+   * second one they would have to be told. Without it the command is a bare
+   * `ward init`, which points the CLI at 127.0.0.1:8081: right for someone
+   * running Warder locally, useless for everyone else.
    */
   runtimeUrl?: string | null;
   className?: string;

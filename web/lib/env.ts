@@ -68,14 +68,15 @@ export function publicOrigin(): string {
 }
 
 /**
- * The address the ward CLI should talk to, if the operator has published one.
+ * The runtime address this dashboard advertises to the ward CLI.
  *
- * Not a credential, and deliberately not a NEXT_PUBLIC variable: it reaches the
+ * Served at /.well-known/warder and rendered into the setup commands. Not a
+ * credential, and deliberately not a NEXT_PUBLIC variable: it reaches the
  * browser as a prop from a server component, which keeps the "no client-side
- * configuration" rule intact for a value that is only ever rendered into a
+ * configuration" rule intact for a value that is only ever printed into a
  * copyable command.
  *
- * Absent means the dashboard shows the bare `ward login`, which is right for a
+ * Absent means the dashboard shows a bare `ward init`, which is right for a
  * developer running Warder on their own machine and wrong for everyone using a
  * deployed one. Operators should set it. See docs/deployment.md.
  */

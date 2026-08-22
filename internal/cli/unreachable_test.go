@@ -1,6 +1,9 @@
 package cli
 
-import "testing"
+import (
+	"net/url"
+	"testing"
+)
 
 // A URL reaching an error message reaches stderr, CI logs, and screenshots.
 // Userinfo must not travel with it.
@@ -70,4 +73,67 @@ func containsSubstring(haystack, needle string) bool {
 		}
 		return false
 	}()
+}
+
+// The discovery document arrives over the network and decides where a password
+// is sent moments later, so it is checked rather than trusted.
+func TestAcceptDiscovered(t *testing.T) {
+	mustParse := func(raw string) *url.URL {
+		parsed, err := url.Parse(raw)
+		if err != nil {
+			t.Fatalf("bad test URL %q: %v", raw, err)
+		}
+		return parsed
+	}
+
+	cases := []struct {
+		name       string
+		base       string
+		advertised string
+		want       string
+		ok         bool
+	}{
+		{"https to https", "https://dash.example.com", "https://runtime.example.com", "https://runtime.example.com", true},
+		{"trailing slash trimmed", "https://dash.example.com", "https://runtime.example.com/", "https://runtime.example.com", true},
+		{"http dashboard may name http", "http://127.0.0.1:3000", "http://127.0.0.1:8081", "http://127.0.0.1:8081", true},
+
+		// The one that matters: a plaintext downgrade would let anyone able to
+		// rewrite the response move a login onto a channel they can read.
+		{"https may not be downgraded", "https://dash.example.com", "http://runtime.example.com", "", false},
+
+		{"userinfo stripped", "https://dash.example.com", "https://bob:pw@runtime.example.com", "https://runtime.example.com", true},
+		{"foreign scheme refused", "https://dash.example.com", "file:///etc/passwd", "", false},
+		{"javascript refused", "https://dash.example.com", "javascript:alert(1)", "", false},
+		{"empty refused", "https://dash.example.com", "", "", false},
+		{"hostless refused", "https://dash.example.com", "https://", "", false},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, ok := acceptDiscovered(mustParse(tc.base), tc.advertised)
+			if ok != tc.ok {
+				t.Fatalf("acceptDiscovered(%q) ok = %v, want %v", tc.advertised, ok, tc.ok)
+			}
+			if ok && got != tc.want {
+				t.Fatalf("acceptDiscovered(%q) = %q, want %q", tc.advertised, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestSameServer(t *testing.T) {
+	cases := []struct {
+		a, b string
+		want bool
+	}{
+		{"https://a.example.com", "https://a.example.com/", true},
+		{"https://A.example.com", "https://a.example.com", true},
+		{"https://a.example.com", "http://a.example.com", false},
+		{"https://a.example.com", "https://b.example.com", false},
+	}
+	for _, tc := range cases {
+		if got := sameServer(tc.a, tc.b); got != tc.want {
+			t.Errorf("sameServer(%q, %q) = %v, want %v", tc.a, tc.b, got, tc.want)
+		}
+	}
 }
