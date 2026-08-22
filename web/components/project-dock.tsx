@@ -48,10 +48,7 @@ export function ProjectDock({ projectId }: { projectId: string }) {
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center pb-[max(1rem,env(safe-area-inset-bottom))]">
-      <nav
-        aria-label="Project sections"
-        className="pointer-events-auto"
-      >
+      <nav aria-label="Project sections" className="pointer-events-auto">
         <Dock magnify className="gap-1 px-2 py-1.5">
           {SECTIONS.map((section) => {
             const href = `${base}${section.segment}`;

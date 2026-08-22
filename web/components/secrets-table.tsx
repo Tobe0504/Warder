@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  CalendarClock,
   CircleOff,
   Copy,
   Eye,
@@ -11,6 +12,7 @@ import {
   RotateCw,
 } from "lucide-react";
 
+import { ChangeExpiryDialog } from "@/components/change-expiry-dialog";
 import { RotateSecretDialog } from "@/components/rotate-secret-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/motion/button";
@@ -320,6 +322,26 @@ function SecretRow({ secret }: { secret: Secret }) {
                     Rotate
                   </DropdownMenuItem>
                 </RotateSecretDialog>
+
+                {/*
+                  Separate from rotation on purpose. Rotating replaces the
+                  value and every runtime has to pick the new one up; changing
+                  the expiry leaves the credential alone. An expired date is
+                  usually the only thing wrong.
+                */}
+                <ChangeExpiryDialog
+                  secretId={secret.id}
+                  secretKey={secret.key}
+                  currentExpiry={secret.expiresAt}
+                  onChanged={() => router.refresh()}
+                >
+                  <DropdownMenuItem
+                    onSelect={(event) => event.preventDefault()}
+                  >
+                    <CalendarClock />
+                    Change expiry
+                  </DropdownMenuItem>
+                </ChangeExpiryDialog>
               </DropdownMenuContent>
             </DropdownMenu>
           )}

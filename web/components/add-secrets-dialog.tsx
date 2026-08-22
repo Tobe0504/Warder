@@ -25,13 +25,61 @@ import {
 import { Textarea } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast";
-import { apiFetch } from "@/lib/client-api";
+import { ApiError, apiFetch } from "@/lib/client-api";
 import { looksLikeDotenv, parseDotenv } from "@/lib/dotenv";
 import { cn } from "@/lib/utils";
 
 type Environment = { id: string; name: string; slug: string };
 
 type Row = { id: number; key: string; value: string };
+
+/**
+ * Turns the API's field paths into messages attached to rows.
+ *
+ * The server names fields as `secrets.3.key`, which is an index into the array
+ * that was sent, and that array is the filled rows in order. Mapping back to a
+ * row id means the message survives the reader adding or removing rows before
+ * they retry.
+ */
+function mapFieldErrors(
+  details: Record<string, string>,
+  rows: Row[],
+): Record<number, string> {
+  const filled = rows.filter((row) => row.key.trim() !== "");
+  const mapped: Record<number, string> = {};
+
+  for (const [field, message] of Object.entries(details)) {
+    const match = /^secrets\.(\d+)\./.exec(field);
+    if (!match) continue;
+    const row = filled[Number(match[1])];
+    if (row) mapped[row.id] = message;
+  }
+  return mapped;
+}
+
+/**
+ * Keys the environment already has.
+ *
+ * Worth separating from the other validation failures: every other message
+ * describes something to correct in this dialog, and this one describes
+ * something to do elsewhere.
+ */
+function conflictingKeys(
+  details: Record<string, string>,
+  rows: Row[],
+): string[] {
+  const filled = rows.filter((row) => row.key.trim() !== "");
+  const keys: string[] = [];
+
+  for (const [field, message] of Object.entries(details)) {
+    if (!message.includes("already has that key")) continue;
+    const match = /^secrets\.(\d+)\./.exec(field);
+    if (!match) continue;
+    const row = filled[Number(match[1])];
+    if (row) keys.push(row.key.trim());
+  }
+  return keys;
+}
 
 let nextRowId = 0;
 const newRow = (key = "", value = ""): Row => ({ id: nextRowId++, key, value });
@@ -64,6 +112,11 @@ export function AddSecretsDialog({
   const [rows, setRows] = useState<Row[]>([newRow()]);
   const [expiresAt, setExpiresAt] = useState("");
   const [error, setError] = useState<string | null>(null);
+  // Keyed by row id, so a message stays with its row as rows are added above it.
+  const [fieldErrors, setFieldErrors] = useState<Record<number, string>>({});
+  // Keys the environment already has, which rotate or a new expiry can fix but
+  // this dialog cannot.
+  const [conflicts, setConflicts] = useState<string[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -138,6 +191,8 @@ export function AddSecretsDialog({
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    setFieldErrors({});
+    setConflicts([]);
 
     if (filled.length === 0) {
       setError("Add at least one key.");
@@ -179,6 +234,13 @@ export function AddSecretsDialog({
       setOpen(false);
       router.refresh();
     } catch (caught) {
+      // The API rejects a batch with a per-field explanation naming which row
+      // is wrong. Reading only `caught.message` threw that away and left a
+      // twenty-row paste failing with one generic sentence.
+      if (caught instanceof ApiError && caught.details) {
+        setFieldErrors(mapFieldErrors(caught.details, rows));
+        setConflicts(conflictingKeys(caught.details, rows));
+      }
       setError(
         caught instanceof Error
           ? caught.message
@@ -261,6 +323,7 @@ export function AddSecretsDialog({
                     }
                     onPaste={(e) => onPasteIntoKey(e, index)}
                     placeholder="DATABASE_URL"
+                    error={fieldErrors[row.id]}
                     className="basis-2/5"
                     autoComplete="off"
                     spellCheck={false}
@@ -359,6 +422,31 @@ export function AddSecretsDialog({
 
           {notice && (
             <p className="text-meta text-muted-foreground">{notice}</p>
+          )}
+
+          {conflicts.length > 0 && (
+            <div
+              role="alert"
+              className="rounded-md border border-can-reveal/30 bg-can-reveal/5 p-2.5 text-meta"
+            >
+              <p className="font-medium text-foreground">
+                {conflicts.length === 1
+                  ? `${conflicts[0]} already exists here.`
+                  : `${conflicts.length} of these keys already exist here.`}
+              </p>
+              <p className="mt-1 text-muted-foreground">
+                A key exists once per environment. To replace the value, rotate
+                it. If only the expiry lapsed, change the expiry instead: the
+                value stays, and nothing has to restart. Both are in the
+                {" "}
+                <span aria-hidden>&#183;&#183;&#183;</span> menu on the secret&rsquo;s row.
+              </p>
+              {conflicts.length > 1 && (
+                <p className="mt-1 font-mono text-micro text-muted-foreground">
+                  {conflicts.join(", ")}
+                </p>
+              )}
+            </div>
           )}
 
           {error && (
