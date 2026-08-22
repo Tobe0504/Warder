@@ -154,9 +154,27 @@ func (s *Server) AdminHandler() http.Handler {
 	// Authentication. These run before a principal exists, so they are keyed by
 	// client address and sit behind the login limiter.
 	mux.Handle("POST /auth/login", s.public(s.limits.Login, http.HandlerFunc(s.handleLogin)))
-	mux.Handle("POST /auth/accept-invitation", s.public(s.limits.Invitation, http.HandlerFunc(s.handleAcceptInvitation)))
+	// Asked before anything is typed, so the interface can offer the one action
+	// that applies instead of a form that may be the wrong one.
+	mux.Handle("POST /auth/invitations/inspect", chain(http.HandlerFunc(s.handleInspectInvitation),
+		withRateLimit(s.limits.Invitation, byClientIP(s.cfg.TrustProxyHeaders), s.logger),
+		withOptionalAuthentication(s.adminAuth, s.cfg.TrustProxyHeaders, s.logger),
+	))
+
+	// Optional authentication: anonymous creates the account, signed in joins
+	// the organization with the account that already exists.
+	mux.Handle("POST /auth/accept-invitation", chain(http.HandlerFunc(s.handleAcceptInvitation),
+		withRateLimit(s.limits.Invitation, byClientIP(s.cfg.TrustProxyHeaders), s.logger),
+		withOptionalAuthentication(s.adminAuth, s.cfg.TrustProxyHeaders, s.logger),
+	))
 	mux.Handle("POST /auth/logout", s.authenticated(s.limits.Admin, http.HandlerFunc(s.handleLogout)))
 	mux.Handle("GET /auth/session", s.authenticated(s.limits.Admin, http.HandlerFunc(s.handleSession)))
+
+	// Which organizations this person belongs to, and moving between them.
+	// Switching re-issues the session, so it is rate limited as a sensitive
+	// action rather than as a read.
+	mux.Handle("GET /auth/organizations", s.authenticated(s.limits.Admin, http.HandlerFunc(s.handleListMemberships)))
+	mux.Handle("POST /auth/organizations/switch", s.authenticated(s.limits.Sensitive, http.HandlerFunc(s.handleSwitchOrganization)))
 
 	// Bootstrap: creating the first organization, owner, and their project.
 	mux.Handle("POST /organizations", s.public(s.limits.Sensitive, http.HandlerFunc(s.handleCreateOrganization)))
@@ -263,6 +281,14 @@ func (s *Server) RuntimeHandler() http.Handler {
 	mux.Handle("POST /cli/logout", chain(http.HandlerFunc(s.handleLogout),
 		withAuthentication(s.runtimeAuth, s.cfg.TrustProxyHeaders, s.logger),
 		withRateLimit(s.limits.Admin, byPrincipal, s.logger),
+	))
+	mux.Handle("GET /cli/organizations", chain(http.HandlerFunc(s.handleListMemberships),
+		withAuthentication(s.runtimeAuth, s.cfg.TrustProxyHeaders, s.logger),
+		withRateLimit(s.limits.Admin, byPrincipal, s.logger),
+	))
+	mux.Handle("POST /cli/organizations/switch", chain(http.HandlerFunc(s.handleSwitchOrganization),
+		withAuthentication(s.runtimeAuth, s.cfg.TrustProxyHeaders, s.logger),
+		withRateLimit(s.limits.Sensitive, byPrincipal, s.logger),
 	))
 	mux.Handle("GET /cli/projects", chain(http.HandlerFunc(s.handleListProjects),
 		withAuthentication(s.runtimeAuth, s.cfg.TrustProxyHeaders, s.logger),

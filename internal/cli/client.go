@@ -276,3 +276,52 @@ func (c *Client) ListSecrets(ctx context.Context, sessionToken, environmentID st
 	}
 	return &result, nil
 }
+
+// OrganizationMembership is one organization the signed-in person can act in.
+type OrganizationMembership struct {
+	OrganizationID string `json:"organizationId"`
+	Name           string `json:"name"`
+	Slug           string `json:"slug"`
+	Role           string `json:"role"`
+	Current        bool   `json:"current"`
+}
+
+type organizationListResult struct {
+	Organizations []OrganizationMembership `json:"organizations"`
+}
+
+// ListOrganizations returns the organizations the session may switch between.
+func (c *Client) ListOrganizations(ctx context.Context, sessionToken string) ([]OrganizationMembership, error) {
+	var result organizationListResult
+	if err := c.get(ctx, "/cli/organizations", sessionToken, &result); err != nil {
+		return nil, err
+	}
+	return result.Organizations, nil
+}
+
+// SwitchResult is the session re-issued against another organization.
+type SwitchResult struct {
+	SessionToken   string `json:"sessionToken"`
+	ExpiresAt      string `json:"expiresAt"`
+	OrganizationID string `json:"organizationId"`
+	Organization   string `json:"organization"`
+	Slug           string `json:"slug"`
+	Role           string `json:"role"`
+	Unchanged      bool   `json:"unchanged"`
+}
+
+// SwitchOrganization re-issues the session against another organization.
+//
+// The server mints a new session and revokes this one, so the returned token
+// replaces the stored credential entirely. Nothing is written here: the caller
+// decides when the stored login is replaced.
+func (c *Client) SwitchOrganization(ctx context.Context, sessionToken, organization string) (*SwitchResult, error) {
+	var result SwitchResult
+	err := c.post(ctx, "/cli/organizations/switch", sessionToken, map[string]string{
+		"organization": organization,
+	}, &result)
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
+}

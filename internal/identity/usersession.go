@@ -125,5 +125,6 @@ func (p *UserSessionProvider) Authenticate(ctx context.Context, req Request) (*d
 		DisplayName:    user.Name,
 		CredentialID:   candidate.ID,
 		Role:           membership.Role,
+		SessionKind:    candidate.Kind,
 	}, nil
 }

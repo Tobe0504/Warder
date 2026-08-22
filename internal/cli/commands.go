@@ -44,6 +44,8 @@ func Execute(ctx context.Context, args []string) error {
 		return commandLogout(ctx, args[1:])
 	case "status", "whoami":
 		return commandStatus(ctx, args[1:])
+	case "org", "organization", "organizations":
+		return commandOrganization(ctx, args[1:])
 	case "project", "projects":
 		return commandProject(ctx, args[1:])
 	case "environment", "environments", "env":
@@ -73,6 +75,8 @@ Usage:
   ward login                    Sign in and store a session for this machine
   ward logout                   Sign out and remove the stored session
   ward status                   Show who you are signed in as
+  ward org list                 List organizations you belong to
+  ward org use <slug>           Switch to another organization
   ward project list             List projects you can see
   ward environment list         List environments in a project
   ward secret list              List secret names in an environment (names only)

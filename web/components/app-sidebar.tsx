@@ -31,6 +31,7 @@ import {
   AnimatedSidebarMenuItem,
   AnimatedSidebarRail,
 } from "@/components/motion/animated-sidebar";
+import { OrganizationSwitcher } from "@/components/organization-switcher";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -92,15 +93,7 @@ export function AppSidebar({ user }: { user: SessionUser }) {
     >
       <AnimatedSidebarHeader className="p-3 pb-2">
         <div className="flex min-h-11 items-center gap-3 overflow-hidden px-2">
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            <span className="truncate text-body font-semibold text-foreground">
-              {user.organization}
-            </span>
-            <ChevronsUpDown
-              aria-hidden="true"
-              className="size-3.5 shrink-0 text-muted-foreground"
-            />
-          </div>
+          <OrganizationSwitcher organization={user.organization} />
           <AnimatedSidebarClose className="ml-auto text-muted-foreground hover:bg-muted md:hidden">
             <X aria-hidden="true" className="size-4" />
           </AnimatedSidebarClose>

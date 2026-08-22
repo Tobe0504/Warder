@@ -61,11 +61,37 @@ Plus a file, which you **commit**:
 
 ```jsonc
 // .warder.json: written by `ward init`
-{ "project": "payments-api", "environment": "production" }
+{
+  "project": "payments-api",
+  "environment": "production",
+  "runtimeUrl": "https://warder-runtime.your-company.com"
+}
 ```
 
-It holds two names and no credentials. Committing it means everyone on the team
-and every deployment targets the same place without passing flags.
+It holds two names and an address, and no credentials. Committing it means
+everyone on the team and every deployment targets the same place without
+passing flags. `ward` looks for it in the working directory and every directory
+above, the way git looks for `.git`, so different repositories can target
+different projects with no switching at all.
+
+`runtimeUrl` is why nobody after the first person has to know where Warder
+lives. See [Setting up a directory](#setting-up-a-directory) below.
+
+### Setting up a directory
+
+Once per repository, by whoever sets it up:
+
+```bash
+ward init --project payments-api --env development --url https://warder.your-company.com
+```
+
+That `--url` is your **dashboard** address, the one you already sign in to.
+`ward` reads `/.well-known/warder` there to find the runtime address behind it
+and records that in `.warder.json`, so you never have to learn that a Warder
+deployment has two hosts. Passing the runtime address directly works too.
+
+Commit the file. Everyone else clones the repository and runs `ward login` with
+no arguments at all.
 
 ### On a developer's laptop, it's zero
 
@@ -78,6 +104,34 @@ ward run -- npm run dev
 ```
 
 `WARDER_RUNTIME_URL` and `WARDER_TOKEN` are the *machine* path, CI, containers, servers.
+
+### Moving between environments
+
+`.warder.json` names the default. To run against another environment, either
+change the file, or pass the flag for one command:
+
+```bash
+ward run --env staging -- npm start
+```
+
+The flag wins over the file. Nothing else changes: the same login, the same
+project, the same command. What can differ is authorization, because access is
+granted per environment, so being able to run against `development` does not
+imply anything about `production`.
+
+### If you belong to more than one organization
+
+A session belongs to one organization at a time.
+
+```bash
+ward org list          # * marks the current one
+ward org use acme      # switch
+```
+
+Switching re-issues your session and signs the old one out, which is why it is
+recorded in the audit log of both organizations. If the directory you are in
+targets a project in the organization you just left, run `ward init` there
+again.
 
 ### Where to put `WARDER_TOKEN`
 
@@ -116,9 +170,19 @@ Three steps, covered in [the developer guide](developer-guide.md#giving-an-appli
 
 ### `WARDER_RUNTIME_URL`: from your deployment, not the dashboard
 
-This is the address of your Warder deployment's **runtime listener**. The
-dashboard doesn't display it, because the dashboard has no way to know what
-hostname you put in front of your own infrastructure.
+This is the address of your Warder deployment's **runtime listener**, and you
+only need it on the machine path. On a laptop, `ward init` finds it for you from
+the dashboard address, and on a machine runtime there is no dashboard involved,
+so it is named directly.
+
+The dashboard does publish it, at `/.well-known/warder`, if whoever deployed it
+set `WARDER_PUBLIC_RUNTIME_URL`. That is what `ward init --url <dashboard>`
+reads. To see it yourself:
+
+```bash
+curl -s https://warder.your-company.com/.well-known/warder
+# {"runtimeUrl":"https://warder-runtime.your-company.com"}
+```
 
 It's set when the API is deployed:
 

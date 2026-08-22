@@ -51,18 +51,24 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {children}
 
       {/*
-        'polite' rather than 'assertive': a confirmation should not interrupt
-        whatever a screen reader is in the middle of saying. The stack renders
-        into a portal, so the live region has to wrap it here.
+        `fixed` is load-bearing, not decoration. The stack defaults to static
+        placement, which renders it inline at the end of the document: it is
+        laid out below the page rather than over it, so a toast is either
+        off-screen or pushing the footer around, and in practice nobody sees
+        one. That is how a rate-limit refusal came to look like a silent
+        failure. `fixed` also opts the stack into its portal, which is what
+        keeps it clear of the dashboard's stacking contexts.
+
+        The stack renders its own aria-live region, so there is none here.
       */}
-      <div aria-live="polite" aria-atomic="false">
-        <AnimatedToastStack
-          toasts={toasts}
-          onDismiss={dismissToast}
-          position="bottom-right"
-          maxVisible={3}
-        />
-      </div>
+      <AnimatedToastStack
+        toasts={toasts}
+        onDismiss={dismissToast}
+        position="bottom-right"
+        fixed
+        maxVisible={3}
+        classNames={{ title: "text-body leading-snug" }}
+      />
     </ToastContext.Provider>
   );
 }

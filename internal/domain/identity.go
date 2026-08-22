@@ -107,6 +107,12 @@ type Principal struct {
 
 	// Role is the organization membership role, for user principals only.
 	Role Role
+
+	// SessionKind is "BROWSER" or "CLI" for user principals, and empty for
+	// machine identities. Carried so that a session re-issued against another
+	// organization keeps the lifetime its kind is entitled to, rather than a
+	// CLI login quietly acquiring a browser session's TTL.
+	SessionKind string
 }
 
 // Organization is the top-level tenant boundary. No query in the system may

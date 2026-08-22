@@ -69,10 +69,6 @@ export default function UserAvatar() {
 
   return (
     <div className="ml-auto flex items-center gap-1.5">
-      <Button asChild variant="ghost" size="sm" className="max-sm:hidden">
-        <Link href="/projects">Dashboard</Link>
-      </Button>
-
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
@@ -87,8 +83,12 @@ export default function UserAvatar() {
           <DropdownMenuLabel className="flex items-center gap-2 py-2">
             <Avatar name={user.name} />
             <div className="grid min-w-0 flex-1 leading-tight">
-              <span className="truncate text-meta font-medium text-foreground">{user.name}</span>
-              <span className="truncate text-meta font-normal">{user.email}</span>
+              <span className="truncate text-meta font-medium text-foreground">
+                {user.name}
+              </span>
+              <span className="truncate text-meta font-normal">
+                {user.email}
+              </span>
             </div>
           </DropdownMenuLabel>
 

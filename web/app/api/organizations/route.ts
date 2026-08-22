@@ -1,6 +1,11 @@
 import { assertSameOrigin } from "@/lib/csrf";
 import { callCoreApi } from "@/lib/core-api";
-import { handlePreAuthRoute, readJson, requireString } from "@/lib/route-helpers";
+import {
+  handlePreAuthRoute,
+  handleRoute,
+  readJson,
+  requireString,
+} from "@/lib/route-helpers";
 import { startSession } from "@/lib/session";
 
 type CreateResponse = { organizationId: string; slug: string; userId: string };
@@ -65,4 +70,16 @@ export async function POST(request: Request) {
       csrfToken,
     };
   });
+}
+
+/**
+ * The organizations the signed-in person may act in.
+ *
+ * Shares a path with organization creation above and nothing else: that one is
+ * pre-authentication bootstrap, this one requires a session. Two methods, two
+ * postures, which is why this handler goes through handleRoute and that one
+ * through handlePreAuthRoute.
+ */
+export async function GET(request: Request) {
+  return handleRoute(request, () => callCoreApi("/auth/organizations"));
 }

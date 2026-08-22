@@ -52,7 +52,9 @@ export function SignupForm() {
     setFieldErrors({});
 
     if (!passwordLongEnough) {
-      setFieldErrors({ password: `Use at least ${MIN_PASSWORD_LENGTH} characters.` });
+      setFieldErrors({
+        password: `Use at least ${MIN_PASSWORD_LENGTH} characters.`,
+      });
       return;
     }
 
@@ -70,7 +72,11 @@ export function SignupForm() {
         setFieldErrors(caught.details);
         setError(caught.message);
       } else {
-        setError(caught instanceof Error ? caught.message : "Could not create the organization.");
+        setError(
+          caught instanceof Error
+            ? caught.message
+            : "Could not create the organization.",
+        );
       }
     } finally {
       // Cleared on every path, including success.
@@ -153,8 +159,12 @@ export function SignupForm() {
           )}
         >
           {password.length > 0 &&
-            (passwordLongEnough ? <Check className="size-3" /> : <X className="size-3" />)}
-          At least {MIN_PASSWORD_LENGTH} characters. Length matters more than symbols.
+            (passwordLongEnough ? (
+              <Check className="size-3" />
+            ) : (
+              <X className="size-3" />
+            ))}
+          At least {MIN_PASSWORD_LENGTH} characters.
         </p>
       </div>
 

@@ -50,6 +50,8 @@ type CallOptions = {
   body?: unknown;
   anonymous?: boolean;
   sessionToken?: string;
+  /** Attach the session when one exists, and proceed without it otherwise. */
+  optionalSession?: boolean;
 };
 
 export async function callCoreApi<T>(
@@ -67,7 +69,17 @@ export async function callCoreApi<T>(
     "X-Service-Token": serviceToken,
   });
 
-  if (!options.anonymous) {
+  if (options.optionalSession) {
+    // For the one endpoint that serves both a signed-in and a signed-out
+    // caller: accepting an invitation creates an account for someone who has
+    // none, and adds a membership for someone who has one. Sending no
+    // credential would make the second case impossible, and demanding one
+    // would make the first.
+    const token = options.sessionToken ?? (await getSessionToken());
+    if (token) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
+  } else if (!options.anonymous) {
     const token = options.sessionToken ?? (await getSessionToken());
     if (!token) {
       throw new NotAuthenticatedError();

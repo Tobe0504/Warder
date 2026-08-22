@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Copy, Link2, UserPlus } from "lucide-react";
+import { Check, Copy, UserPlus } from "lucide-react";
 
 import { Button } from "@/components/motion/button";
 import {
@@ -25,10 +25,19 @@ import {
 import { Label } from "@/components/ui/label";
 import { apiFetch } from "@/lib/client-api";
 
-type Created = { inviteUrl: string; email: string; role: string; expiresAt: string };
+type Created = {
+  inviteUrl: string;
+  email: string;
+  role: string;
+  expiresAt: string;
+};
 
 const ROLES = [
-  ["DEVELOPER", "Developer", "Can see what exists. Cannot administer anything."],
+  [
+    "DEVELOPER",
+    "Developer",
+    "Can see what exists. Cannot administer anything.",
+  ],
   ["VIEWER", "Viewer", "Read-only on metadata."],
   ["ADMIN", "Admin", "Manages projects, access, and identities."],
   ["OWNER", "Owner", "Everything an admin can do, plus organization settings."],
@@ -88,7 +97,11 @@ export function InviteMemberDialog() {
       setCreated(result);
       router.refresh();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not create this invitation.");
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Could not create this invitation.",
+      );
     } finally {
       setPending(false);
     }
@@ -102,7 +115,10 @@ export function InviteMemberDialog() {
   }
 
   return (
-    <Dialog open={open} onOpenChange={(next) => (next ? setOpen(true) : close())}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => (next ? setOpen(true) : close())}
+    >
       <DialogTrigger asChild>
         <Button size="sm">
           <UserPlus />
@@ -116,24 +132,30 @@ export function InviteMemberDialog() {
             <DialogHeader>
               <DialogTitle>Invitation ready</DialogTitle>
               <DialogDescription>
-                Send this link to {created.email}. It works once, expires in seven days, and can be
-                withdrawn from this page until it is used.
+                Send this link to {created.email}. It works once, expires in
+                seven days, and can be withdrawn from this page until it is
+                used.
               </DialogDescription>
             </DialogHeader>
 
             <div className="flex items-center gap-2 rounded-md border bg-muted px-2.5 py-2">
-              <Link2 className="size-3.5 shrink-0 text-muted-foreground" />
-              <code className="min-w-0 flex-1 break-all font-mono text-meta">
+              <code className="min-w-0 flex-1 break-all font-sans text-meta">
                 {created.inviteUrl}
               </code>
-              <Button variant="ghost" size="icon" onClick={copy} aria-label="Copy invitation link">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={copy}
+                aria-label="Copy invitation link"
+              >
                 {copied ? <Check /> : <Copy />}
               </Button>
             </div>
 
             <p className="mt-2 prose-note text-muted-foreground">
-              Only a verifier is stored, so this cannot be shown again. They will set their own
-              password: you will not know it, and you will not be able to sign in as them.
+              Only a verifier is stored, so this cannot be shown again. They
+              will set their own password: you will not know it, and you will
+              not be able to sign in as them.
             </p>
 
             <DialogFooter>
@@ -172,8 +194,8 @@ export function InviteMemberDialog() {
                   required
                 />
                 <p className="prose-note text-muted-foreground">
-                  Fixed at this point. Whoever opens the link joins as this address and cannot
-                  change it.
+                  Fixed at this point. Whoever opens the link joins as this
+                  address and cannot change it.
                 </p>
               </div>
 
@@ -194,8 +216,8 @@ export function InviteMemberDialog() {
                 <p className="prose-note text-muted-foreground">
                   {ROLES.find(([value]) => value === role)?.[2]} No role grants{" "}
                   <span className="font-mono">USE_SECRET</span> or{" "}
-                  <span className="font-mono">READ_SECRET</span>: those are separate grants on a
-                  project.
+                  <span className="font-mono">READ_SECRET</span>: those are
+                  separate grants on a project.
                 </p>
               </div>
 
@@ -208,8 +230,8 @@ export function InviteMemberDialog() {
                   onChange={setExpiresAt}
                 />
                 <p className="prose-note text-muted-foreground">
-                  The contractor case: set a date now and their access ends on its own, with
-                  nothing to rotate and nobody to remind.
+                  The contractor case: set a date now and their access ends on
+                  its own, with nothing to rotate and nobody to remind.
                 </p>
               </div>
 

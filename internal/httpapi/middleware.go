@@ -170,6 +170,43 @@ func withAuthentication(chainProvider *identity.Chain, trustProxy bool, logger *
 	}
 }
 
+// withOptionalAuthentication attaches a principal when one is presented, and
+// lets the request through when none is.
+//
+// For the one route that serves two populations: accepting an invitation is
+// how a person without an account gets one, and also how a person who already
+// has an account joins a second organization. Rejecting the anonymous case
+// would break the first, and ignoring the credential in the second would try to
+// create a duplicate account for an address that already has one.
+//
+// A credential that is presented and *invalid* is still refused. Falling
+// through to the anonymous path would let an expired session quietly become an
+// account-creation attempt, which is a confusing failure at best.
+func withOptionalAuthentication(chainProvider *identity.Chain, trustProxy bool, logger *slog.Logger) middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			presented := bearerToken(r)
+			if presented == "" {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			principal, err := chainProvider.Authenticate(r.Context(), identity.Request{
+				Credential: presented,
+				Headers:    r.Header,
+				ClientIP:   ClientIP(r, trustProxy),
+				UserAgent:  r.UserAgent(),
+			})
+			if err != nil {
+				writeError(w, r, logger, ErrUnauthorized, nil)
+				return
+			}
+
+			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), principalKey, principal)))
+		})
+	}
+}
+
 // withRateLimit throttles by a caller-derived key.
 func withRateLimit(limiter ratelimit.Limiter, keyFor func(*http.Request) string, logger *slog.Logger) middleware {
 	return func(next http.Handler) http.Handler {
@@ -177,7 +214,10 @@ func withRateLimit(limiter ratelimit.Limiter, keyFor func(*http.Request) string,
 			allowed, retryAfter := limiter.Allow(keyFor(r))
 			if !allowed {
 				w.Header().Set("Retry-After", strconv.Itoa(int(retryAfter.Seconds())+1))
-				writeError(w, r, logger, ErrRateLimited, nil)
+				// The wait goes in the body too. The header does not survive
+				// the BFF hop, and the person reading the message is the one
+				// who needs to know how long.
+				writeError(w, r, logger, rateLimited(retryAfter), nil)
 				return
 			}
 			next.ServeHTTP(w, r)

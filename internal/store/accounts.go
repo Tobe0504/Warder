@@ -158,6 +158,109 @@ func (r *AccountRepo) FindPrimaryMembership(ctx context.Context, userID uuid.UUI
 	return m, nil
 }
 
+// MembershipOrg is one organization a user belongs to, with the role they hold.
+type MembershipOrg struct {
+	MembershipID   uuid.UUID
+	OrganizationID uuid.UUID
+	Name           string
+	Slug           string
+	Role           domain.Role
+	CreatedAt      time.Time
+	ExpiresAt      *time.Time
+}
+
+// ListMemberships returns every organization a user can currently act in.
+//
+// FindPrimaryMembership answers "which one by default"; this answers "which
+// ones at all", which is what makes switching possible. Same filters as that
+// query, so an organization a person can see here is one they can actually
+// enter: a revoked or expired membership never appears.
+func (r *AccountRepo) ListMemberships(ctx context.Context, userID uuid.UUID) ([]MembershipOrg, error) {
+	rows, err := r.db.Pool.Query(ctx, `
+		SELECT m.id, o.id, o.name, o.slug, m.role, m.created_at, m.expires_at
+		FROM memberships m
+		JOIN organizations o ON o.id = m.organization_id
+		WHERE m.user_id = $1 AND m.revoked_at IS NULL
+		  AND (m.expires_at IS NULL OR m.expires_at > now())
+		ORDER BY o.name ASC`, userID)
+	if err != nil {
+		return nil, translate(err)
+	}
+	defer rows.Close()
+
+	out := make([]MembershipOrg, 0, 4)
+	for rows.Next() {
+		var m MembershipOrg
+		var role string
+		if err := rows.Scan(&m.MembershipID, &m.OrganizationID, &m.Name, &m.Slug,
+			&role, &m.CreatedAt, &m.ExpiresAt); err != nil {
+			return nil, translate(err)
+		}
+		m.Role = domain.Role(role)
+		out = append(out, m)
+	}
+	return out, translate(rows.Err())
+}
+
+// FindMembershipInOrganization returns a user's active membership in one
+// organization, or ErrNotFound.
+//
+// The check that gates switching. It is deliberately a fresh query rather than
+// a filter over ListMemberships: this is an authorization decision, and it
+// should read the current state of the row it is deciding on.
+func (r *AccountRepo) FindMembershipInOrganization(ctx context.Context, userID, orgID uuid.UUID) (*domain.Membership, error) {
+	m := &domain.Membership{UserID: userID, OrganizationID: orgID}
+	var role string
+	err := r.db.Pool.QueryRow(ctx, `
+		SELECT id, role, created_at, expires_at, revoked_at
+		FROM memberships
+		WHERE user_id = $1 AND organization_id = $2 AND revoked_at IS NULL
+		  AND (expires_at IS NULL OR expires_at > now())`,
+		userID, orgID,
+	).Scan(&m.ID, &role, &m.CreatedAt, &m.ExpiresAt, &m.RevokedAt)
+	if err != nil {
+		return nil, translate(err)
+	}
+	m.Role = domain.Role(role)
+	return m, nil
+}
+
+// GetOrganizationBySlug resolves the human-typed name for an organization.
+func (r *AccountRepo) GetOrganizationBySlug(ctx context.Context, slug string) (*domain.Organization, error) {
+	o := &domain.Organization{}
+	err := r.db.Pool.QueryRow(ctx, `
+		SELECT id, name, slug, created_at, updated_at
+		FROM organizations WHERE slug = $1`, slug,
+	).Scan(&o.ID, &o.Name, &o.Slug, &o.CreatedAt, &o.UpdatedAt)
+	if err != nil {
+		return nil, translate(err)
+	}
+	return o, nil
+}
+
+// EmailBelongsToOrganization reports whether an address already has an active
+// membership in one organization.
+//
+// This replaced a global "does this address have an account anywhere" check.
+// That question was the right one while a person could belong to exactly one
+// organization; now that they can belong to several, answering it refuses
+// every invitation to anyone who already uses Warder.
+func (r *AccountRepo) EmailBelongsToOrganization(ctx context.Context, orgID uuid.UUID, email string) (bool, error) {
+	var exists bool
+	err := r.db.Pool.QueryRow(ctx, `
+		SELECT EXISTS (
+			SELECT 1 FROM memberships m
+			JOIN users u ON u.id = m.user_id
+			WHERE m.organization_id = $1 AND lower(u.email) = lower($2)
+			  AND m.revoked_at IS NULL
+			  AND (m.expires_at IS NULL OR m.expires_at > now())
+		)`, orgID, email).Scan(&exists)
+	if err != nil {
+		return false, translate(err)
+	}
+	return exists, nil
+}
+
 // ListMembers returns the members of an organization with their user records.
 func (r *AccountRepo) ListMembers(ctx context.Context, orgID uuid.UUID) ([]Member, error) {
 	rows, err := r.db.Pool.Query(ctx, `

@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
@@ -91,11 +92,19 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // next-themes writes the theme attribute from an inline script that runs
+  // before first paint. That script carries no nonce of its own, and this
+  // application's CSP uses 'strict-dynamic', which makes browsers that
+  // understand it ignore 'unsafe-inline' entirely: the script is blocked, the
+  // attribute is not set until React hydrates, and the theme appears to be
+  // ignored or to flip a moment after load. Handing next-themes the request
+  // nonce is what lets that script run.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     // suppressHydrationWarning is required by next-themes, not optional: its
     // script sets the theme attribute on <html> before React hydrates, so the
@@ -107,7 +116,7 @@ export default function RootLayout({
       className={cn(GeistSans.variable, GeistMono.variable, "font-sans", geist.variable)}
     >
       <body className="min-h-dvh antialiased">
-        <ThemeProvider>
+        <ThemeProvider nonce={nonce}>
           <ToastProvider>{children}</ToastProvider>
         </ThemeProvider>
       </body>

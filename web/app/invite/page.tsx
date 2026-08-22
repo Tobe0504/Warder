@@ -20,7 +20,7 @@ export default function AcceptInvitationPage() {
   return (
     <AuthShell
       title="Join the organization"
-      description="Set a password to finish creating your account. Whoever invited you will not see it."
+      description="Set a password to finish creating your account. Your organization owner will not see it."
     >
       <AcceptInvitationForm />
     </AuthShell>

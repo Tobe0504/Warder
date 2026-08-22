@@ -449,7 +449,14 @@ const ToastItem = memo(function ToastItem({
                 >
                   <p
                     className={cn(
-                      "truncate text-sm font-medium leading-5 text-foreground",
+                      // Not truncated. beUI clips this to one line, which suits
+                      // "Saved" and loses everything this application actually
+                      // says: which key was refused, how long a wait is, why a
+                      // member could not be removed. tailwind-merge cannot undo
+                      // `truncate` from a caller's className, because the
+                      // winner would come down to stylesheet order, so it is
+                      // removed here rather than overridden.
+                      "text-sm font-medium leading-5 text-foreground break-words",
                       classNames?.title,
                     )}
                   >
@@ -458,7 +465,7 @@ const ToastItem = memo(function ToastItem({
                   {toast.description ? (
                     <p
                       className={cn(
-                        "mt-0.5 line-clamp-2 text-xs leading-4 text-muted-foreground",
+                        "mt-0.5 text-xs leading-4 text-muted-foreground break-words",
                         classNames?.description,
                       )}
                     >

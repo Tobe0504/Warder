@@ -49,11 +49,17 @@ const (
 	EventProjectCreated     EventType = "PROJECT_CREATED"
 	EventEnvironmentCreated EventType = "ENVIRONMENT_CREATED"
 
-	EventLogin        EventType = "LOGIN"
-	EventLoginFailed  EventType = "LOGIN_FAILED"
-	EventLogout       EventType = "LOGOUT"
-	EventRateLimited  EventType = "RATE_LIMITED"
-	EventDecryptError EventType = "DECRYPTION_FAILED"
+	EventLogin       EventType = "LOGIN"
+	EventLoginFailed EventType = "LOGIN_FAILED"
+	EventLogout      EventType = "LOGOUT"
+
+	// EventOrganizationSwitched records a session being re-issued against a
+	// different organization the same person belongs to. Recorded in both
+	// organizations: the one being left has as much reason to know as the one
+	// being entered.
+	EventOrganizationSwitched EventType = "ORGANIZATION_SWITCHED"
+	EventRateLimited          EventType = "RATE_LIMITED"
+	EventDecryptError         EventType = "DECRYPTION_FAILED"
 )
 
 // Outcome is the result of the audited action.

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/Tobe0504/Warder/internal/crypto"
 	"github.com/Tobe0504/Warder/internal/identity"
@@ -64,11 +66,24 @@ var (
 	// ErrSecretUnavailable reports that a secret the caller is authorized for
 	// has no usable version. It is only ever returned to a caller who has
 	// already passed authorization for that key, so it reveals nothing.
-	// ErrAccountExists reports that an address already has an account, so an
-	// invitation to it could never be redeemed.
+	// ErrAccountExists reports that the invited address already has an account.
+	//
+	// Not a dead end: the invitation is still good, it simply has to be claimed
+	// by the person signing in rather than by creating a second account for the
+	// same address. The message says so, because the previous behaviour was to
+	// fail on a unique-constraint violation and answer "this invitation is not
+	// valid", which was both wrong and unactionable.
 	ErrAccountExists = &APIError{
 		Code:    "account_exists",
-		Message: "An account already uses that address.",
+		Message: "You already have a Warder account with this address. Sign in, then open the invitation link again.",
+	}
+
+	// ErrAlreadyMember reports that the invited address is already in this
+	// organization, which is the one case where an invitation genuinely has
+	// nothing to do.
+	ErrAlreadyMember = &APIError{
+		Code:    "already_member",
+		Message: "That address is already a member of this organization.",
 	}
 
 	// ErrInvitationUnusable is the single answer for every way an invitation
@@ -116,7 +131,7 @@ func statusFor(err *APIError) int {
 		return http.StatusForbidden
 	case "not_found", "secret_unavailable":
 		return http.StatusNotFound
-	case "conflict", "account_exists":
+	case "conflict", "account_exists", "already_member":
 		return http.StatusConflict
 	case "payload_too_large":
 		return http.StatusRequestEntityTooLarge
@@ -124,6 +139,30 @@ func statusFor(err *APIError) int {
 		return http.StatusTooManyRequests
 	default:
 		return http.StatusInternalServerError
+	}
+}
+
+// rateLimited builds the refusal with the wait included in the message.
+//
+// "Try again shortly" is fine for a limit measured in seconds and misleading
+// for one measured in minutes: the reveal allowance refills at ten an hour, so
+// somebody who has spent it waits six minutes for the next one and has no way
+// to know that from a message telling them to try shortly.
+func rateLimited(retryAfter time.Duration) *APIError {
+	wait := "a moment"
+	switch seconds := int(retryAfter.Seconds()) + 1; {
+	case seconds >= 120:
+		wait = strconv.Itoa((seconds+59)/60) + " minutes"
+	case seconds >= 60:
+		wait = "a minute"
+	case seconds > 1:
+		wait = strconv.Itoa(seconds) + " seconds"
+	}
+
+	return &APIError{
+		Code:    "rate_limited",
+		Message: "Too many requests. Try again in " + wait + ".",
+		Details: map[string]string{"retryAfter": strconv.Itoa(int(retryAfter.Seconds()) + 1)},
 	}
 }
 
