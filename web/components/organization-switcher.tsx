@@ -14,7 +14,7 @@ import {
 import { useToast } from "@/components/ui/toast";
 import { apiFetch } from "@/lib/client-api";
 import { cn } from "@/lib/utils";
-import { Loader } from "./motion/loader";
+import { Loader } from "@/components/motion/loader";
 
 type Membership = {
   organizationId: string;
@@ -136,7 +136,7 @@ export function OrganizationSwitcher({
                 </span>
                 <span
                   className={cn(
-                    "shrink-0 text-micro text-muted-foreground",
+                    "shrink-0 text-meta text-muted-foreground",
                     membership.current && "hidden",
                   )}
                 >
