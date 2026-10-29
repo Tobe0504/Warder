@@ -32,7 +32,7 @@ export function DataListRow({
   return (
     <div
       className={cn(
-        "flex items-center gap-8 border-b px-3.5 py-2 last:border-b-0",
+        "flex min-h-9 items-center gap-6 border-b px-3.5 py-1.5 last:border-b-0",
         interactive && "transition-colors hover:bg-muted/40",
         className,
       )}
@@ -158,7 +158,7 @@ export function EmptyState({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
+    <div className="flex flex-col items-center gap-2 px-6 py-8 text-center">
       {icon && <div className="text-muted-foreground">{icon}</div>}
       <p className="prose-text font-medium">{title}</p>
       {description && (

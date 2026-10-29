@@ -13,25 +13,20 @@
 # loopback, where nothing outside the container can reach it.
 #
 # First deploy, in order:
-#   1. Push this file. In Render: New → Blueprint → pick the repo.
-#   2. Render creates the database and both services, then stops at the
-#      secrets marked sync:false below. Fill them in (see docs/deployment.md).
-#   3. Run the migration once, from your machine, against the database's
-#      External URL:  WARDER_DATABASE_URL="…" warder-api migrate
+#   1. Create a Postgres database somewhere that does not expire and copy its
+#      connection string (see docs/deployment.md).
+#   2. Run the migration once, from your machine:
+#        WARDER_DATABASE_URL="…" warder-api migrate
+#   3. Push this file. In Render: New → Blueprint → pick the repo.
+#   4. Render creates both services and stops at the values marked sync:false
+#      below. Fill them in; both services need the same three.
 #
-# Note the free database is removed after 30 days. To point at an external
-# Postgres instead, delete the databases block and change the two
-# WARDER_DATABASE_URL entries from fromDatabase to `sync: false`.
-
-databases:
-  - name: warder-db
-    databaseName: warder
-    user: warder
-    plan: free
-    # Keep the database and both services in one region. Every request the
-    # dashboard makes crosses this link, and a cross-region hop is a hop an
-    # attacker could be sitting on.
-    region: oregon
+# The database is NOT defined here. Render's free Postgres is deleted after
+# thirty days, which is a poor property for the store holding every secret an
+# organization owns, and a surprising one to discover when it happens. Bring
+# your own Postgres instead and paste its connection string into
+# WARDER_DATABASE_URL on both services. Neon's free tier does not expire; so
+# does Supabase's. See docs/deployment.md.
 
 services:
   # -------------------------------------------------------------------------
@@ -64,12 +59,12 @@ services:
       - key: WARDER_TRUST_PROXY_HEADERS
         value: "true"
 
-      # Render wires this to the managed database's internal URL, which does
-      # not leave their network.
+      # Your Postgres. Both services read the same ciphertext, so both take
+      # the same connection string. Use the POOLED endpoint if your provider
+      # offers one: these are two services on free instances, and a pooler is
+      # what keeps them inside a shared connection budget.
       - key: WARDER_DATABASE_URL
-        fromDatabase:
-          name: warder-db
-          property: connectionString
+        sync: false
 
       # Set once, by hand, and never rotated casually: every secret in the
       # system is encrypted under this. Generate with `warder-api keygen`.
@@ -78,6 +73,15 @@ services:
 
       # Shared with the dashboard's WARDER_URL. Nothing else may hold it.
       - key: WARDER_SERVICE_TOKEN
+        sync: false
+
+      # Passkeys are bound to the dashboard's domain, not this service's.
+      # Leave both unset to keep passkeys off. RP_ID is the bare host
+      # (app.example.com); ORIGINS is the full origin(s), comma-separated
+      # (https://app.example.com).
+      - key: WARDER_WEBAUTHN_RP_ID
+        sync: false
+      - key: WARDER_WEBAUTHN_ORIGINS
         sync: false
 
   # -------------------------------------------------------------------------
@@ -115,12 +119,12 @@ services:
       - key: WARDER_TRUST_PROXY_HEADERS
         value: "true"
 
-      # Render wires this to the managed database's internal URL, which does
-      # not leave their network.
+      # Your Postgres. Both services read the same ciphertext, so both take
+      # the same connection string. Use the POOLED endpoint if your provider
+      # offers one: these are two services on free instances, and a pooler is
+      # what keeps them inside a shared connection budget.
       - key: WARDER_DATABASE_URL
-        fromDatabase:
-          name: warder-db
-          property: connectionString
+        sync: false
 
       # The same keyring as the admin service. Two processes, one set of keys:
       # they are reading the same ciphertext.

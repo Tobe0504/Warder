@@ -70,6 +70,12 @@ var (
 	// is either doing something unusual or is not a person.
 	Reveal = Rule{Burst: 5, Rate: 10, Period: time.Hour}
 
+	// Recovery is a password guess by another name: the caller has named an
+	// account and is presenting a code against it. Tighter than login, because
+	// a login attempt costs an attacker a password they half believe in, and a
+	// recovery attempt costs them nothing but a guess at a code.
+	Recovery = Rule{Burst: 5, Rate: 20, Period: time.Hour}
+
 	// Admin covers ordinary dashboard reads and writes.
 	Admin = Rule{Burst: 120, Rate: 120, Period: time.Minute}
 

@@ -3,6 +3,7 @@ package identity
 import (
 	"context"
 	"errors"
+	"github.com/google/uuid"
 	"slices"
 	"strings"
 	"time"
@@ -95,15 +96,23 @@ func (p *UserSessionProvider) Authenticate(ctx context.Context, req Request) (*d
 	// membership expires or is revoked, sessions already in flight stop
 	// conferring anything on their very next request, with no credential in the
 	// organization needing to change.
-	membership, err := p.accounts.GetMembership(ctx, candidate.OrganizationID, candidate.UserID)
-	if err != nil {
-		if errors.Is(err, store.ErrNotFound) {
+	// A session with no organization belongs to somebody who has signed up and
+	// not yet created or joined one. There is no membership to check, and no
+	// role to confer: the principal carries uuid.Nil, and the route guard is
+	// what stops it reaching anything organization-scoped.
+	var role domain.Role
+	if candidate.OrganizationID != uuid.Nil {
+		membership, err := p.accounts.GetMembership(ctx, candidate.OrganizationID, candidate.UserID)
+		if err != nil {
+			if errors.Is(err, store.ErrNotFound) {
+				return nil, ErrUnauthenticated
+			}
+			return nil, err
+		}
+		if !membership.Active(now) {
 			return nil, ErrUnauthenticated
 		}
-		return nil, err
-	}
-	if !membership.Active(now) {
-		return nil, ErrUnauthenticated
+		role = membership.Role
 	}
 
 	user, err := p.accounts.GetUser(ctx, candidate.UserID)
@@ -124,7 +133,7 @@ func (p *UserSessionProvider) Authenticate(ctx context.Context, req Request) (*d
 		ActorType:      domain.ActorHuman,
 		DisplayName:    user.Name,
 		CredentialID:   candidate.ID,
-		Role:           membership.Role,
+		Role:           role,
 		SessionKind:    candidate.Kind,
 	}, nil
 }

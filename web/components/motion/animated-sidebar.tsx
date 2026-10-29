@@ -281,8 +281,8 @@ export function AnimatedSidebarProvider({
         data-slot="sidebar-wrapper"
         data-state={desktopOpen ? "expanded" : "collapsed"}
         style={{
-          "--sidebar-width": "16rem",
-          "--sidebar-width-icon": "4.25rem",
+          "--sidebar-width": "13.25rem",
+          "--sidebar-width-icon": "3.5rem",
           "--sidebar-width-mobile": "18rem",
           ...style,
         }}
@@ -694,7 +694,7 @@ export const AnimatedSidebarContent = forwardRef<
       ref={forwardedRef}
       data-slot="sidebar-content"
       className={cn(
-        "flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overflow-x-hidden overscroll-contain px-2 py-2",
+        "flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto overflow-x-hidden overscroll-contain px-2 py-1.5",
         className,
       )}
     />
@@ -727,7 +727,7 @@ export const AnimatedSidebarGroup = forwardRef<
       {...props}
       ref={forwardedRef}
       data-slot="sidebar-group"
-      className={cn("flex w-full min-w-0 flex-col px-1 py-1.5", className)}
+      className={cn("flex w-full min-w-0 flex-col px-1 py-1", className)}
     />
   );
 });
@@ -748,7 +748,7 @@ export const AnimatedSidebarGroupLabel = forwardRef<
       aria-hidden={collapsed}
       data-slot="sidebar-group-label"
       className={cn(
-        "mb-1 h-7 overflow-hidden px-2 text-xs tracking-normal font-medium font-sans text-muted-foreground transition-opacity",
+        "mb-1 mt-3 h-5 overflow-hidden px-2 text-[0.6875rem] font-medium uppercase font-sans text-muted-foreground/70 transition-opacity text-meta",
         collapsed ? "opacity-0" : "opacity-100",
         className,
       )}
@@ -786,7 +786,7 @@ export const AnimatedSidebarMenu = forwardRef<
       as="ul"
       inset={0}
       pillClassName="rounded-xl bg-muted/70"
-      pillContainerClassName="inset-y-auto top-0 h-9"
+      pillContainerClassName="inset-y-auto top-0 h-7"
       data-slot="sidebar-menu"
       className={cn(
         "flex w-full min-w-0 list-none flex-col gap-0.5",
@@ -924,12 +924,14 @@ export function AnimatedSidebarMenuSubButton({
       >
         {icon ?? <span className="size-1 rounded-full bg-current" />}
       </span>
-      <span className="min-w-0 flex-1 truncate">{children}</span>
+      <span className="min-w-0 flex-1 truncate text-sm font-medium">
+        {children}
+      </span>
     </>
   );
 
   const interactiveClassName = cn(
-    "flex min-h-8 w-full min-w-0 items-center gap-2 rounded-lg px-2 text-left text-xs outline-none",
+    "flex min-h-8 w-full min-w-0 items-center gap-2 rounded-sm px-2 text-left text-xs outline-none",
     "text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground",
     "focus-visible:bg-muted/70 focus-visible:ring-2 focus-visible:ring-ring",
     isActive && "bg-muted/70 text-foreground",
@@ -1061,14 +1063,14 @@ export function AnimatedSidebarMenuButton({
         }
         aria-hidden={panel.collapsed}
         className={cn(
-          "relative z-10 min-w-0 flex-1 truncate",
+          "relative z-10 min-w-0 flex-1 truncate text-meta",
           panel.collapsed && "pointer-events-none",
         )}
       >
         {children}
       </motion.span>
       {badge && !panel.collapsed ? (
-        <span className="relative z-10 shrink-0 text-xs text-muted-foreground">
+        <span className="relative z-10 shrink-0 text-sm text-muted-foreground">
           {badge}
         </span>
       ) : null}
@@ -1082,7 +1084,7 @@ export function AnimatedSidebarMenuButton({
             x: panel.collapsed ? 4 : 0,
           }}
           transition={context.reduce ? { duration: 0 } : SPRING_LAYOUT}
-          className="relative z-10 grid size-4 shrink-0 place-items-center text-muted-foreground"
+          className="relative z-10 grid size-4 shrink-0 place-items-center text-muted-foreground border-10 border-white"
         >
           <ChevronRight className="size-3.5" />
         </motion.span>
@@ -1091,7 +1093,7 @@ export function AnimatedSidebarMenuButton({
   );
 
   const interactiveClassName = cn(
-    "relative flex min-h-9 w-full min-w-0 items-center gap-2.5 overflow-hidden rounded-xl px-3 text-left text-sm font-medium outline-none",
+    "relative flex min-h-7 w-full min-w-0 items-center gap-2 overflow-hidden rounded-md px-2 text-left text-[0.8125rem] font-medium outline-none",
     "text-muted-foreground transition-colors hover:text-foreground",
     "focus-visible:bg-muted/70 focus-visible:ring-2 focus-visible:ring-ring",
     isActive && "text-foreground",

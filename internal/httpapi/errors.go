@@ -78,6 +78,88 @@ var (
 		Message: "You already have a Warder account with this address. Sign in, then open the invitation link again.",
 	}
 
+	// ErrIncorrectPassword reports that the current password supplied alongside
+	// a change did not match. Named rather than collapsed into unauthorized,
+	// because the caller is signed in and the field they got wrong is one they
+	// are looking at.
+	ErrIncorrectPassword = &APIError{
+		Code:    "incorrect_password",
+		Message: "That is not your current password.",
+	}
+
+	// ErrRecoveryFailed is the single answer for every way a recovery attempt
+	// can fail: no such address, wrong code, already-spent code.
+	//
+	// One answer on purpose. Separating "no such account" from "wrong code"
+	// would turn an unauthenticated endpoint into a way to ask whether an
+	// address has a Warder account, which is exactly what somebody with a list
+	// of addresses would want.
+	ErrRecoveryFailed = &APIError{
+		Code:    "recovery_failed",
+		Message: "That address and recovery code do not match. Each code works once.",
+	}
+
+	// ErrRecoveryCodeRejected refuses a recovery code offered in place of a
+	// passkey. The password is already known to be right by then, so there is
+	// no address to avoid confirming and the message can be specific.
+	ErrRecoveryCodeRejected = &APIError{
+		Code:    "recovery_code_rejected",
+		Message: "That recovery code is not valid, or has already been used.",
+	}
+
+	// ErrPasskeysUnavailable reports that this deployment has not been told its
+	// own domain, so it cannot verify a credential bound to one.
+	ErrPasskeysUnavailable = &APIError{
+		Code:    "passkeys_unavailable",
+		Message: "Passkeys are not configured on this deployment.",
+	}
+
+	// ErrPasskeyRejected is the single answer for every way an assertion or an
+	// attestation can fail: a malformed response, a wrong signature, an unknown
+	// credential, a counter that did not advance.
+	ErrPasskeyRejected = &APIError{
+		Code:    "passkey_rejected",
+		Message: "That passkey could not be verified. Try again, or use a recovery code.",
+	}
+
+	// ErrChallengeExpired reports that the ceremony took too long or was
+	// already answered. A challenge is single use, so a second attempt with the
+	// same one lands here.
+	ErrChallengeExpired = &APIError{
+		Code:    "challenge_expired",
+		Message: "That took too long. Start again.",
+	}
+
+	// ErrSelfRecovery reports an owner issuing a recovery link for their own
+	// account, which is a password change they can already make and would turn
+	// a borrowed session into a way to lock the real owner out.
+	ErrSelfRecovery = &APIError{
+		Code:    "self_recovery",
+		Message: "Use the change-password screen for your own account.",
+	}
+
+	// ErrPasswordlessUnsafe refuses a passkey-only sign-in for an account that
+	// has no second way back in.
+	//
+	// Not a security refusal but a lockout one: with one passkey, no recovery
+	// codes and no email, losing the device ends the account permanently. The
+	// password still works, so this costs the person a sign-in rather than
+	// their access.
+	ErrPasswordlessUnsafe = &APIError{
+		Code:    "passwordless_unsafe",
+		Message: "Add a second passkey or generate recovery codes before signing in without a password. With only one key and no codes, losing it would lock you out for good.",
+	}
+
+	// ErrNoOrganization reports that the caller is signed in but belongs to no
+	// organization, so there is nothing for this route to act on. Distinct
+	// from forbidden, which means "you are in one and may not do this": the
+	// answer here is to create an organization or accept an invitation, and
+	// the interface can say so.
+	ErrNoOrganization = &APIError{
+		Code:    "no_organization",
+		Message: "You do not belong to an organization yet. Create one, or accept an invitation.",
+	}
+
 	// ErrAlreadyMember reports that the invited address is already in this
 	// organization, which is the one case where an invitation genuinely has
 	// nothing to do.
@@ -123,11 +205,13 @@ func Validation(details map[string]string) *APIError {
 
 func statusFor(err *APIError) int {
 	switch err.Code {
-	case "bad_request", "invalid_request", "invitation_unusable":
+	case "bad_request", "invalid_request", "invitation_unusable",
+		"challenge_expired", "passkeys_unavailable", "passwordless_unsafe":
 		return http.StatusBadRequest
-	case "unauthorized", "service_unauthorized":
+	case "unauthorized", "service_unauthorized", "recovery_failed",
+		"incorrect_password", "passkey_rejected", "recovery_code_rejected":
 		return http.StatusUnauthorized
-	case "forbidden":
+	case "forbidden", "no_organization", "self_recovery":
 		return http.StatusForbidden
 	case "not_found", "secret_unavailable":
 		return http.StatusNotFound

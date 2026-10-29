@@ -1,6 +1,7 @@
 package store
 
 import (
+	"github.com/google/uuid"
 	"net/netip"
 
 	"github.com/Tobe0504/Warder/internal/domain"
@@ -9,6 +10,15 @@ import (
 // nullInet renders a client address for the inet column, yielding NULL when the
 // address is absent or unparseable rather than storing a value that looks
 // authoritative but is not.
+// nullUUID writes SQL NULL for the zero uuid, so "no organization" is absent
+// from the column rather than stored as a uuid of zeroes that no row matches.
+func nullUUID(id uuid.UUID) any {
+	if id == uuid.Nil {
+		return nil
+	}
+	return id
+}
+
 func nullInet(addr string) any {
 	if addr == "" {
 		return nil

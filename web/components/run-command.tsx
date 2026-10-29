@@ -53,14 +53,14 @@ export function RunCommand({
 
   return (
     <div className={cn("rounded-xl border bg-card", className)}>
-      <div className="flex items-center gap-1.5 border-b px-3 py-2">
+      <div className="flex items-center gap-1.5 border-b px-3 py-1.5">
         <Terminal className="size-3.5 text-muted-foreground" />
         <span className="text-meta font-medium">
           Use these from your application
         </span>
       </div>
 
-      <div className="grid gap-4 p-3 md:grid-cols-3">
+      <div className="grid gap-3 p-3 lg:grid-cols-3">
         <Snippet
           step={1}
           label="Point this directory at the environment"
@@ -145,7 +145,13 @@ function Snippet({
           can see gets a broken command, which is a worse outcome than two
           lines of text.
         */}
-        <code className="min-w-0 flex-1 whitespace-pre-wrap break-all font-mono prose-note">
+        {/*
+          break-words, not break-all. break-all splits inside a word, so
+          "payments-api" rendered as "paym ents-api" across two lines: a
+          command somebody is about to copy, shown wrong. This breaks only
+          where a token genuinely cannot fit.
+        */}
+        <code className="min-w-0 flex-1 whitespace-pre-wrap break-words font-mono prose-note">
           {command}
         </code>
         {/* <Button

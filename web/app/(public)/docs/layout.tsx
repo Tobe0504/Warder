@@ -1,4 +1,5 @@
 import { ChevronDown } from "lucide-react";
+import { MEASURE } from "@/components/page-shell";
 
 import { DocsNav } from "@/components/docs/docs-nav";
 import { DOC_SECTIONS } from "@/lib/docs";
@@ -17,7 +18,7 @@ export default function DocsLayout({
   }));
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6">
+    <div className={`mx-auto px-4 sm:px-6 ${MEASURE}`}>
       {/*
         On a narrow screen the navigation is a disclosure above the content
         rather than a drawer. It needs no JavaScript, it cannot get stuck open

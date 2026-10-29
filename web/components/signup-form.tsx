@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Check, X } from "lucide-react";
 
 import { Button } from "@/components/motion/button";
+import { Checkbox } from "@/components/motion/checkbox";
 import { Input } from "@/components/motion/input";
+import { RecoveryCodesPanel } from "@/components/recovery-codes-panel";
 import { ApiError, apiFetch } from "@/lib/client-api";
 import { cn } from "@/lib/utils";
 
@@ -21,9 +23,6 @@ const MIN_PASSWORD_LENGTH = 12;
  */
 export function SignupForm() {
   const router = useRouter();
-  const [organizationName, setOrganizationName] = useState("");
-  const [slug, setSlug] = useState("");
-  const [slugEdited, setSlugEdited] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -31,20 +30,12 @@ export function SignupForm() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [pending, setPending] = useState(false);
 
-  const passwordLongEnough = password.length >= MIN_PASSWORD_LENGTH;
+  // Set once the account exists. Their presence is what switches this form
+  // into the screen that shows them.
+  const [codes, setCodes] = useState<string[] | null>(null);
+  const [acknowledged, setAcknowledged] = useState(false);
 
-  function onOrganizationNameChange(value: string) {
-    setOrganizationName(value);
-    if (!slugEdited) {
-      setSlug(
-        value
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/^-+|-+$/g, "")
-          .slice(0, 63),
-      );
-    }
-  }
+  const passwordLongEnough = password.length >= MIN_PASSWORD_LENGTH;
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -60,13 +51,18 @@ export function SignupForm() {
 
     setPending(true);
     try {
-      await apiFetch("/api/organizations", {
-        method: "POST",
-        body: { organizationName, slug, name, email, password },
-      });
+      const created = await apiFetch<{ recoveryCodes?: string[] }>(
+        "/api/auth/signup",
+        { method: "POST", body: { name, email, password } },
+      );
 
-      router.replace("/projects");
-      router.refresh();
+      // Held in this component and nowhere else.
+      //
+      // Not a separate route, which would mean carrying them in storage or a
+      // URL: both put a credential somewhere it outlives the moment, and one
+      // of them puts it in browser history. Staying on this screen is what
+      // lets the codes exist only in memory.
+      setCodes(created.recoveryCodes ?? []);
     } catch (caught) {
       if (caught instanceof ApiError && caught.details) {
         setFieldErrors(caught.details);
@@ -75,7 +71,7 @@ export function SignupForm() {
         setError(
           caught instanceof Error
             ? caught.message
-            : "Could not create the organization.",
+            : "Could not create your account.",
         );
       }
     } finally {
@@ -85,35 +81,46 @@ export function SignupForm() {
     }
   }
 
+  // The account exists. Everything left to do is make sure these are saved.
+  if (codes) {
+    return (
+      <div className="space-y-4">
+        <div className="rounded-md border border-can-reveal/30 bg-can-reveal-surface/40 p-3">
+          <p className="text-meta font-medium text-foreground">
+            Save these recovery codes
+          </p>
+          <p className="mt-1 text-meta leading-relaxed text-muted-foreground">
+            Warder sends no email, so these are how you get back in if you
+            forget your password. Each one works once, and they are stored
+            hashed: this is the only time they can be shown.
+          </p>
+        </div>
+
+        <RecoveryCodesPanel codes={codes} />
+
+        <Checkbox
+          checked={acknowledged}
+          onCheckedChange={setAcknowledged}
+          label="I have saved these somewhere I can reach without this account"
+        />
+
+        <Button
+          className="w-full"
+          disabled={!acknowledged}
+          onClick={() => {
+            router.replace("/welcome");
+            router.refresh();
+          }}
+        >
+          Continue
+          <ArrowRight />
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={onSubmit} className="space-y-3.5">
-      <Input
-        id="organizationName"
-        label="Organization"
-        value={organizationName}
-        onChange={onOrganizationNameChange}
-        placeholder="Acme"
-        autoComplete="organization"
-        error={fieldErrors.organizationName}
-        autoFocus
-        required
-      />
-
-      <Input
-        id="slug"
-        label="Slug"
-        value={slug}
-        onChange={(v) => {
-          setSlugEdited(true);
-          setSlug(v);
-        }}
-        placeholder="acme"
-        classNames={{ input: "font-mono" }}
-        pattern="[a-z0-9]([a-z0-9-]*[a-z0-9])?"
-        error={fieldErrors.slug}
-        required
-      />
-
       <Input
         id="name"
         label="Your name"
@@ -175,7 +182,7 @@ export function SignupForm() {
       )}
 
       <Button type="submit" size="lg" className="w-full" loading={pending}>
-        Create organization
+        Create account
         {!pending && <ArrowRight />}
       </Button>
     </form>

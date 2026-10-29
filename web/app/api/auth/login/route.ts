@@ -4,6 +4,10 @@ import { handlePreAuthRoute, readJson, requireString } from "@/lib/route-helpers
 import { startSession } from "@/lib/session";
 
 type LoginResponse = {
+  // Set when the account has a passkey. The password was right, but it buys
+  // only a pending token: no session exists until the passkey answers.
+  mfaRequired?: boolean;
+  pendingToken?: string;
   sessionToken: string;
   expiresAt: string;
   user: {
@@ -41,6 +45,17 @@ export async function POST(request: Request) {
       anonymous: true,
       body: { email, password, kind: "browser" },
     });
+
+    // The pending token goes to the page because the page is what runs the
+    // passkey ceremony. It is not a session: the only thing it can do is ask
+    // for a challenge and present the answer, and it expires in minutes.
+    if (result.mfaRequired) {
+      return {
+        mfaRequired: true,
+        pendingToken: result.pendingToken,
+        expiresAt: result.expiresAt,
+      };
+    }
 
     const csrfToken = await startSession(result.sessionToken, new Date(result.expiresAt));
 

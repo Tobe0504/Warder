@@ -1,0 +1,14 @@
+-- Audit events that belong to no organization.
+--
+-- Signing up, signing in before joining anything, and resetting a password are
+-- all security-relevant and all possible with no organization in sight. The
+-- column required one, so every such event failed its insert: the trail simply
+-- had a hole where the account lifecycle should be.
+--
+-- Nullable rather than pointed at a sentinel organization, because a sentinel
+-- would be a real row that a real tenant could be given, and because the
+-- organization-scoped reads already filter with `organization_id = $1`, which
+-- excludes NULL on its own. A tenant's trail therefore stays exactly what it
+-- was: events belonging to that tenant. These rows are the operator's to read,
+-- not a tenant's, and they are visible to anyone who can query the table.
+ALTER TABLE audit_events ALTER COLUMN organization_id DROP NOT NULL;

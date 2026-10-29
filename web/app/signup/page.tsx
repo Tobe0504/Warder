@@ -12,8 +12,8 @@ export default async function SignupPage() {
 
   return (
     <AuthShell
-      title="Create an organization"
-      description="You will be its first owner, which lets you administer projects and manage access, and does not by itself let you read any secret value."
+      title="Create your account"
+      description="An account on its own belongs to nothing. The next step is to create an organization or open an invitation to one."
       footer={
         <>
           Already have an account?{" "}

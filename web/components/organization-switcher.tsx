@@ -98,9 +98,9 @@ export function OrganizationSwitcher({
         <button
           type="button"
           aria-label={`Organization: ${organization}. Switch organization`}
-          className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-1 py-0.5 text-left outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-muted"
+          className="flex min-w-0 flex-1 items-center gap-1.5 rounded-md px-1.5 py-1 text-left outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-muted"
         >
-          <span className="truncate text-body font-semibold text-foreground">
+          <span className="truncate text-meta font-semibold text-foreground">
             {organization}
           </span>
           <ChevronsUpDown

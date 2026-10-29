@@ -3,6 +3,8 @@ import { KeyRound, Server, ShieldCheck } from "lucide-react";
 import { Crumb, PageShell, PageTitle } from "@/components/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { DataList, DataListRow } from "@/components/ui/data-list";
+import { type Passkey, PasskeysPanel } from "@/components/passkeys-panel";
+import { RecoveryCodesSettings } from "@/components/recovery-codes-settings";
 import { callCoreApi } from "@/lib/core-api";
 
 type SessionUser = {
@@ -21,7 +23,11 @@ type SessionUser = {
  * providing, so an operator does not have to infer them from documentation.
  */
 export default async function SettingsPage() {
-  const user = await callCoreApi<SessionUser>("/auth/session");
+  const [user, passkeys, recovery] = await Promise.all([
+    callCoreApi<SessionUser>("/auth/session"),
+    callCoreApi<{ passkeys: Passkey[]; enabled: boolean }>("/auth/passkeys"),
+    callCoreApi<{ remaining: number }>("/auth/recovery-codes"),
+  ]);
 
   return (
     <PageShell breadcrumb={<Crumb>Settings</Crumb>}>
@@ -46,6 +52,20 @@ export default async function SettingsPage() {
               }
             />
           </DataList>
+        </section>
+
+        <section>
+          <h2 className="mb-1 text-heading font-medium">Passkeys</h2>
+          <p className="mb-3 prose-note text-muted-foreground">
+            With a passkey, signing in asks for it after your password. With two passkeys, or
+            one and your recovery codes, you can also sign in with the passkey alone.
+          </p>
+          <PasskeysPanel passkeys={passkeys.passkeys} enabled={passkeys.enabled} />
+        </section>
+
+        <section>
+          <h2 className="mb-3 text-heading font-medium">Recovery codes</h2>
+          <RecoveryCodesSettings remaining={recovery.remaining} />
         </section>
 
         <section>

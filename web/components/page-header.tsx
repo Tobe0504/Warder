@@ -1,6 +1,7 @@
 import { PanelLeft } from "lucide-react";
 
 import { AnimatedSidebarTrigger } from "@/components/motion/animated-sidebar";
+import { cn } from "@/lib/utils";
 
 /**
  * The bar across the top of every dashboard page.
@@ -13,18 +14,36 @@ import { AnimatedSidebarTrigger } from "@/components/motion/animated-sidebar";
 export function PageHeader({
   breadcrumb,
   actions,
+  measure,
 }: {
   breadcrumb: React.ReactNode;
   actions?: React.ReactNode;
+  /** The page's measure, so the bar's contents share its left edge. */
+  measure?: string;
 }) {
   return (
-    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background/90 px-4 backdrop-blur">
-      <AnimatedSidebarTrigger className="-ml-1 size-8 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-        <PanelLeft aria-hidden="true" className="size-4" />
-      </AnimatedSidebarTrigger>
-      <div className="mx-1 h-4 w-px bg-border" />
-      <div className="flex min-w-0 flex-1 items-center gap-2 text-body">{breadcrumb}</div>
-      {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+    <header className="sticky top-0 z-20 h-11 shrink-0 border-b bg-background/90 backdrop-blur">
+      {/*
+        The bar spans the window; what is in it does not. Aligning the
+        breadcrumb to the same column as the title below is what makes the two
+        read as one page rather than as a bar with a page under it.
+      */}
+      <div
+        className={cn(
+          "mx-auto flex h-full w-full items-center gap-2 px-4 sm:px-6",
+          measure,
+        )}
+      >
+        <AnimatedSidebarTrigger className="-ml-1.5 size-7 shrink-0 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+          <PanelLeft aria-hidden="true" className="size-4" />
+        </AnimatedSidebarTrigger>
+        <div className="flex min-w-0 flex-1 items-center gap-1.5 text-meta text-muted-foreground">
+          {breadcrumb}
+        </div>
+        {actions && (
+          <div className="flex shrink-0 items-center gap-2">{actions}</div>
+        )}
+      </div>
     </header>
   );
 }

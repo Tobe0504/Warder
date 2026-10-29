@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MEASURE } from "@/components/page-shell";
 
 import { Mark, Wordmark } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -18,7 +19,7 @@ import UserAvatar from "@/components/user-avatar";
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-7xl items-center gap-6 px-4 sm:px-6">
+      <div className={`mx-auto flex h-14 items-center gap-6 px-4 sm:px-6 ${MEASURE}`}>
         <Link href="/" className="rounded-md" aria-label="Warder home">
           <Wordmark height={19} priority />
         </Link>
@@ -32,7 +33,7 @@ export function SiteHeader() {
 export function SiteFooter() {
   return (
     <footer className="border-t">
-      <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-6 text-meta text-muted-foreground sm:flex-row sm:items-center sm:px-6">
+      <div className={`mx-auto flex flex-col gap-3 px-4 py-6 text-meta text-muted-foreground sm:flex-row sm:items-center sm:px-6 ${MEASURE}`}>
         <p className="flex items-center gap-2">
           <Mark size={14} />
           Warder: Secret access without unnecessary secret visibility.

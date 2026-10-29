@@ -24,6 +24,25 @@ const migrationLockID int64 = 0x5741_5244_4552 // "WARDER"
 // edited after being applied somewhere is a schema drift bug, and it is
 // reported rather than silently ignored.
 func Migrate(ctx context.Context, dsn string) (applied []string, err error) {
+	// Refused rather than attempted. The lock below is session-level, and a
+	// transaction-mode pooler hands each statement whichever backend is free:
+	// the lock would be taken on one connection and the migration run on
+	// another, so two migrators could proceed at once, each believing it holds
+	// the lock. Nothing would report an error; the schema would simply be
+	// wrong afterwards.
+	cfg, parseErr := pgx.ParseConfig(dsn)
+	if parseErr != nil {
+		return nil, fmt.Errorf("migrate: database connection string is not valid")
+	}
+	if throughPooler(cfg.Host) {
+		return nil, fmt.Errorf(
+			"migrate: %s is a connection pooler, and migrations need a direct connection\n\n"+
+				"The migration lock is session-level and does not survive a pooler, so two\n"+
+				"migrations could run at once without either noticing.\n\n"+
+				"Use your provider's direct connection string here. The services can keep\n"+
+				"using the pooled one", cfg.Host)
+	}
+
 	conn, err := pgx.Connect(ctx, dsn)
 	if err != nil {
 		return nil, fmt.Errorf("migrate: database is unreachable")

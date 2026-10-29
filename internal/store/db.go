@@ -9,8 +9,10 @@ package store
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -32,14 +34,31 @@ func Open(ctx context.Context, dsn string) (*DB, error) {
 	cfg.MinConns = 2
 	cfg.MaxConnLifetime = time.Hour
 	cfg.MaxConnIdleTime = 15 * time.Minute
-	cfg.ConnConfig.ConnectTimeout = 10 * time.Second
+
+	// Generous, because a serverless Postgres that has scaled to zero takes
+	// several seconds to wake. Ten was enough for a database that is always
+	// running and turns a first request after an idle period into "the database
+	// is unreachable", which sends whoever reads it looking for a fault that is
+	// not there.
+	cfg.ConnConfig.ConnectTimeout = 30 * time.Second
+
+	if throughPooler(cfg.ConnConfig.Host) {
+		// A transaction-mode pooler hands each transaction a different backend,
+		// so a prepared statement named on one is absent on the next and every
+		// query after the first fails with "prepared statement does not exist".
+		// Describing statements on each execution is the documented way to use
+		// pgx through PgBouncer, and it costs one extra round trip per query.
+		cfg.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeDescribeExec
+		cfg.ConnConfig.StatementCacheCapacity = 0
+		cfg.ConnConfig.DescriptionCacheCapacity = 0
+	}
 
 	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("store: creating connection pool")
 	}
 
-	pingCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	pingCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	if err := pool.Ping(pingCtx); err != nil {
 		pool.Close()
@@ -47,6 +66,22 @@ func Open(ctx context.Context, dsn string) (*DB, error) {
 	}
 
 	return &DB{Pool: pool}, nil
+}
+
+// throughPooler reports whether a host looks like a connection pooler.
+//
+// Matched by name because that is all the connection string offers, and the
+// alternative is a configuration flag that somebody has to know to set. Neon
+// and Supabase both mark their pooled endpoints this way; a direct endpoint
+// keeps the faster prepared-statement path.
+func throughPooler(host string) bool {
+	lowered := strings.ToLower(host)
+	for _, marker := range []string{"-pooler.", "pgbouncer", "pooler."} {
+		if strings.Contains(lowered, marker) {
+			return true
+		}
+	}
+	return false
 }
 
 // Close releases the pool.

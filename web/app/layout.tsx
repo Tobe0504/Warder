@@ -8,10 +8,7 @@ import { ToastProvider } from "@/components/ui/toast";
 import { publicOrigin } from "@/lib/env";
 
 import "./globals.css";
-import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
-
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   // Absolute URLs are built from this. Without it the social card would point
@@ -113,7 +110,7 @@ export default async function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn(GeistSans.variable, GeistMono.variable, "font-sans", geist.variable)}
+      className={cn(GeistSans.variable, GeistMono.variable, "font-sans")}
     >
       <body className="min-h-dvh antialiased">
         <ThemeProvider nonce={nonce}>

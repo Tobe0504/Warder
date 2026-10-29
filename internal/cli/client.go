@@ -139,6 +139,9 @@ func (c *Client) do(ctx context.Context, method, path, credential string, body, 
 // ---------------------------------------------------------------------------
 
 type loginResult struct {
+	// MFARequired is set when the account has a passkey. The password alone
+	// earns no session, and a terminal cannot answer a WebAuthn challenge.
+	MFARequired  bool   `json:"mfaRequired"`
 	SessionToken string `json:"sessionToken"`
 	ExpiresAt    string `json:"expiresAt"`
 	User         struct {
@@ -158,6 +161,11 @@ func (c *Client) Login(ctx context.Context, email, password string) (*loginResul
 	}, &result)
 	if err != nil {
 		return nil, err
+	}
+	// Refused here rather than stored: an empty session token saved to disk
+	// would read as "signed in" until the first command failed.
+	if result.MFARequired || result.SessionToken == "" {
+		return nil, errors.New("this account is protected by a passkey, which `ward login` cannot use yet; sign in from the dashboard instead")
 	}
 	return &result, nil
 }

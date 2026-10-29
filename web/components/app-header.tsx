@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MEASURE } from "@/components/page-shell";
 
 import { NavLink } from "@/components/nav-link";
 import { SignOutButton } from "@/components/sign-out-button";
@@ -22,7 +23,7 @@ export function AppHeader({ user }: { user: SessionUser }) {
       </a>
 
       <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur">
-        <div className="mx-auto flex h-12 max-w-7xl items-center gap-4 px-4">
+        <div className={`mx-auto flex h-12 items-center gap-4 px-4 ${MEASURE}`}>
           <Link
             href="/projects"
             className="flex items-center gap-1.5 rounded-md text-body font-medium tracking-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

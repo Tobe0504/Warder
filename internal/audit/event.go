@@ -58,8 +58,41 @@ const (
 	// organizations: the one being left has as much reason to know as the one
 	// being entered.
 	EventOrganizationSwitched EventType = "ORGANIZATION_SWITCHED"
-	EventRateLimited          EventType = "RATE_LIMITED"
-	EventDecryptError         EventType = "DECRYPTION_FAILED"
+
+	// EventOrganizationCreated records a person founding an organization and
+	// becoming its first owner.
+	EventOrganizationCreated EventType = "ORGANIZATION_CREATED"
+
+	// EventPasswordChanged records a person replacing their own password while
+	// signed in and able to prove the old one.
+	EventPasswordChanged EventType = "PASSWORD_CHANGED"
+
+	// EventPasswordReset records a password replaced by spending a recovery
+	// code. Recorded on failure too: a run of denied resets against one
+	// account is somebody working through guesses.
+	EventPasswordReset EventType = "PASSWORD_RESET"
+
+	// EventRecoveryCodesIssued records a new set being minted, which
+	// invalidates every code from the set before it.
+	EventRecoveryCodesIssued EventType = "RECOVERY_CODES_ISSUED"
+
+	// EventPasskeyRegistered records a new second factor being enrolled.
+	EventPasskeyRegistered EventType = "PASSKEY_REGISTERED"
+
+	// EventPasskeyRemoved records one being removed, which may be the last and
+	// may therefore drop an account back to a password alone.
+	EventPasskeyRemoved EventType = "PASSKEY_REMOVED"
+
+	// EventAccountRecoveryIssued records an owner minting a link that lets
+	// somebody else set a password. The loudest event in the account
+	// lifecycle, because whoever redeems it can then sign in as that person.
+	EventAccountRecoveryIssued EventType = "ACCOUNT_RECOVERY_ISSUED"
+
+	// EventPasskeyRejected records a refused assertion. A cloned authenticator
+	// shows up here and nowhere else.
+	EventPasskeyRejected EventType = "PASSKEY_REJECTED"
+	EventRateLimited     EventType = "RATE_LIMITED"
+	EventDecryptError    EventType = "DECRYPTION_FAILED"
 )
 
 // Outcome is the result of the audited action.

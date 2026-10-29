@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"log/slog"
 
 	"github.com/Tobe0504/Warder/internal/logging"
@@ -91,13 +92,23 @@ func eventArgs(ev Event) ([]any, error) {
 		occurredAt = ev.OccurredAt
 	}
 
+	// An event can genuinely belong to no organization: signing up, signing in
+	// before joining one, resetting a password. The column is nullable for
+	// exactly those, and the zero uuid is not a substitute for NULL here. It
+	// is a value, so the foreign key goes looking for an organization whose id
+	// is all zeroes, finds none, and refuses the insert.
+	var organizationID any
+	if ev.OrganizationID != uuid.Nil {
+		organizationID = ev.OrganizationID
+	}
+
 	var ip any
 	if ev.IPAddress != "" {
 		ip = ev.IPAddress
 	}
 
 	return []any{
-		ev.OrganizationID, occurredAt, string(ev.Type), string(ev.Outcome),
+		organizationID, occurredAt, string(ev.Type), string(ev.Outcome),
 		string(ev.ActorType), ev.ActorID, logging.Scrub(ev.ActorLabel), ev.CredentialID,
 		ev.ProjectID, ev.EnvironmentID, ev.SecretID, ev.SecretKey, ev.TokenID,
 		ip, logging.Scrub(ev.UserAgent), logging.Scrub(ev.Reason), metadata,

@@ -207,6 +207,26 @@ func withOptionalAuthentication(chainProvider *identity.Chain, trustProxy bool, 
 	}
 }
 
+// withOrganization refuses a principal that belongs to no organization.
+//
+// Fail-closed by construction: this wraps `authenticated`, which every
+// organization-scoped route already uses, so a route added later is covered
+// without anybody remembering to cover it. The handful of routes a person
+// without an organization genuinely needs, creating one, accepting an
+// invitation, reading their own profile, signing out, opt out explicitly.
+func withOrganization(logger *slog.Logger) middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			principal, ok := PrincipalFrom(r.Context())
+			if !ok || principal.OrganizationID == uuid.Nil {
+				writeError(w, r, logger, ErrNoOrganization, nil)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
 // withRateLimit throttles by a caller-derived key.
 func withRateLimit(limiter ratelimit.Limiter, keyFor func(*http.Request) string, logger *slog.Logger) middleware {
 	return func(next http.Handler) http.Handler {

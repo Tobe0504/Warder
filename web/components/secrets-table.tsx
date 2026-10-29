@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   CalendarClock,
@@ -39,6 +40,13 @@ import {
 import { RelativeTime } from "@/components/ui/relative-time";
 import { useToast } from "@/components/ui/toast";
 import { apiFetch } from "@/lib/client-api";
+import { cn } from "@/lib/utils";
+
+/** One identity a grant names. */
+export type Subject = { name: string; kind: string; expiresAt?: string | null };
+
+/** Who can reach a secret, keyed by secret id. */
+export type Reach = Record<string, { use: Subject[]; read: Subject[] }>;
 
 export type Secret = {
   id: string;
@@ -64,9 +72,20 @@ const STATUS_OPTIONS = [
   { value: "NO_VERSION", label: "No version" },
 ];
 
-export function SecretsTable({ secrets }: { secrets: Secret[] }) {
+export function SecretsTable({
+  secrets,
+  reach = {},
+  projectId,
+}: {
+  secrets: Secret[];
+  reach?: Reach;
+  projectId?: string;
+}) {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(
+    secrets[0]?.id ?? null,
+  );
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -79,6 +98,11 @@ export function SecretsTable({ secrets }: { secrets: Secret[] }) {
       );
     });
   }, [secrets, query, status]);
+
+  // The selection follows the filter: a pane describing a row that is no
+  // longer on screen is a pane describing nothing the reader can see.
+  const selected =
+    filtered.find((secret) => secret.id === selectedId) ?? filtered[0] ?? null;
 
   if (secrets.length === 0) {
     return (
@@ -120,24 +144,106 @@ export function SecretsTable({ secrets }: { secrets: Secret[] }) {
         </span>
       </FilterBar>
 
-      <DataList>
-        {filtered.length === 0 ? (
-          <EmptyState
-            title="No secrets match those filters"
-            description="Either there are no secrets for this environment or try a different search keyword"
-            icon={<CircleOff />}
+      {/*
+        List and detail, side by side. Inspecting a secret used to mean leaving
+        the list, and the question people actually arrive with, who can reach
+        this, was two screens away. The pane answers it in place.
+      */}
+      <div className="flex flex-wrap items-start gap-4">
+        <div className="min-w-0 flex-[999_1_28rem]">
+          <DataList>
+            {filtered.length > 0 && (
+              <div className="flex items-center gap-6 border-b bg-muted/30 px-3.5 py-1.5 text-micro font-medium uppercase tracking-wider text-muted-foreground">
+                <span className="min-w-[8rem] flex-[2] basis-44">Key</span>
+                <span className="w-[4.5rem] shrink-0">Access</span>
+                <span className="flex shrink-0 items-center gap-3">
+                  <span className="w-14">Status</span>
+                  <span className="w-8 text-right">Ver</span>
+                </span>
+                <span className="ml-auto hidden 2xl:block w-20 text-right">Used</span>
+              </div>
+            )}
+            {filtered.length === 0 ? (
+              <EmptyState
+                title="No secrets match those filters"
+                description="Either there are no secrets for this environment or try a different search keyword"
+                icon={<CircleOff />}
+              />
+            ) : (
+              filtered.map((secret) => (
+                <SecretRow
+                  key={secret.id}
+                  secret={secret}
+                  reach={reach[secret.id]}
+                  selected={secret.id === selectedId}
+                  onSelect={() => setSelectedId(secret.id)}
+                />
+              ))
+            )}
+          </DataList>
+        </div>
+
+        {selected && (
+          <SecretDetail
+            secret={selected}
+            reach={reach[selected.id]}
+            projectId={projectId}
           />
-        ) : (
-          filtered.map((secret) => (
-            <SecretRow key={secret.id} secret={secret} />
-          ))
         )}
-      </DataList>
+      </div>
     </>
   );
 }
 
-function SecretRow({ secret }: { secret: Secret }) {
+/**
+ * The two dots.
+ *
+ * A filled dot is software that may use the credential; a ring is a person who
+ * may read it. Shape as well as colour, so the pair survives greyscale and the
+ * common colour-blindness cases, where green and amber alone would not.
+ *
+ * A ring should be rare. A column of them means the separation this product
+ * exists to keep has stopped being kept, and that is worth seeing from the
+ * list rather than three screens in.
+ */
+function ReachDots({ reach }: { reach?: { use: Subject[]; read: Subject[] } }) {
+  const use = reach?.use.length ?? 0;
+  const read = reach?.read.length ?? 0;
+
+  return (
+    <span className="flex shrink-0 items-center gap-1.5">
+      <span
+        title={use === 1 ? "1 identity may use this" : `${use} identities may use this`}
+        className={cn(
+          "size-[7px] rounded-full",
+          use > 0 ? "bg-can-use" : "bg-border",
+        )}
+      />
+      <span
+        title={read === 1 ? "1 identity may read this" : `${read} identities may read this`}
+        className={cn(
+          "size-[7px] rounded-full border-[1.5px]",
+          read > 0 ? "border-can-reveal" : "border-border",
+        )}
+      />
+      {read > 0 && (
+        <span className="text-micro tabular text-can-reveal">{read}</span>
+      )}
+    </span>
+  );
+}
+
+function SecretRow({
+  secret,
+  reach,
+  selected,
+  onSelect,
+}: {
+  secret: Secret;
+  reach?: { use: Subject[]; read: Subject[] };
+  selected?: boolean;
+  onSelect?: () => void;
+}) {
   const router = useRouter();
   const toast = useToast();
   const [revealed, setRevealed] = useState<string | null>(null);
@@ -206,13 +312,25 @@ function SecretRow({ secret }: { secret: Secret }) {
         : "neutral";
 
   return (
-    <DataListRow className="gap-y-2 max-md:flex-wrap">
+    <DataListRow
+      className={cn(
+        "cursor-default gap-y-2 max-md:flex-wrap",
+        selected && "bg-muted/40 shadow-[inset_2px_0_0_var(--foreground)]",
+      )}
+      onClick={onSelect}
+    >
       {/* <div className="flex size-7 shrink-0 items-center justify-center rounded-md border bg-muted/50">
         <KeyRound className="size-3.5 text-muted-foreground" />
       </div> */}
 
-      <div className="min-w-0 basis-44">
-        <div className="truncate font-sans text-meta">{secret.key}</div>
+      {/*
+        flex-[2] and a real minimum. This column had `basis-44` and nothing to
+        defend it, so the metadata on the right held its full width while the
+        secret's name, the one thing the row is about, collapsed to "DA..".
+        The name now takes space before anything else does.
+      */}
+      <div className="min-w-[8rem] flex-[2] basis-44">
+        <div className="truncate font-sans text-meta font-medium">{secret.key}</div>
         {secret.description && (
           <div className="truncate text-meta text-muted-foreground">
             {secret.description}
@@ -220,7 +338,9 @@ function SecretRow({ secret }: { secret: Secret }) {
         )}
       </div>
 
-      <div className="min-w-0 flex-1 basis-22">
+      <ReachDots reach={reach} />
+
+      <div className={cn("min-w-0", revealed ? "flex-1 basis-20" : "hidden")}>
         {revealed ? (
           <div className="flex items-start gap-1.5">
             <span className="min-w-0 flex-1 break-all rounded bg-can-reveal-surface px-1.5 py-0.5 font-mono text-meta text-can-reveal">
@@ -242,13 +362,7 @@ function SecretRow({ secret }: { secret: Secret }) {
               {countdown}s
             </span>
           </div>
-        ) : (
-          // select-none so a drag-select of the row does not put a string of
-          // dots on the clipboard that looks like it might be the value.
-          <span className="select-none font-mono text-body text-muted-foreground">
-            {secret.masked}
-          </span>
-        )}
+        ) : null}
       </div>
 
       <div className="flex shrink-0 items-center gap-3">
@@ -265,12 +379,13 @@ function SecretRow({ secret }: { secret: Secret }) {
 
       <RowMeta className="max-md:basis-full max-md:justify-end text-meta">
         <RelativeTime
+          className="hidden xl:inline"
           value={secret.expiresAt}
           prefix="Expires"
           fallback="No expiry"
         />
         <RelativeTime
-          className="hidden md:inline"
+          className="hidden 2xl:inline"
           value={secret.lastUsedAt}
           prefix="Used"
           fallback="Never used"
@@ -352,3 +467,133 @@ function SecretRow({ secret }: { secret: Secret }) {
 }
 
 export { MonoTag };
+
+/**
+ * The detail pane.
+ *
+ * It answers one question, which is the question the product exists for: who
+ * can reach this credential, and in which of the two senses. Everything else
+ * on screen lists what exists; this says what that means.
+ */
+function SecretDetail({
+  secret,
+  reach,
+  projectId,
+}: {
+  secret: Secret;
+  reach?: { use: Subject[]; read: Subject[] };
+  projectId?: string;
+}) {
+  const use = reach?.use ?? [];
+  const read = reach?.read ?? [];
+
+  return (
+    <aside className="min-w-0 flex-[1_1_18rem] rounded-lg border bg-card p-3.5 lg:max-w-[22rem]">
+      <div className="truncate text-body font-medium">{secret.key}</div>
+      <div className="mt-1 text-meta text-muted-foreground">
+        {secret.version && <span>v{secret.version}</span>}
+        <span aria-hidden className="px-1.5 text-border">/</span>
+        <span>{secret.status.toLowerCase().replace("_", " ")}</span>
+        <span aria-hidden className="px-1.5 text-border">/</span>
+        <RelativeTime
+          value={secret.expiresAt}
+          prefix="expires"
+          fallback="no expiry"
+        />
+      </div>
+
+      {secret.description && (
+        <p className="mt-2 text-meta leading-relaxed text-muted-foreground">
+          {secret.description}
+        </p>
+      )}
+
+      {/*
+        Said plainly, where the question gets asked. Somebody looking at a row
+        of dots wants to know where the value is; the honest answer is that it
+        is not here, and that asking for it is an event rather than a glance.
+      */}
+      <div className="mt-3 rounded-md border bg-background/40 p-2.5">
+        <p className="text-meta leading-relaxed text-muted-foreground">
+          The value is not on this page. A runtime holding{" "}
+          <span className="text-can-use">USE_SECRET</span> receives it directly.
+        </p>
+        {secret.canReveal && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-2.5 w-full border-can-reveal/50 text-can-reveal hover:bg-can-reveal-surface"
+          >
+            Reveal, and record it
+          </Button>
+        )}
+      </div>
+
+      <div className="mt-4">
+        <div className="flex items-center gap-1.5 text-micro font-medium uppercase tracking-wider text-muted-foreground">
+          <span className="size-[6px] rounded-full bg-can-use" />
+          Can use
+        </div>
+        {use.length === 0 ? (
+          <p className="mt-1.5 text-meta text-muted-foreground">
+            Nothing can use this yet. A secret nothing is granted is a secret no
+            application can start with.
+          </p>
+        ) : (
+          <ul className="mt-1">
+            {use.map((subject) => (
+              <li
+                key={`use-${subject.name}`}
+                className="flex items-center gap-2 border-b py-1.5 last:border-b-0"
+              >
+                <span className="min-w-0 flex-1 truncate text-meta">
+                  {subject.name}
+                </span>
+                <span className="shrink-0 text-micro text-muted-foreground">
+                  {subject.kind.toLowerCase().replace("_", " ")}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div className="mt-4">
+        <div className="flex items-center gap-1.5 text-micro font-medium uppercase tracking-wider text-can-reveal">
+          <span className="size-[6px] rounded-full border-[1.5px] border-can-reveal" />
+          Can read
+        </div>
+        {read.length === 0 ? (
+          <p className="mt-1.5 text-meta text-muted-foreground">
+            Nobody. The value reaches runtimes and no one else.
+          </p>
+        ) : (
+          <ul className="mt-1">
+            {read.map((subject) => (
+              <li
+                key={`read-${subject.name}`}
+                className="flex items-center gap-2 border-b py-1.5 last:border-b-0"
+              >
+                <span className="min-w-0 flex-1 truncate text-meta">
+                  {subject.name}
+                </span>
+                <RelativeTime
+                  className="shrink-0 text-micro text-muted-foreground"
+                  value={subject.expiresAt ?? null}
+                  prefix="until"
+                  fallback="no expiry"
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {projectId && (
+        <Button asChild variant="outline" size="sm" className="mt-4 w-full">
+          <Link href={`/projects/${projectId}/access`}>Change access</Link>
+        </Button>
+      )}
+    </aside>
+  );
+}

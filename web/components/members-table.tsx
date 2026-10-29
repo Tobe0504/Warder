@@ -6,6 +6,7 @@ import { Clock, UserMinus, Users } from "lucide-react";
 
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { IssueRecoveryDialog } from "@/components/issue-recovery-dialog";
 import { Button } from "@/components/motion/button";
 import { DataList, DataListRow, EmptyState, RowMeta, StatusDot } from "@/components/ui/data-list";
 import { RelativeTime } from "@/components/ui/relative-time";
@@ -24,7 +25,16 @@ export type Member = {
   active: boolean;
 };
 
-export function MembersTable({ members, currentUserId }: { members: Member[]; currentUserId: string }) {
+export function MembersTable({
+  members,
+  currentUserId,
+  canRecover = false,
+}: {
+  members: Member[];
+  currentUserId: string;
+  /** Owners only. The API enforces it too; this just hides a button that would be refused. */
+  canRecover?: boolean;
+}) {
   if (members.length === 0) {
     return (
       <DataList>
@@ -36,13 +46,26 @@ export function MembersTable({ members, currentUserId }: { members: Member[]; cu
   return (
     <DataList>
       {members.map((member) => (
-        <MemberRow key={member.membershipId} member={member} currentUserId={currentUserId} />
+        <MemberRow
+          key={member.membershipId}
+          member={member}
+          currentUserId={currentUserId}
+          canRecover={canRecover}
+        />
       ))}
     </DataList>
   );
 }
 
-function MemberRow({ member, currentUserId }: { member: Member; currentUserId: string }) {
+function MemberRow({
+  member,
+  currentUserId,
+  canRecover,
+}: {
+  member: Member;
+  currentUserId: string;
+  canRecover: boolean;
+}) {
   const router = useRouter();
   const toast = useToast();
   const [pending, setPending] = useState(false);
@@ -90,6 +113,10 @@ function MemberRow({ member, currentUserId }: { member: Member; currentUserId: s
           <span>No expiry</span>
         )}
         <RelativeTime className="hidden md:inline" value={member.createdAt} prefix="Joined" />
+
+        {member.active && !isSelf && canRecover && (
+          <IssueRecoveryDialog name={member.name} membershipId={member.membershipId} />
+        )}
 
         {member.active && !isSelf && (
           <Button

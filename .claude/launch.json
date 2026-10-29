@@ -4,9 +4,25 @@
     {
       "name": "warder-web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "cwd": "web",
       "port": 3000
+    },
+    {
+      "name": "warder-web-3010",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "-p",
+        "3010"
+      ],
+      "cwd": "web",
+      "port": 3010
     }
   ]
 }

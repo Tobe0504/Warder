@@ -98,8 +98,8 @@ func (r *AccountRepo) GetUser(ctx context.Context, id uuid.UUID) (*domain.User, 
 
 // UpdatePasswordHash replaces a stored hash, used to upgrade Argon2 parameters
 // after a successful login.
-func (r *AccountRepo) UpdatePasswordHash(ctx context.Context, userID uuid.UUID, hash string) error {
-	_, err := r.db.Pool.Exec(ctx,
+func (r *AccountRepo) UpdatePasswordHash(ctx context.Context, q Queryer, userID uuid.UUID, hash string) error {
+	_, err := q.Exec(ctx,
 		`UPDATE users SET password_hash = $2, updated_at = now() WHERE id = $1`, userID, hash)
 	return translate(err)
 }
@@ -261,6 +261,26 @@ func (r *AccountRepo) EmailBelongsToOrganization(ctx context.Context, orgID uuid
 	return exists, nil
 }
 
+// GetMembershipByID loads one membership, scoped to the organization asking.
+//
+// Scoped on purpose: an id from another organization answers not-found rather
+// than resolving, so a guessed identifier cannot reach across the boundary.
+func (r *AccountRepo) GetMembershipByID(
+	ctx context.Context, orgID, membershipID uuid.UUID,
+) (*domain.Membership, error) {
+	m := &domain.Membership{ID: membershipID, OrganizationID: orgID}
+	var role string
+	err := r.db.Pool.QueryRow(ctx, `
+		SELECT user_id, role, created_at, expires_at, revoked_at
+		FROM memberships WHERE id = $1 AND organization_id = $2`, membershipID, orgID,
+	).Scan(&m.UserID, &role, &m.CreatedAt, &m.ExpiresAt, &m.RevokedAt)
+	if err != nil {
+		return nil, translate(err)
+	}
+	m.Role = domain.Role(role)
+	return m, nil
+}
+
 // ListMembers returns the members of an organization with their user records.
 func (r *AccountRepo) ListMembers(ctx context.Context, orgID uuid.UUID) ([]Member, error) {
 	rows, err := r.db.Pool.Query(ctx, `
@@ -369,6 +389,11 @@ func (r *AccountRepo) RevokeMembership(ctx context.Context, orgID, membershipID 
 // ---------------------------------------------------------------------------
 
 // Session is a browser or CLI login session.
+//
+// OrganizationID is uuid.Nil for a session that belongs to no organization:
+// somebody who has signed up and not yet created or joined one. The column is
+// NULL in that case, so the foreign key still holds for every session that does
+// name an organization.
 type Session struct {
 	ID             uuid.UUID
 	UserID         uuid.UUID
@@ -388,7 +413,7 @@ func (r *AccountRepo) CreateSession(ctx context.Context, s *Session, publicID st
 			(user_id, organization_id, kind, token_hash, token_prefix, expires_at, ip_address, user_agent)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING id, created_at`,
-		s.UserID, s.OrganizationID, s.Kind, hash, publicID, s.ExpiresAt, nullInet(ip), userAgent,
+		s.UserID, nullUUID(s.OrganizationID), s.Kind, hash, publicID, s.ExpiresAt, nullInet(ip), userAgent,
 	).Scan(&s.ID, &s.CreatedAt)
 	return translate(err)
 }
@@ -404,13 +429,19 @@ type SessionCandidate struct {
 // constant time; this lookup is by the public handle only.
 func (r *AccountRepo) FindSessionByPublicID(ctx context.Context, publicID string) (*SessionCandidate, error) {
 	c := &SessionCandidate{}
+	// organization_id is NULL for a session that belongs to no organization,
+	// which will not scan into a uuid.UUID directly.
+	var organizationID *uuid.UUID
 	err := r.db.Pool.QueryRow(ctx, `
 		SELECT id, user_id, organization_id, kind, token_hash, created_at, expires_at, revoked_at, last_used_at
 		FROM user_sessions WHERE token_prefix = $1`, publicID,
-	).Scan(&c.ID, &c.UserID, &c.OrganizationID, &c.Kind, &c.TokenHash,
+	).Scan(&c.ID, &c.UserID, &organizationID, &c.Kind, &c.TokenHash,
 		&c.CreatedAt, &c.ExpiresAt, &c.RevokedAt, &c.LastUsedAt)
 	if err != nil {
 		return nil, translate(err)
+	}
+	if organizationID != nil {
+		c.OrganizationID = *organizationID
 	}
 	return c, nil
 }
@@ -430,8 +461,8 @@ func (r *AccountRepo) RevokeSession(ctx context.Context, id uuid.UUID) error {
 
 // RevokeSessionsForUser ends every session a user holds, which is what a
 // password change or an offboarding needs.
-func (r *AccountRepo) RevokeSessionsForUser(ctx context.Context, userID uuid.UUID) error {
-	_, err := r.db.Pool.Exec(ctx,
+func (r *AccountRepo) RevokeSessionsForUser(ctx context.Context, q Queryer, userID uuid.UUID) error {
+	_, err := q.Exec(ctx,
 		`UPDATE user_sessions SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`, userID)
 	return translate(err)
 }

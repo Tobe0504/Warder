@@ -29,27 +29,29 @@ export default function LandingPage() {
 
 function Hero() {
   return (
-    <section className="mx-auto max-w-7xl px-4 pb-14 pt-16 sm:px-6 sm:pt-14">
-      <h1 className="mt-4 max-w-[18ch] text-[2.25rem] font-medium leading-[1.08] tracking-[-0.03em] sm:text-[3.25rem]">
+    <section className="mx-auto max-w-[72rem] px-4 pb-10 pt-12 sm:px-6">
+      <h1 className="max-w-[20ch] text-[2rem] font-semibold leading-[1.06] tracking-[-0.03em] sm:text-[2.75rem]">
         Your application gets the credential. Nobody else has to.
       </h1>
 
-      <p className="mt-5 max-w-[58ch] text-body leading-relaxed text-muted-foreground sm:text-[1.0625rem]">
-        Warder separates <em className="not-italic text-foreground">using</em> a
-        secret from <em className="not-italic text-foreground">seeing</em> one.
+      <p className="mt-4 max-w-[62ch] text-body leading-relaxed text-muted-foreground">
+        Warder separates{" "}
+        <em className="not-italic font-medium text-foreground">using</em> a
+        secret from{" "}
+        <em className="not-italic font-medium text-foreground">seeing</em> one.
         Developers run the app, CI deploys it, agents test it: none of them are
         handed the value, and none of them need to be.
       </p>
 
-      <div className="mt-8 flex flex-wrap items-center gap-2">
-        <Button asChild size="lg">
-          <Link href="/docs/using-warder">
-            Read the docs
+      <div className="mt-6 flex flex-wrap items-center gap-2">
+        <Button asChild>
+          <Link href="/signup">
+            Get started
             <ArrowRight />
           </Link>
         </Button>
-        <Button asChild size="lg" variant="outline">
-          <Link href="/signup">Get started</Link>
+        <Button asChild variant="outline">
+          <Link href="/docs/using-warder">Read the docs</Link>
         </Button>
       </div>
 
@@ -68,7 +70,7 @@ function Hero() {
  */
 function SplitDemo() {
   return (
-    <div className="mt-14 overflow-hidden rounded-xl border bg-card">
+    <div className="mt-8 overflow-hidden rounded-lg border bg-card">
       <div className="flex items-center gap-2 border-b px-4 py-2.5">
         <Terminal className="size-3.5 text-muted-foreground" />
         <code className="font-mono text-meta">
@@ -138,7 +140,7 @@ function Pane({
             </dt>
             <dd
               className={`truncate font-mono text-meta ${
-                tone === "use" ? "text-can-use" : "text-muted-foreground/70"
+                tone === "use" ? "text-can-use" : "text-muted-foreground/60"
               }`}
             >
               {value}
@@ -394,7 +396,7 @@ function Honesty() {
 function ClosingCta() {
   return (
     <section className="border-t">
-      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+      <div className="mx-auto max-w-[72rem] px-4 py-10 sm:px-6">
         <h2 className="max-w-[30ch] text-title font-medium tracking-tight sm:text-[1.75rem]">
           A credential should be available to the software that needs it, and
           to nobody else by default.
@@ -430,7 +432,7 @@ function Section({
 }) {
   return (
     <section className="border-t">
-      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+      <div className="mx-auto max-w-[72rem] px-4 py-10 sm:px-6">
         <p className="text-micro font-medium uppercase text-muted-foreground">
           {eyebrow}
         </p>

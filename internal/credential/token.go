@@ -37,6 +37,12 @@ const (
 	// authenticates nothing on its own: presenting it only allows the holder to
 	// create the one account the invitation already names.
 	KindInvite Kind = "vin"
+
+	// KindRecovery is a single-use link an owner issues so that a member who
+	// has lost everything else can set a new password. It is the only
+	// credential in the system that lets one person restore another's access,
+	// which is why it is its own kind and its own audit event.
+	KindRecovery Kind = "vrc"
 )
 
 const (
@@ -132,7 +138,7 @@ func Parse(presented string) (Kind, string, error) {
 	kind, publicID, secret := Kind(parts[0]), parts[1], parts[2]
 
 	switch kind {
-	case KindMachine, KindRuntime, KindSession, KindInvite:
+	case KindMachine, KindRuntime, KindSession, KindInvite, KindRecovery:
 	default:
 		return "", "", ErrMalformed
 	}

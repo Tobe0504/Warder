@@ -132,37 +132,12 @@ func (s *Server) handleSwitchOrganization(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	now := s.now()
-	ttl := s.cfg.SessionTTL
-	if principal.SessionKind == "CLI" {
-		ttl = s.cfg.CLISessionTTL
-	}
-
-	token, err := credential.Mint(credential.KindSession)
+	switched, err := s.reissueSessionFor(r, principal, org.ID)
 	if err != nil {
 		writeError(w, r, s.logger, ErrInternal, err)
 		return
 	}
-
-	session := &store.Session{
-		UserID:         principal.ID,
-		OrganizationID: org.ID,
-		Kind:           principal.SessionKind,
-		ExpiresAt:      now.Add(ttl),
-	}
-
 	clientIP := ClientIP(r, s.cfg.TrustProxyHeaders)
-	if err := s.accounts.CreateSession(r.Context(), session, token.PublicID, token.Hash, clientIP, r.UserAgent()); err != nil {
-		writeError(w, r, s.logger, ErrInternal, err)
-		return
-	}
-
-	// The old session goes only after the new one exists, so a failure here
-	// leaves the caller signed in rather than signed out of everything.
-	if err := s.accounts.RevokeSession(r.Context(), principal.CredentialID); err != nil {
-		s.logger.Warn("could not revoke the previous session after an organization switch",
-			"error", err)
-	}
 
 	// Recorded in both organizations. The one being left has as much reason to
 	// know that a session moved as the one being entered.
@@ -174,7 +149,6 @@ func (s *Server) handleSwitchOrganization(w http.ResponseWriter, r *http.Request
 			ActorType:      domain.ActorHuman,
 			ActorID:        &principal.ID,
 			ActorLabel:     principal.DisplayName,
-			CredentialID:   &session.ID,
 			IPAddress:      clientIP,
 			UserAgent:      r.UserAgent(),
 			Metadata: map[string]any{
@@ -186,8 +160,8 @@ func (s *Server) handleSwitchOrganization(w http.ResponseWriter, r *http.Request
 	}
 
 	writeJSON(w, r, s.logger, http.StatusOK, map[string]any{
-		"sessionToken":   token.Secret,
-		"expiresAt":      session.ExpiresAt.UTC().Format(time.RFC3339),
+		"sessionToken":   switched.Token,
+		"expiresAt":      switched.ExpiresAt.UTC().Format(time.RFC3339),
 		"organizationId": org.ID.String(),
 		"organization":   org.Name,
 		"slug":           org.Slug,
@@ -201,4 +175,58 @@ func (s *Server) resolveOrganization(r *http.Request, wanted string) (*domain.Or
 		return s.accounts.GetOrganization(r.Context(), id)
 	}
 	return s.accounts.GetOrganizationBySlug(r.Context(), strings.ToLower(wanted))
+}
+
+// reissuedSession is a replacement session bound to a different organization.
+type reissuedSession struct {
+	Token     string
+	ExpiresAt time.Time
+}
+
+// reissueSessionFor mints a session bound to orgID and retires the caller's
+// current one.
+//
+// A session is bound to one organization for the whole of its life, which is
+// what keeps every query scoped without threading an organization through it.
+// Moving therefore means a new credential, not a mutated row: a token that
+// silently changed what it authorized could not be reasoned about, and any
+// copy of the old one would have quietly gained the new access.
+//
+// Shared by switching between organizations and by founding one, because the
+// session problem is identical in both and solving it twice is how the two
+// drift apart.
+func (s *Server) reissueSessionFor(
+	r *http.Request,
+	principal *domain.Principal,
+	orgID uuid.UUID,
+) (*reissuedSession, error) {
+	ttl := s.cfg.SessionTTL
+	if principal.SessionKind == "CLI" {
+		ttl = s.cfg.CLISessionTTL
+	}
+
+	token, err := credential.Mint(credential.KindSession)
+	if err != nil {
+		return nil, err
+	}
+
+	session := &store.Session{
+		UserID:         principal.ID,
+		OrganizationID: orgID,
+		Kind:           principal.SessionKind,
+		ExpiresAt:      s.now().Add(ttl),
+	}
+
+	clientIP := ClientIP(r, s.cfg.TrustProxyHeaders)
+	if err := s.accounts.CreateSession(r.Context(), session, token.PublicID, token.Hash, clientIP, r.UserAgent()); err != nil {
+		return nil, err
+	}
+
+	// The old session goes only after the new one exists, so a failure here
+	// leaves the caller signed in rather than signed out of everything.
+	if err := s.accounts.RevokeSession(r.Context(), principal.CredentialID); err != nil {
+		s.logger.Warn("could not revoke the previous session", "error", err)
+	}
+
+	return &reissuedSession{Token: token.Secret, ExpiresAt: session.ExpiresAt}, nil
 }

@@ -7,6 +7,7 @@ import {
 } from "@/components/motion/animated-sidebar";
 import { callCoreApi, NotAuthenticatedError } from "@/lib/core-api";
 import { getSessionToken } from "@/lib/session";
+import type { SidebarProject } from "@/components/app-sidebar";
 import type { SessionUser } from "@/lib/session-user";
 
 /**
@@ -56,9 +57,34 @@ export default async function DashboardLayout({
     throw error;
   }
 
+  // Signed in, belonging to nothing. Every destination in this shell is
+  // scoped to an organization and the API refuses all of them, so the only
+  // honest thing to show is the screen where that gets fixed.
+  if (!user.organizationId) {
+    redirect("/welcome");
+  }
+
+  // The sidebar carries the project tree, so it needs the projects. Fetched
+  // here rather than in the sidebar because this is already a server component
+  // holding the session, and a client component would have to ask for them
+  // over the BFF on every navigation.
+  //
+  // A failure here must not take down the shell: a sidebar missing its tree is
+  // a worse day than a sidebar, but an error page instead of the dashboard is
+  // worse than both.
+  let projects: SidebarProject[] = [];
+  try {
+    const listing = await callCoreApi<{ projects: SidebarProject[] | null }>(
+      "/projects",
+    );
+    projects = listing.projects ?? [];
+  } catch {
+    projects = [];
+  }
+
   return (
     <AnimatedSidebarProvider>
-        <AppSidebar user={user} />
+        <AppSidebar user={user} projects={projects} />
         <AnimatedSidebarInset>
           <a
             href="#main"

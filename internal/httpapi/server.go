@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"github.com/go-webauthn/webauthn/webauthn"
 	"log/slog"
 	"net/http"
 	"time"
@@ -39,7 +40,11 @@ type Server struct {
 
 	limits            Limits
 	runtimeSessionTTL time.Duration
-	now               func() time.Time
+
+	// webauthn is nil when the deployment has not been told its own domain,
+	// which is how passkeys stay off rather than half on.
+	webauthn *webauthn.WebAuthn
+	now      func() time.Time
 }
 
 // Session kinds. A session is issued for one surface and is not accepted on
@@ -56,6 +61,7 @@ type Limits struct {
 	Admin          ratelimit.Limiter
 	Sensitive      ratelimit.Limiter
 	Reveal         ratelimit.Limiter
+	Recovery       ratelimit.Limiter
 	RuntimeAuth    ratelimit.Limiter
 	RuntimeDeliver ratelimit.Limiter
 }
@@ -88,7 +94,19 @@ func New(d Deps) *Server {
 		now = time.Now
 	}
 
+	// A misconfigured relying party is a startup problem, not a per-request
+	// one, but it must not take the API down: passkeys are optional, and a
+	// deployment that got the origins wrong should still serve everything
+	// else while saying passkeys are unavailable.
+	rp, err := newWebAuthn(d.Config.WebAuthnRPID, d.Config.WebAuthnDisplayName, d.Config.WebAuthnOrigins)
+	if err != nil {
+		d.Logger.Error("passkeys are disabled: the relying party could not be built",
+			"error", err)
+		rp = nil
+	}
+
 	return &Server{
+		webauthn:   rp,
 		cfg:        d.Config,
 		logger:     d.Logger,
 		db:         d.DB,
@@ -133,6 +151,7 @@ func New(d Deps) *Server {
 			Admin:          ratelimit.New(ratelimit.Admin),
 			Sensitive:      ratelimit.New(ratelimit.Sensitive),
 			Reveal:         ratelimit.New(ratelimit.Reveal),
+			Recovery:       ratelimit.New(ratelimit.Recovery),
 			RuntimeAuth:    ratelimit.New(ratelimit.RuntimeAuth),
 			RuntimeDeliver: ratelimit.New(ratelimit.RuntimeDeliver),
 		},
@@ -167,17 +186,52 @@ func (s *Server) AdminHandler() http.Handler {
 		withRateLimit(s.limits.Invitation, byClientIP(s.cfg.TrustProxyHeaders), s.logger),
 		withOptionalAuthentication(s.adminAuth, s.cfg.TrustProxyHeaders, s.logger),
 	))
-	mux.Handle("POST /auth/logout", s.authenticated(s.limits.Admin, http.HandlerFunc(s.handleLogout)))
-	mux.Handle("GET /auth/session", s.authenticated(s.limits.Admin, http.HandlerFunc(s.handleSession)))
+	// Reachable without an organization: a person who has just signed up has a
+	// session and nothing else, and still needs to see who they are and sign
+	// out again.
+	mux.Handle("POST /auth/logout", s.authenticatedWithoutOrganization(s.limits.Admin, http.HandlerFunc(s.handleLogout)))
+	mux.Handle("GET /auth/session", s.authenticatedWithoutOrganization(s.limits.Admin, http.HandlerFunc(s.handleSession)))
+
+	// Signing up no longer creates an organization. A person exists first and
+	// belongs afterwards, which is what makes "invited to somebody else's
+	// organization" and "between organizations" expressible at all.
+	mux.Handle("POST /auth/signup", s.public(s.limits.Sensitive, http.HandlerFunc(s.handleSignup)))
+
+	// Recovery, for somebody who cannot sign in. Warder sends no email, so a
+	// recovery code is what stands in for a reset link.
+	mux.Handle("POST /auth/password/reset", s.public(s.limits.Recovery, http.HandlerFunc(s.handleResetPassword)))
+
+	// Changing a password and managing the codes are things a signed-in person
+	// does, and neither needs an organization.
+	mux.Handle("POST /auth/password", s.authenticatedWithoutOrganization(s.limits.Sensitive, http.HandlerFunc(s.handleChangePassword)))
+	mux.Handle("GET /auth/recovery-codes", s.authenticatedWithoutOrganization(s.limits.Admin, http.HandlerFunc(s.handleRecoveryCodeStatus)))
+
+	// Passkeys. Registration needs a session; finishing a sign-in deliberately
+	// does not, because the caller has a password accepted and nothing else.
+	mux.Handle("GET /auth/passkeys", s.authenticatedWithoutOrganization(s.limits.Admin, http.HandlerFunc(s.handleListPasskeys)))
+	mux.Handle("POST /auth/passkeys/register/begin", s.authenticatedWithoutOrganization(s.limits.Sensitive, http.HandlerFunc(s.handleBeginPasskeyRegistration)))
+	mux.Handle("POST /auth/passkeys/register/finish", s.authenticatedWithoutOrganization(s.limits.Sensitive, http.HandlerFunc(s.handleFinishPasskeyRegistration)))
+	mux.Handle("DELETE /auth/passkeys/{passkeyID}", s.authenticatedWithoutOrganization(s.limits.Sensitive, http.HandlerFunc(s.handleDeletePasskey)))
+
+	// The pending token is the only credential these accept, and it can do
+	// nothing else anywhere in the system. A recovery code stands in for a
+	// lost passkey, so losing the key is not losing the account.
+	mux.Handle("POST /auth/passkeys/assert/begin", s.public(s.limits.Login, http.HandlerFunc(s.handleBeginPasskeyAssertion)))
+	mux.Handle("POST /auth/passkeys/assert/finish", s.public(s.limits.Login, http.HandlerFunc(s.handleFinishPasskeyAssertion)))
+	mux.Handle("POST /auth/passkeys/assert/recovery", s.public(s.limits.Login, http.HandlerFunc(s.handleFinishWithRecoveryCode)))
+	mux.Handle("POST /auth/recovery-codes", s.authenticatedWithoutOrganization(s.limits.Sensitive, http.HandlerFunc(s.handleIssueRecoveryCodes)))
 
 	// Which organizations this person belongs to, and moving between them.
 	// Switching re-issues the session, so it is rate limited as a sensitive
 	// action rather than as a read.
-	mux.Handle("GET /auth/organizations", s.authenticated(s.limits.Admin, http.HandlerFunc(s.handleListMemberships)))
-	mux.Handle("POST /auth/organizations/switch", s.authenticated(s.limits.Sensitive, http.HandlerFunc(s.handleSwitchOrganization)))
+	mux.Handle("GET /auth/organizations", s.authenticatedWithoutOrganization(s.limits.Admin, http.HandlerFunc(s.handleListMemberships)))
+	mux.Handle("POST /auth/organizations/switch", s.authenticatedWithoutOrganization(s.limits.Sensitive, http.HandlerFunc(s.handleSwitchOrganization)))
 
 	// Bootstrap: creating the first organization, owner, and their project.
-	mux.Handle("POST /organizations", s.public(s.limits.Sensitive, http.HandlerFunc(s.handleCreateOrganization)))
+	// Authenticated now, and reachable without an organization: you create one
+	// as yourself, and become its owner. This also closes the hole where
+	// anybody who could reach the API could create a tenant.
+	mux.Handle("POST /organizations", s.authenticatedWithoutOrganization(s.limits.Sensitive, http.HandlerFunc(s.handleCreateOrganization)))
 
 	mux.Handle("GET /projects", s.authenticated(s.limits.Admin, http.HandlerFunc(s.handleListProjects)))
 	mux.Handle("POST /projects", s.authenticated(s.limits.Sensitive, http.HandlerFunc(s.handleCreateProject)))
@@ -225,6 +279,16 @@ func (s *Server) AdminHandler() http.Handler {
 	mux.Handle("GET /members/invitations", s.authenticated(s.limits.Admin, http.HandlerFunc(s.handleListInvitations)))
 	mux.Handle("POST /members/invitations", s.authenticated(s.limits.Sensitive, http.HandlerFunc(s.handleCreateInvitation)))
 	mux.Handle("DELETE /members/invitations/{invitationID}", s.authenticated(s.limits.Sensitive, http.HandlerFunc(s.handleRevokeInvitation)))
+
+	// The last rung of the recovery ladder: an owner vouching for somebody who
+	// has lost their password, their passkeys and their codes.
+	mux.Handle("POST /members/{membershipID}/recovery", s.authenticated(s.limits.Sensitive, http.HandlerFunc(s.handleIssueAccountRecovery)))
+	mux.Handle("POST /auth/password/recover", s.public(s.limits.Recovery, http.HandlerFunc(s.handleRedeemAccountRecovery)))
+
+	// Passwordless sign-in. A discoverable passkey identifies the account on
+	// its own, so there is no password step in front of it.
+	mux.Handle("POST /auth/passkeys/signin/begin", s.public(s.limits.Login, http.HandlerFunc(s.handleBeginPasswordlessSignIn)))
+	mux.Handle("POST /auth/passkeys/signin/finish", s.public(s.limits.Login, http.HandlerFunc(s.handleFinishPasswordlessSignIn)))
 
 	return chain(mux,
 		withRequestID,
@@ -317,8 +381,26 @@ func (s *Server) public(limiter ratelimit.Limiter, h http.Handler) http.Handler 
 	return chain(h, withRateLimit(limiter, byClientIP(s.cfg.TrustProxyHeaders), s.logger))
 }
 
-// authenticated wraps a route that requires a principal.
+// authenticated wraps a route that requires a principal with an organization.
+//
+// The organization check lives here rather than in each handler so that it is
+// the default: a route added later gets it without anyone deciding to add it.
+// Routes that must serve somebody with no organization use
+// authenticatedWithoutOrganization instead, which is deliberately longer to
+// type than the safe one.
 func (s *Server) authenticated(limiter ratelimit.Limiter, h http.Handler) http.Handler {
+	return chain(h,
+		withAuthentication(s.adminAuth, s.cfg.TrustProxyHeaders, s.logger),
+		withRateLimit(limiter, byPrincipal, s.logger),
+		withOrganization(s.logger),
+	)
+}
+
+// authenticatedWithoutOrganization wraps the few routes a signed-in person
+// needs before they belong anywhere: creating an organization, accepting an
+// invitation, reading their own profile, listing what they belong to, and
+// signing out.
+func (s *Server) authenticatedWithoutOrganization(limiter ratelimit.Limiter, h http.Handler) http.Handler {
 	return chain(h,
 		withAuthentication(s.adminAuth, s.cfg.TrustProxyHeaders, s.logger),
 		withRateLimit(limiter, byPrincipal, s.logger),

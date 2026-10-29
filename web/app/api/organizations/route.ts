@@ -1,20 +1,19 @@
-import { assertSameOrigin } from "@/lib/csrf";
 import { callCoreApi } from "@/lib/core-api";
 import {
-  handlePreAuthRoute,
   handleRoute,
   readJson,
   requireString,
 } from "@/lib/route-helpers";
 import { startSession } from "@/lib/session";
 
-type CreateResponse = { organizationId: string; slug: string; userId: string };
-type LoginResponse = {
-  sessionToken: string;
-  expiresAt: string;
-  user: { email: string; name: string; organization: string; role: string };
+type CreateResponse = {
+  organizationId: string;
+  organization: string;
+  slug: string;
+  userId: string;
+  sessionToken?: string;
+  expiresAt?: string;
 };
-
 /**
  * Creates an organization and signs the new owner straight in.
  *
@@ -29,57 +28,37 @@ type LoginResponse = {
  * allowlisted email domain, or an operator-only path. See
  * docs/security/limitations.md.
  */
+/**
+ * Founds an organization, with the signed-in person as its first owner.
+ *
+ * The core API replaces the caller's session, because a session is bound to
+ * one organization for its whole life and this one currently names none. So
+ * the cookie is rewritten here, exactly as switching organizations does.
+ */
 export async function POST(request: Request) {
-  return handlePreAuthRoute(async () => {
-    // Same reasoning as sign-in: no session exists yet, so there is no token to
-    // check, but a forged cross-site request must not be able to create a
-    // tenant and sign the victim's browser into it.
-    await assertSameOrigin(request);
-
+  return handleRoute(request, async () => {
     const body = await readJson(request);
 
-    const organizationName = requireString(body, "organizationName", 128);
-    const slug = requireString(body, "slug", 64);
-    const name = requireString(body, "name", 128);
-    const email = requireString(body, "email", 320);
-    const password = requireString(body, "password", 256);
-
-    await callCoreApi<CreateResponse>("/organizations", {
+    const result = await callCoreApi<CreateResponse>("/organizations", {
       method: "POST",
-      anonymous: true,
-      body: { organizationName, slug, name, email, password },
-    });
-
-    const session = await callCoreApi<LoginResponse>("/auth/login", {
-      method: "POST",
-      anonymous: true,
-      body: { email, password, kind: "browser" },
-    });
-
-    const csrfToken = await startSession(session.sessionToken, new Date(session.expiresAt));
-
-    // The session credential is in an HttpOnly cookie and is deliberately not
-    // part of this body.
-    return {
-      user: {
-        email: session.user.email,
-        name: session.user.name,
-        organization: session.user.organization,
-        role: session.user.role,
+      body: {
+        organizationName: requireString(body, "organizationName", 128),
+        slug: requireString(body, "slug", 64),
       },
-      csrfToken,
+    });
+
+    if (result.sessionToken && result.expiresAt) {
+      await startSession(result.sessionToken, new Date(result.expiresAt));
+    }
+
+    return {
+      organizationId: result.organizationId,
+      organization: result.organization,
+      slug: result.slug,
     };
   });
 }
 
-/**
- * The organizations the signed-in person may act in.
- *
- * Shares a path with organization creation above and nothing else: that one is
- * pre-authentication bootstrap, this one requires a session. Two methods, two
- * postures, which is why this handler goes through handleRoute and that one
- * through handlePreAuthRoute.
- */
 export async function GET(request: Request) {
   return handleRoute(request, () => callCoreApi("/auth/organizations"));
 }

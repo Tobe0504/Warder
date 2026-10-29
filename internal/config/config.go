@@ -72,6 +72,30 @@ type Config struct {
 	// process start.
 	RuntimeSessionTTL time.Duration
 
+	// WebAuthnRPID is the domain passkeys are bound to, without scheme or port:
+	// "localhost" in development, "warder.example.com" in production. A
+	// credential registered under one RP ID is invisible under another, which
+	// is the property that stops a phishing site from using it.
+	//
+	// Empty disables passkeys entirely, so a deployment that has not been told
+	// its own domain offers a factor it could never verify.
+	WebAuthnRPID string
+
+	// WebAuthnOrigins are the exact origins a ceremony may come from, scheme
+	// and port included. The browser reports the origin it ran in and the
+	// library checks it against this list, so a wrong entry is the usual cause
+	// of a registration that works locally and fails in production.
+	WebAuthnOrigins []string
+
+	// WebAuthnDisplayName is what the authenticator shows when it asks the
+	// person to confirm.
+	WebAuthnDisplayName string
+
+	// MFAPendingTTL bounds the gap between a correct password and the second
+	// factor that completes it. Short: it is a person reaching for a key that
+	// is already in their hand.
+	MFAPendingTTL time.Duration
+
 	// TrustProxyHeaders enables reading the client address from X-Forwarded-For.
 	// Off by default: a spoofable client address would corrupt both the audit
 	// trail and per-address rate limiting.
@@ -99,6 +123,18 @@ func Load() (*Config, error) {
 	if cfg.CLISessionTTL, err = duration("WARDER_CLI_SESSION_TTL", 7*24*time.Hour); err != nil {
 		return nil, err
 	}
+	cfg.WebAuthnRPID = strings.TrimSpace(getenv("WARDER_WEBAUTHN_RP_ID", ""))
+	cfg.WebAuthnDisplayName = getenv("WARDER_WEBAUTHN_DISPLAY_NAME", "Warder")
+	for _, origin := range strings.Split(getenv("WARDER_WEBAUTHN_ORIGINS", ""), ",") {
+		if trimmed := strings.TrimSpace(origin); trimmed != "" {
+			cfg.WebAuthnOrigins = append(cfg.WebAuthnOrigins, trimmed)
+		}
+	}
+
+	if cfg.MFAPendingTTL, err = duration("WARDER_MFA_PENDING_TTL", 5*time.Minute); err != nil {
+		return nil, err
+	}
+
 	if cfg.RuntimeSessionTTL, err = duration("WARDER_RUNTIME_SESSION_TTL", 5*time.Minute); err != nil {
 		return nil, err
 	}

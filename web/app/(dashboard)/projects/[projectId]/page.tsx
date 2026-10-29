@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { ProjectShell } from "@/components/project-shell";
 import { callCoreApi } from "@/lib/core-api";
 
 type Params = { params: Promise<{ projectId: string }> };
@@ -21,10 +22,21 @@ export default async function ProjectPage({ params }: Params) {
   const target = list.find((e) => e.slug === "development") ?? list[0];
 
   if (!target) {
+    // Rare, but it must not be a bare sentence floating in an unframed page:
+    // the layout stopped drawing a header, so without a shell this route has
+    // no breadcrumb, no measure and no way back.
+    const project = await callCoreApi<{
+      id: string;
+      name: string;
+      slug: string;
+    }>(`/projects/${projectId}`);
+
     return (
-      <p className="py-12 text-center text-meta text-muted-foreground">
-        This project has no environments yet.
-      </p>
+      <ProjectShell project={project}>
+        <p className="py-10 text-center text-meta text-muted-foreground">
+          This project has no environments yet.
+        </p>
+      </ProjectShell>
     );
   }
 

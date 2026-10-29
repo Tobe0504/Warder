@@ -34,6 +34,8 @@ export type Grant = {
   subjectKind: string;
   scope: string;
   environmentId: string | null;
+  /** Null when the grant is broader than one secret. */
+  secretId: string | null;
   capabilities: string[];
   canUse: boolean;
   canReveal: boolean;

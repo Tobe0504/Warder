@@ -108,10 +108,34 @@ alphanumeric, so it survives a URI, a shell, and a dashboard form unchanged.
 Keep both somewhere you can paste from in the next step. Not in the repository,
 not in a chat message.
 
-## 2. Deploy the API and database
+## 2. Create the database
+
+Warder does not deploy one for you, on purpose: Render's free Postgres is
+deleted after thirty days, and discovering that by having your secrets store
+disappear is not a good way to find out.
+
+Use anything that speaks real PostgreSQL. [Neon](https://neon.tech) is the
+recommended free option: it does not expire, and it suspends when idle rather
+than being removed. Supabase, Aiven and Railway all work.
+
+Create a project and copy **both** connection strings. Providers give two, and
+the difference matters here:
+
+| | Looks like | Used for |
+|---|---|---|
+| **Direct** | `…-123456.us-east-2.aws.neon.tech` | migrations |
+| **Pooled** | `…-123456-pooler.us-east-2.aws.neon.tech` | the two services |
+
+The services use the pooled one because two free instances share a small
+connection budget. Migrations need the direct one: the migration lock is
+session-level and a transaction-mode pooler does not preserve it, so two
+migrations could run at once without either noticing. `warder-api migrate`
+refuses a pooled host rather than letting that happen.
+
+## 3. Deploy the API
 
 In Render: **New → Blueprint**, pick this repository. Render reads
-`render.yaml` and proposes a database and two services.
+`render.yaml` and proposes two services.
 
 It will stop and ask for the values marked `sync: false`. Set the **same value
 on both services**:
@@ -120,13 +144,24 @@ on both services**:
 |---|---|
 | `WARDER_KEYRING` | the key from `warder-api keygen` |
 | `WARDER_SERVICE_TOKEN` | the string from `openssl rand -hex 32` |
+| `WARDER_DATABASE_URL` | your **pooled** connection string |
 
-`WARDER_DATABASE_URL` is wired automatically to the managed database's internal
-URL, which does not leave Render's network. You do not set it.
+Both services read the same ciphertext, so they need the same keyring and the
+same database. The service token is only *used* by the admin surface, but the
+binary requires it at startup on both.
 
-Both services read the same ciphertext, so they need the same keyring. The
-service token is only *used* by the admin surface, but the binary requires it
-at startup on both.
+Passkeys are optional, and only the **admin** service needs these. Leave them
+unset and the dashboard simply doesn't offer passkeys:
+
+| Variable | Value |
+|---|---|
+| `WARDER_WEBAUTHN_RP_ID` | the dashboard's bare host, e.g. `app.example.com` (no scheme, no port) |
+| `WARDER_WEBAUTHN_ORIGINS` | the dashboard's exact origin(s), comma-separated, e.g. `https://app.example.com` |
+| `WARDER_WEBAUTHN_DISPLAY_NAME` | optional; what the authenticator prompt calls the site (default `Warder`) |
+
+A passkey is bound to the RP ID it was created under. Changing the dashboard's
+domain later invalidates every registered passkey, so people would sign in
+with a password and recovery code and register again.
 
 Apply. Render builds the image once and starts both services:
 
@@ -146,22 +181,15 @@ curl -s https://warder-runtime-XXXX.onrender.com/health
 `{"status":"ok"}` from each. The admin service answers the same on `/health`
 and refuses everything else without the service token, which is correct.
 
-> **The free database is removed after 30 days.** Fine for evaluating, and a
-> poor property for the store holding every secret an organization owns. See
-> [using a different database](#using-a-different-database) when you outgrow
-> it: nothing about Warder is tied to Render.
+## 4. Create the schema
 
-## 3. Create the schema
-
-**Do not skip this.** Render creates an empty database; the services start fine
-against it and then every request fails, because there are no tables. The API
-answers `internal_error`: deliberately, since a caller learns nothing about
-the internals, and the real cause appears only in the service log as
+**Do not skip this.** A new database is empty; the services start fine against
+it and then every request fails, because there are no tables. The API answers
+`internal_error`: deliberately, since a caller learns nothing about the
+internals, and the real cause appears only in the service log as
 `relation "users" does not exist`.
 
-Copy the **External Database URL** from the Render database page. The services
-use the internal one; this command runs from your machine, so it needs the
-external.
+Use the **direct** connection string here, not the pooled one.
 
 ```bash
 WARDER_DATABASE_URL="postgres://…" warder-api migrate
@@ -171,11 +199,12 @@ That is the only variable it needs. A schema change has no business requiring
 the keyring, and demanding it would put the key that decrypts every secret in
 one more shell for no benefit.
 
-Expect `applied 0001_init.sql` and `applied 0002_invitations.sql`. Run it again
+Expect one `applied …` line per file in `migrations/`, from `0001_init.sql`
+through the newest (currently `0007_passwordless.sql`). Run it again
 after any deploy that adds a migration; when there is nothing to apply it says
 `Database is up to date.` and exits.
 
-## 4. Deploy the dashboard
+## 5. Deploy the dashboard
 
 In Vercel: **Add New → Project**, pick this repository, and set the **root
 directory to `web`**. Vercel detects Next.js on its own.
@@ -225,7 +254,7 @@ curl -s https://<your-vercel-domain>/.well-known/warder
 
 Deploy. Open the domain and choose **Create an organization**.
 
-## 5. Point the CLI at it
+## 6. Point the CLI at it
 
 With `WARDER_PUBLIC_RUNTIME_URL` set above, developers never learn that there
 are two hosts. They give `ward` the dashboard address, which is the one they
@@ -262,14 +291,10 @@ Worth doing once, in this order, because each proves a different boundary:
 4. **Sign-out ends the session.** The next request should redirect to sign-in
    rather than serving a cached page.
 
-## Using a different database
+## What the database has to be
 
-Nothing about Warder is tied to Render's database. To point at an external one:
-when the free tier expires, or for anything real, delete the `databases`
-block from `render.yaml` and change both `WARDER_DATABASE_URL` entries from
-`fromDatabase` to `sync: false`, then set the connection string on each service.
-
-It has to be **PostgreSQL**, not a Postgres-flavoured API. Warder uses two
+It has to be **PostgreSQL**, not a Postgres-flavoured API, and not a document
+store. Warder uses two
 schemas: `public` for metadata and `secret_material` for ciphertext, and that
 split is what lets a reporting role be given everything about which credentials
 exist while holding no privilege on the ciphertext. It also uses `bytea`,
@@ -280,11 +305,15 @@ twice.
 SQLite-backed services such as Turso cannot express that. Schemas do not exist
 there, so the separation the threat model rests on would simply be gone.
 
-[Neon](https://neon.tech) is the natural next step: real Postgres, a free tier
-that does not expire, suspended when idle rather than deleted. Supabase, Aiven
-and Railway work too. If the provider offers a connection pooler, use the
-pooled string for the services and the **direct** one for migrations:
-session-level advisory locks do not survive a transaction-mode pooler.
+**MongoDB and other document stores are not a substitute**, and the gap is not
+a porting exercise. The schema split above has no equivalent. Neither does the
+database-enforced append-only audit trail: `audit_events` carries a trigger
+that raises on UPDATE and DELETE, so the role the application runs as cannot
+rewrite history even if the application is fully compromised. Moving that
+guarantee into application code means it is only as good as the code it is
+defending against. Add to that nineteen multi-statement transactions and
+several unique indexes that arbitrate concurrent writes, and the result is a
+rewrite that ends with a weaker product.
 
 ---
 
@@ -293,11 +322,11 @@ session-level advisory locks do not survive a transaction-mode pooler.
 Stated plainly, because a deployment guide that only lists successes is not
 useful.
 
-**The free tiers sleep and expire.** Render free services spin down when idle,
-so the first `ward run` after a quiet period waits for a cold start, and the
-free database is removed after 30 days. Fine for evaluating; unsuitable for a
-workload that needs a credential in under a second, or for data you intend to
-keep.
+**The free tiers sleep.** Render free services spin down when idle and Neon
+suspends an idle database, so the first `ward run` after a quiet period waits
+for both to wake. The connect timeout allows thirty seconds for exactly this.
+Fine for evaluating; unsuitable for a workload that needs a credential in under
+a second.
 
 **The keyring sits in an environment variable.** That is the local key
 provider, and it means anyone who can read the service's configuration can read

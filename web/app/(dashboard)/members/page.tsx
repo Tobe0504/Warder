@@ -36,7 +36,7 @@ export default async function MembersPage() {
         actions={<InviteMemberDialog />}
       />
 
-      <MembersTable members={list} currentUserId={user.id} />
+      <MembersTable members={list} currentUserId={user.id} canRecover={user.role === "OWNER"} />
 
       {outstanding.length > 0 && (
         <section className="mt-8">
