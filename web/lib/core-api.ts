@@ -108,7 +108,15 @@ export async function callCoreApi<T>(
       redirect: "manual",
       signal: AbortSignal.timeout(15_000),
     });
-  } catch {
+  } catch (caught) {
+    // The browser gets nothing specific, but the operator needs the real
+    // cause: a DNS failure, a refused port and a timeout all look identical
+    // from the page. coreApiUrl carries no credential, so it is safe to log.
+    const cause = caught instanceof Error ? (caught.cause ?? caught) : caught;
+    console.error(
+      `Could not reach the core API at ${coreApiUrl}${path}:`,
+      cause instanceof Error ? `${cause.name}: ${cause.message}` : cause,
+    );
     throw new CoreApiError(
       502,
       "upstream_unavailable",
@@ -117,6 +125,13 @@ export async function callCoreApi<T>(
   }
 
   if (response.status >= 300 && response.status < 400) {
+    // Almost always WARDER_URL using warder+insecure (plain HTTP) against a
+    // host that redirects to HTTPS.
+    console.error(
+      `The core API at ${coreApiUrl} answered ${path} with a ${response.status} redirect to ` +
+        `${response.headers.get("location") ?? "an unknown location"}. ` +
+        "Check the scheme and host in WARDER_URL.",
+    );
     throw new CoreApiError(
       502,
       "upstream_unavailable",

@@ -189,8 +189,9 @@ func TestContractorAccessEndsWithoutRotatingCredentials(t *testing.T) {
 		t.Fatalf("the contractor still had access after removal: %d %s", ended.Status, ended.Raw)
 	}
 
-	// They cannot simply log in again: the password is still correct and now
-	// confers nothing.
+	// Logging in again gets them nothing. The account outlives the membership,
+	// so the password still signs them in, but to a session that belongs to no
+	// organization and so cannot reach the project it used to.
 	relogin := h.RuntimeCall(apitest.Request{
 		Method: http.MethodPost,
 		Path:   "/cli/login",
@@ -198,8 +199,23 @@ func TestContractorAccessEndsWithoutRotatingCredentials(t *testing.T) {
 			"email": contractor.Email, "password": contractor.Password, "kind": "cli",
 		},
 	})
-	if relogin.Status != http.StatusUnauthorized {
-		t.Fatalf("a removed contractor logged back in: %d %s", relogin.Status, relogin.Raw)
+	if relogin.Status == http.StatusOK {
+		user, _ := relogin.Get("user").(map[string]any)
+		if org, _ := user["organizationId"].(string); org != "" {
+			t.Fatalf("a removed contractor logged back into an organization: %s", relogin.Raw)
+		}
+
+		again := h.RuntimeCall(apitest.Request{
+			Method:     http.MethodPost,
+			Path:       "/runtime/auth",
+			Credential: relogin.String("sessionToken"),
+			Body:       map[string]string{"project": project.Slug, "environment": "development"},
+		})
+		if again.Status == http.StatusOK {
+			t.Fatalf("a removed contractor's new session reached the project: %s", again.Raw)
+		}
+	} else if relogin.Status != http.StatusUnauthorized {
+		t.Fatalf("unexpected response to a removed contractor's login: %d %s", relogin.Status, relogin.Raw)
 	}
 
 	// And the credential itself was never touched. This is the point: nobody

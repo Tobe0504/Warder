@@ -43,15 +43,25 @@ func (h *Harness) NewOrganization() *Organization {
 	// A deliberately fake password, long enough to satisfy the policy.
 	const password = "correct-horse-battery-staple-test"
 
-	created := h.MustAdmin(http.StatusCreated, Request{
+	// Two steps, as a real founder takes them: an account that belongs to
+	// nothing, then an organization created by that signed-in account.
+	signedUp := h.MustAdmin(http.StatusCreated, Request{
 		Method: http.MethodPost,
-		Path:   "/organizations",
+		Path:   "/auth/signup",
+		Body: map[string]string{
+			"email":    email,
+			"name":     "Test Owner",
+			"password": password,
+		},
+	})
+
+	created := h.MustAdmin(http.StatusCreated, Request{
+		Method:     http.MethodPost,
+		Path:       "/organizations",
+		Credential: signedUp.String("sessionToken"),
 		Body: map[string]string{
 			"organizationName": "Test Organization",
 			"slug":             slug,
-			"email":            email,
-			"name":             "Test Owner",
-			"password":         password,
 		},
 	})
 
